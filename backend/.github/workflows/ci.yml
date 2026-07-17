@@ -1,0 +1,159 @@
+name: CI/CD — Caramel Kitchen API
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+
+env:
+  MIX_ENV: test
+  ELIXIR_VERSION: "1.16.3"
+  OTP_VERSION: "26.2.5"
+
+jobs:
+  # ── Test ────────────────────────────────────────────────────
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER:     postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB:       caramel_kitchen_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 10s
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version:    ${{ env.OTP_VERSION }}
+
+      - name: Restore deps cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Compile (warnings as errors)
+        run: mix compile --warnings-as-errors
+
+      - name: Run Credo
+        run: mix credo --strict
+
+      - name: Run Sobelow (security)
+        run: mix sobelow --config
+
+      - name: Run tests with coverage
+        run: mix coveralls.json
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost/caramel_kitchen_test
+          GUARDIAN_SECRET_KEY: test_secret_key_at_least_64_chars_long_for_ci_pipeline_ok
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: cover/excoveralls.json
+
+  # ── Dialyzer ────────────────────────────────────────────────
+  dialyzer:
+    name: Dialyzer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version:    ${{ env.OTP_VERSION }}
+
+      - name: Restore PLT cache
+        uses: actions/cache@v4
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-plt-${{ hashFiles('**/mix.lock') }}
+
+      - run: mix deps.get
+      - run: mix dialyzer --plt
+      - run: mix dialyzer
+
+  # ── Deploy Staging ───────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io (staging)
+        run: flyctl deploy --app caramel-kitchen-api-staging --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+
+      - name: Run migrations
+        run: flyctl ssh console -a caramel-kitchen-api-staging --command "/app/bin/caramel_kitchen eval 'CaramelKitchen.Release.migrate()'"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+
+  # ── Deploy Production ────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production
+    needs: [test, dialyzer]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io (production)
+        run: flyctl deploy --app caramel-kitchen-api --remote-only --strategy rolling
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Run migrations (zero-downtime)
+        run: |
+          flyctl ssh console \
+            -a caramel-kitchen-api \
+            --command "/app/bin/caramel_kitchen eval 'CaramelKitchen.Release.migrate()'"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Notify Sentry of release
+        run: |
+          curl -sS https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/ \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"version":"${{ github.sha }}","projects":["caramel-kitchen-api"]}'

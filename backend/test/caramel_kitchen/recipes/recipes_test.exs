@@ -1,0 +1,180 @@
+defmodule CaramelKitchen.RecipesTest do
+  use CaramelKitchen.DataCase, async: true
+
+  alias CaramelKitchen.Recipes
+  alias CaramelKitchen.Recipes.Recipe
+
+  describe "create_recipe/2" do
+    setup do
+      {:ok, creator: insert(:creator)}
+    end
+
+    test "creates recipe with valid attributes", %{creator: creator} do
+      attrs = %{
+        "title"          => "Jollof Rice",
+        "description"    => "Classic West African Jollof Rice",
+        "ingredients"    => [
+          %{"name" => "rice",   "quantity" => 400, "unit" => "g"},
+          %{"name" => "tomato", "quantity" => 3,   "unit" => "whole"}
+        ],
+        "steps" => [
+          %{"order" => 1, "instruction" => "Blend tomatoes"},
+          %{"order" => 2, "instruction" => "Fry tomato base"},
+          %{"order" => 3, "instruction" => "Add rice and stock"}
+        ],
+        "dish_category"  => "rice_dishes",
+        "course"         => "main",
+        "primary_method" => "boiling",
+        "taste_tags"     => ["savory", "spicy"],
+        "dietary_flags"  => ["halal", "gluten_free"],
+        "calories"       => 380,
+        "prep_time_mins" => 15,
+        "cook_time_mins" => 45
+      }
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert recipe.title          == "Jollof Rice"
+      assert recipe.status         == "draft"
+      assert recipe.creator_id     == creator.id
+      assert recipe.taste_tags     == ["savory", "spicy"]
+      assert recipe.total_time_mins == 60
+      # taste_profile should be computed
+      assert not is_nil(recipe.taste_profile)
+    end
+
+    test "rejects recipe without ingredients", %{creator: creator} do
+      attrs = %{
+        "title"          => "Empty Recipe",
+        "ingredients"    => [],
+        "steps"          => [%{"order" => 1, "instruction" => "Do something"}],
+        "primary_method" => "boiling",
+        "taste_tags"     => ["mild"]
+      }
+      assert {:error, changeset} = Recipes.create_recipe(creator, attrs)
+      assert errors_on(changeset).ingredients != []
+    end
+
+    test "rejects recipe with invalid taste tags", %{creator: creator} do
+      attrs = %{
+        "title"          => "Bad Tags Recipe",
+        "ingredients"    => [%{"name" => "salt", "quantity" => 1, "unit" => "tsp"}],
+        "steps"          => [%{"order" => 1, "instruction" => "Add salt"}],
+        "primary_method" => "raw",
+        "taste_tags"     => ["not_a_valid_taste", "also_invalid"]
+      }
+      assert {:error, changeset} = Recipes.create_recipe(creator, attrs)
+      assert errors_on(changeset).taste_tags != []
+    end
+
+    test "generates unique slug from title", %{creator: creator} do
+      attrs = base_recipe_attrs()
+      assert {:ok, recipe1} = Recipes.create_recipe(creator, Map.put(attrs, "title", "Pepper Soup"))
+      assert {:ok, recipe2} = Recipes.create_recipe(creator, Map.put(attrs, "title", "Pepper Soup"))
+      assert recipe1.slug != recipe2.slug
+      assert String.starts_with?(recipe1.slug, "pepper-soup")
+    end
+  end
+
+  describe "update_recipe/2" do
+    setup do
+      recipe = insert(:recipe)
+      {:ok, recipe: recipe}
+    end
+
+    test "updates recipe attributes", %{recipe: recipe} do
+      assert {:ok, updated} = Recipes.update_recipe(recipe, %{"title" => "Updated Title"})
+      assert updated.title == "Updated Title"
+    end
+
+    test "cannot update with empty steps", %{recipe: recipe} do
+      assert {:error, changeset} = Recipes.update_recipe(recipe, %{"steps" => []})
+      assert errors_on(changeset).steps != []
+    end
+  end
+
+  describe "publish_recipe/1" do
+    test "publishes a draft recipe" do
+      recipe = insert(:draft_recipe)
+      assert {:ok, published} = Recipes.publish_recipe(recipe)
+      assert published.status      == "live"
+      assert not is_nil(published.published_at)
+    end
+  end
+
+  describe "category_counts/0" do
+    test "returns counts per dish category" do
+      insert(:recipe, dish_category: "meat_dishes")
+      insert(:recipe, dish_category: "meat_dishes")
+      insert(:recipe, dish_category: "rice_dishes")
+
+      counts = Recipes.category_counts()
+      assert is_map(counts)
+      assert Map.get(counts, "meat_dishes") >= 2
+      assert Map.get(counts, "rice_dishes") >= 1
+    end
+  end
+
+  describe "search/2" do
+    test "finds recipes by title" do
+      insert(:recipe, title: "Egusi Soup Special", status: "live")
+      insert(:recipe, title: "Jollof Rice Deluxe", status: "live")
+
+      results = Recipes.search("Egusi")
+      titles  = Enum.map(results, fn %{recipe: r} -> r.title end)
+      assert Enum.any?(titles, &String.contains?(&1, "Egusi"))
+    end
+  end
+
+  describe "filter system" do
+    setup do
+      insert(:recipe, primary_method: "grilling",  dietary_flags: ["halal"],
+             taste_tags: ["savory"], total_time_mins: 20, status: "live")
+      insert(:recipe, primary_method: "boiling",   dietary_flags: ["vegan"],
+             taste_tags: ["mild"],   total_time_mins: 60, status: "live")
+      insert(:recipe, primary_method: "frying",    dietary_flags: ["halal", "gluten_free"],
+             taste_tags: ["spicy"],  total_time_mins: 15, status: "live")
+      :ok
+    end
+
+    test "filters by cooking method" do
+      user    = insert(:premium_user)
+      results = Recipes.personalised_feed(user, filters: %{cooking_method: "grilling"})
+      methods = Enum.map(results, fn %{recipe: r} -> r.primary_method end)
+      assert Enum.all?(methods, &(&1 == "grilling"))
+    end
+
+    test "filters by dietary flags" do
+      user    = insert(:premium_user)
+      results = Recipes.personalised_feed(user, filters: %{dietary: ["vegan"]})
+      flags   = Enum.map(results, fn %{recipe: r} -> r.dietary_flags end)
+      assert Enum.all?(flags, &("vegan" in &1))
+    end
+
+    test "filters by max time" do
+      user    = insert(:premium_user)
+      results = Recipes.personalised_feed(user, filters: %{max_time: 25}, limit: 50)
+      times   = Enum.map(results, fn %{recipe: r} -> r.total_time_mins end)
+      assert Enum.all?(times, &(&1 <= 25))
+    end
+  end
+
+  # ── Helpers ───────────────────────────────────────────────────
+
+  defp base_recipe_attrs do
+    %{
+      "title"          => "Test Recipe",
+      "ingredients"    => [%{"name" => "egg", "quantity" => 2, "unit" => "whole"}],
+      "steps"          => [%{"order" => 1, "instruction" => "Boil eggs"}],
+      "primary_method" => "boiling",
+      "taste_tags"     => ["mild"]
+    }
+  end
+
+  defp errors_on(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
+  end
+end

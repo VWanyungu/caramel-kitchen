@@ -1,0 +1,105 @@
+version: "3.9"
+
+# ── Local Development Stack ────────────────────────────────────
+# Starts: PostgreSQL 16 (with pgvector), Redis 7, Mailpit (email preview)
+#
+# Usage:
+#   docker compose up -d          # start all services
+#   docker compose down           # stop all
+#   docker compose down -v        # stop + wipe volumes
+#   docker compose logs -f db     # follow DB logs
+
+services:
+
+  # ── PostgreSQL 16 + pgvector ──────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: caramel_kitchen_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       caramel_kitchen_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./priv/docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis 7 ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: caramel_kitchen_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Mailpit (local SMTP + email preview UI) ───────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: caramel_kitchen_mail
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI → http://localhost:8025
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  # ── MinIO (local S3-compatible storage) ───────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: caramel_kitchen_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console UI → http://localhost:9001
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── MinIO bucket setup (runs once) ───────────────────────────
+  minio_setup:
+    image: minio/mc:latest
+    container_name: caramel_kitchen_minio_setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin123;
+      mc mb --ignore-existing local/caramel-kitchen-dev;
+      mc anonymous set download local/caramel-kitchen-dev;
+      echo 'MinIO bucket ready';
+      "
+    restart: "no"
+
+volumes:
+  postgres_data:
+    name: caramel_kitchen_postgres
+  redis_data:
+    name: caramel_kitchen_redis
+  minio_data:
+    name: caramel_kitchen_minio
