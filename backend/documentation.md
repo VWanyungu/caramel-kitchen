@@ -29,7 +29,7 @@ This phase focuses on exposing the data securely and implementing the complex 6-
 - [x] **6-Dimensional Filtering**: Built Ecto query builders to filter recipes by dietary flags, taste profiles, max prep/cook time, difficulty, dish category, and primary cooking method.
 - [x] **Rate Limiting Setup**: Configured the `Hammer` backend to protect auth, API, and AI routes.
 - [ ] **Security Testing**: Validate Guardian refresh token rotation logic and write unit tests for Hammer rate limiting to ensure legitimate traffic isn't blocked.
-- [ ] **API Documentation**: Generate Swagger/OpenAPI specifications for the mobile team.
+- [x] **API Documentation**: Generate Swagger/OpenAPI specifications for the mobile team.
 
 ---
 

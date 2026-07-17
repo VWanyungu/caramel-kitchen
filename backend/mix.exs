@@ -107,6 +107,9 @@ defmodule CaramelKitchen.MixProject do
       # Error tracking
       {:sentry, "~> 10.2"},
 
+      # API Documentation
+      {:open_api_spex, "~> 3.18"},
+
       # Dev / Test
       {:excoveralls, "~> 0.18", only: :test},
       {:ex_machina, "~> 2.8", only: :test},
