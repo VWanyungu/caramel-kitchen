@@ -5,6 +5,8 @@ defmodule CaramelKitchenWeb.ApiSpec do
 
   alias OpenApiSpex.{Info, Server, Components, OpenApi, ServerVariable, Paths}
 
+  @dialyzer {:nowarn_function, spec: 0}
+
   def spec do
     %OpenApi{
       info: %Info{
@@ -23,9 +25,10 @@ defmodule CaramelKitchenWeb.ApiSpec do
       ],
       tags: [
         %{name: "Auth", description: "Authentication endpoints"},
-        %{name: "Recipes", description: "Recipe browsing and management"},
+        %{name: "Recipes", description: "Recipe browsing and management"}
       ],
       components: %Components{
+        schemas: %{},
         securitySchemes: %{
           "BearerAuth" => %OpenApiSpex.SecurityScheme{
             type: "http",
@@ -65,6 +68,7 @@ defmodule CaramelKitchenWeb.Schemas do
 
   defmodule ErrorResponse do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "ErrorResponse",
       description: "Standard error response",
@@ -79,6 +83,7 @@ defmodule CaramelKitchenWeb.Schemas do
 
   defmodule Recipe do
     require OpenApiSpex
+
     OpenApiSpex.schema(%{
       title: "Recipe",
       description: "A recipe object",

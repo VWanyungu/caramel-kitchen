@@ -57,13 +57,16 @@ defmodule CaramelKitchen.Cache do
   end
 
   def invalidate_user(%{id: user_id}), do: invalidate("user:#{user_id}")
+
   def invalidate_user_feed(%{id: user_id}) do
     # Pattern-delete all feed keys for this user
     l2_pattern_delete("feed:#{user_id}:*")
     :ok
   end
+
   def invalidate_recipe(recipe_id), do: invalidate("recipe:#{recipe_id}")
   def invalidate_category_counts, do: invalidate("category_counts")
+  def invalidate_dish_type_counts, do: invalidate("dish_type_counts")
   def invalidate_trending, do: invalidate("trending:global")
 
   # ── L1: ConCache (ETS) ────────────────────────────────────────
@@ -99,11 +102,14 @@ defmodule CaramelKitchen.Cache do
 
   defp l2_get(key) do
     case Redix.command(:redix, ["GET", prefixed(key)]) do
-      {:ok, nil}   -> :miss
+      {:ok, nil} ->
+        :miss
+
       {:ok, value} ->
         case :erlang.binary_to_term(value, [:safe]) do
           term -> {:ok, term}
         end
+
       {:error, reason} ->
         Logger.warning("Redis GET failed for #{key}: #{inspect(reason)}")
         :miss
@@ -116,10 +122,12 @@ defmodule CaramelKitchen.Cache do
 
   defp l2_put(key, val, ttl_ms) do
     ttl_secs = max(div(ttl_ms, 1000), 1)
-    binary   = :erlang.term_to_binary(val)
+    binary = :erlang.term_to_binary(val)
 
     case Redix.command(:redix, ["SET", prefixed(key), binary, "EX", ttl_secs]) do
-      {:ok, _}         -> :ok
+      {:ok, _} ->
+        :ok
+
       {:error, reason} ->
         Logger.warning("Redis SET failed for #{key}: #{inspect(reason)}")
         :ok
@@ -146,7 +154,9 @@ defmodule CaramelKitchen.Cache do
     case Redix.command(:redix, ["SCAN", "0", "MATCH", prefixed(pattern), "COUNT", "100"]) do
       {:ok, [_cursor, keys]} when keys != [] ->
         Redix.command(:redix, ["DEL" | keys])
-      _ -> :ok
+
+      _ ->
+        :ok
     end
   rescue
     _ -> :ok
