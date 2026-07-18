@@ -22,7 +22,7 @@ defmodule CaramelKitchenWeb.RecipeController do
          %OpenApiSpex.Schema{
            type: :object,
            properties: %{
-             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe},
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.RecipeCard},
              meta: %OpenApiSpex.Schema{type: :object}
            }
          }}
@@ -71,7 +71,7 @@ defmodule CaramelKitchenWeb.RecipeController do
          %OpenApiSpex.Schema{
            type: :object,
            properties: %{
-             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe}
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.RecipeCard}
            }
          }}
     }
@@ -98,7 +98,7 @@ defmodule CaramelKitchenWeb.RecipeController do
          %OpenApiSpex.Schema{
            type: :object,
            properties: %{
-             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe},
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.RecipeCard},
              meta: %OpenApiSpex.Schema{type: :object}
            }
          }}
@@ -134,7 +134,7 @@ defmodule CaramelKitchenWeb.RecipeController do
         {"Success", "application/json",
          %OpenApiSpex.Schema{
            type: :object,
-           properties: %{data: CaramelKitchenWeb.Schemas.Recipe}
+           properties: %{data: CaramelKitchenWeb.Schemas.RecipeDetail}
          }},
       404 => "NotFound"
     }
@@ -160,7 +160,7 @@ defmodule CaramelKitchenWeb.RecipeController do
         {"Success", "application/json",
          %OpenApiSpex.Schema{
            type: :object,
-           properties: %{data: CaramelKitchenWeb.Schemas.Recipe}
+           properties: %{data: CaramelKitchenWeb.Schemas.RecipeDetail}
          }},
       404 => "NotFound"
     }

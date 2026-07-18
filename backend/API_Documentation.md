@@ -11,23 +11,77 @@ All API requests should be prefixed with `/api/v1`
 
 ## 1. Core Schemas
 
-### `Recipe`
-Represents a recipe in the Caramel Kitchen platform.
+### `RecipeCard`
+Represents a simplified recipe object returned in list views (search, feed, trending).
 ```typescript
-interface Recipe {
+interface RecipeCard {
   id: string;               // UUID
+  slug: string;
   title: string;
-  description: string;
-  status: "draft" | "live" | "archived";
+  thumbnail_url: string | null;
   dish_category: string;
+  course: string;
+  primary_method: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  total_time_mins: number;
+  taste_tags: string[];
+  dietary_flags: string[];
+  calories: number | null;
+  avg_rating: number;
+  rating_count: number;
+  cuisine_origin: string[];
+  taste_score?: number;
+  search_rank?: number;
+}
+```
+
+### `RecipeDetail`
+Represents the full recipe object returned in detail views.
+```typescript
+interface RecipeDetail {
+  id: string;               // UUID
+  slug: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  video_url: string | null;
+  video_duration_secs: number | null;
+  dish_category: string;
+  course: string;
+  primary_method: string;
+  secondary_method: string | null;
   difficulty: "beginner" | "intermediate" | "advanced";
   prep_time_mins: number;
   cook_time_mins: number;
-  calories: number;
-  taste_tags: string[];     // Array of taste profile strings
-  dietary_flags: string[];  // Array of dietary flags (e.g., "vegan", "gluten-free")
-  thumbnail_url: string;
-  video_url: string | null;
+  total_time_mins: number;
+  serving_size: number;
+  taste_tags: string[];
+  dietary_flags: string[];
+  allergens: string[];
+  allergy_alerts?: string[];
+  calories: number | null;
+  macros: Record<string, any>;
+  avg_rating: number;
+  rating_count: number;
+  cuisine_origin: string[];
+  creator_id: string;
+  published_at: string | null;
+  featured_until: string | null;
+  view_count: number;
+  save_count: number;
+  cook_count: number;
+  ingredients: {
+    name: string;
+    quantity: string;
+    unit: string | null;
+    notes: string | null;
+  }[];
+  steps: {
+    order: number;
+    instruction: string;
+    duration_minutes: number | null;
+    tip: string | null;
+  }[];
 }
 ```
 
@@ -69,7 +123,7 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 ```json
 {
   "data": [
-    { /* Recipe Object */ }
+    { /* RecipeCard Object */ }
   ],
   "meta": {
     "count": 20,
@@ -93,7 +147,7 @@ Search for recipes across titles, descriptions, ingredients, and various tags (t
 ```json
 {
   "data": [
-    { /* Recipe Object */ }
+    { /* RecipeCard Object */ }
   ],
   "meta": {
     "query": "search term",
@@ -115,7 +169,7 @@ Get trending recipes based on engagement scores.
 ```json
 {
   "data": [
-    { /* Recipe Object */ }
+    { /* RecipeCard Object */ }
   ]
 }
 ```
@@ -131,7 +185,7 @@ Get full details for a single recipe by its UUID.
 **Response (200 OK):**
 ```json
 {
-  "data": { /* Full Recipe Object with ingredients, steps, macros, etc. */ }
+  "data": { /* Full RecipeDetail Object */ }
 }
 ```
 
@@ -146,7 +200,7 @@ Get full details for a single recipe using its URL slug.
 **Response (200 OK):**
 ```json
 {
-  "data": { /* Full Recipe Object */ }
+  "data": { /* Full RecipeDetail Object */ }
 }
 ```
 
