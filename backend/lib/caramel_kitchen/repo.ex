@@ -3,7 +3,8 @@ defmodule CaramelKitchen.Repo do
     otp_app: :caramel_kitchen,
     adapter: Ecto.Adapters.Postgres
 
-  Postgrex.Types.define(CaramelKitchen.PostgresTypes,
+  Postgrex.Types.define(
+    CaramelKitchen.PostgresTypes,
     [Pgvector.Extensions.Vector] ++ Ecto.Adapters.Postgres.extensions(),
     []
   )
@@ -16,9 +17,9 @@ defmodule CaramelKitchen.Repo do
   def run_transaction(fun) do
     transaction(fn repo ->
       case fun.(repo) do
-        {:ok, result}    -> result
+        {:ok, result} -> result
         {:error, reason} -> rollback(reason)
-        result           -> result
+        result -> result
       end
     end)
   end
@@ -28,7 +29,7 @@ defmodule CaramelKitchen.Repo do
   """
   def fetch(queryable, opts \\ []) do
     case one(queryable, opts) do
-      nil    -> {:error, :not_found}
+      nil -> {:error, :not_found}
       record -> {:ok, record}
     end
   end

@@ -12,43 +12,43 @@ defmodule CaramelKitchen.Accounts.User do
   @valid_tiers ~w(free premium creator_pro)
 
   schema "users" do
-    field :email,                :string
-    field :password_hash,        :string
-    field :password,             :string, virtual: true
+    field :email, :string
+    field :password_hash, :string
+    field :password, :string, virtual: true
     field :password_confirmation, :string, virtual: true
-    field :name,                 :string
-    field :avatar_url,           :string
-    field :role,                 :string, default: "user"
-    field :subscription_tier,    :string, default: "free"
+    field :name, :string
+    field :avatar_url, :string
+    field :role, :string, default: "user"
+    field :subscription_tier, :string, default: "free"
 
     # Taste
-    field :taste_vector,         Pgvector.Ecto.Vector
-    field :taste_survey_done,    :boolean, default: false
-    field :taste_updated_at,     :utc_datetime
+    field :taste_vector, Pgvector.Ecto.Vector
+    field :taste_survey_done, :boolean, default: false
+    field :taste_updated_at, :utc_datetime
 
     # Preferences
-    field :dietary_flags,        {:array, :string}, default: []
-    field :allergy_flags,        {:array, :string}, default: []
-    field :cuisine_preferences,  {:array, :string}, default: []
-    field :goal_type,            :string
+    field :dietary_flags, {:array, :string}, default: []
+    field :allergy_flags, {:array, :string}, default: []
+    field :cuisine_preferences, {:array, :string}, default: []
+    field :goal_type, :string
 
     # Auth
-    field :google_uid,           :string
-    field :email_verified,       :boolean, default: false
-    field :email_verify_token,   :string
+    field :google_uid, :string
+    field :email_verified, :boolean, default: false
+    field :email_verify_token, :string
     field :password_reset_token, :string
-    field :password_reset_at,    :utc_datetime
-    field :last_sign_in_at,      :utc_datetime
-    field :sign_in_count,        :integer, default: 0
+    field :password_reset_at, :utc_datetime
+    field :last_sign_in_at, :utc_datetime
+    field :sign_in_count, :integer, default: 0
 
     # State
-    field :deactivated_at,       :utc_datetime
-    field :deactivation_reason,  :string
+    field :deactivated_at, :utc_datetime
+    field :deactivation_reason, :string
 
-    has_many :recipes,       CaramelKitchen.Recipes.Recipe, foreign_key: :creator_id
-    has_many :meal_plans,    CaramelKitchen.MealPlans.MealPlan
+    has_many :recipes, CaramelKitchen.Recipes.Recipe, foreign_key: :creator_id
+    has_many :meal_plans, CaramelKitchen.MealPlans.MealPlan
     has_many :shopping_lists, CaramelKitchen.Shopping.ShoppingList
-    has_one  :subscription,  CaramelKitchen.Monetisation.Subscription
+    has_one :subscription, CaramelKitchen.Monetisation.Subscription
 
     timestamps(type: :utc_datetime)
   end
@@ -78,8 +78,14 @@ defmodule CaramelKitchen.Accounts.User do
 
   def profile_changeset(user, attrs) do
     user
-    |> cast(attrs, [:name, :avatar_url, :dietary_flags, :allergy_flags,
-                     :cuisine_preferences, :goal_type])
+    |> cast(attrs, [
+      :name,
+      :avatar_url,
+      :dietary_flags,
+      :allergy_flags,
+      :cuisine_preferences,
+      :goal_type
+    ])
     |> validate_length(:name, min: 2, max: 100)
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:goal_type, @valid_goal_types, allow_nil: true)
@@ -144,7 +150,9 @@ defmodule CaramelKitchen.Accounts.User do
   defp validate_email(changeset) do
     changeset
     |> validate_required([:email])
-    |> validate_format(:email, Regex.compile!("^[^\\\\s]+@[^\\\\s]+\\\\.[^\\\\s]+$"), message: "must be a valid email")
+    |> validate_format(:email, Regex.compile!("^[^\\s]+@[^\\s]+\\.[^\\s]+$"),
+      message: "must be a valid email"
+    )
     |> validate_length(:email, max: 255)
     |> update_change(:email, &String.downcase/1)
   end
@@ -160,6 +168,7 @@ defmodule CaramelKitchen.Accounts.User do
   defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: pw}} = cs) do
     change(cs, password_hash: Bcrypt.hash_pwd_salt(pw))
   end
+
   defp put_password_hash(cs), do: cs
 
   defp generate_random_password do

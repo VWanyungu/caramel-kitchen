@@ -8,7 +8,8 @@ defmodule CaramelKitchen.Workers.GuardianSweepWorker do
 
   @impl Oban.Worker
   def perform(_job) do
-    now  = System.system_time(:second)
+    now = System.system_time(:second)
+
     {count, _} =
       from(t in "guardian_tokens", where: t.exp < ^now)
       |> Repo.delete_all()

@@ -10,7 +10,8 @@ defmodule CaramelKitchen.Nutrition do
   require Logger
 
   @nutritionix_url "https://trackapi.nutritionix.com/v2/natural/nutrients"
-  @cache_ttl       :timer.hours(24 * 30)  # 30 days
+  # 30 days
+  @cache_ttl :timer.hours(24 * 30)
 
   # ── Public API ────────────────────────────────────────────────
 
@@ -22,9 +23,10 @@ defmodule CaramelKitchen.Nutrition do
     query = ingredients_to_query(ingredients)
     cache_key = "nutrition:#{:erlang.phash2(query)}"
 
-    result = Cache.get_or_store(cache_key, @cache_ttl, fn ->
-      fetch_nutrition(query)
-    end)
+    result =
+      Cache.get_or_store(cache_key, @cache_ttl, fn ->
+        fetch_nutrition(query)
+      end)
 
     case result do
       {:ok, totals} ->
@@ -38,7 +40,7 @@ defmodule CaramelKitchen.Nutrition do
 
   @doc "Look up a single ingredient's nutrition data."
   def ingredient_nutrition(ingredient_name, quantity, unit) do
-    query     = "#{quantity} #{unit} #{ingredient_name}"
+    query = "#{quantity} #{unit} #{ingredient_name}"
     cache_key = "nutrition:single:#{:erlang.phash2(query)}"
 
     Cache.get_or_store(cache_key, @cache_ttl, fn ->
@@ -49,7 +51,7 @@ defmodule CaramelKitchen.Nutrition do
   # ── Private ───────────────────────────────────────────────────
 
   defp fetch_nutrition(query) do
-    app_id  = Application.get_env(:caramel_kitchen, :nutritionix_app_id)
+    app_id = Application.get_env(:caramel_kitchen, :nutritionix_app_id)
     app_key = Application.get_env(:caramel_kitchen, :nutritionix_app_key)
 
     if app_id && app_key do
@@ -62,14 +64,14 @@ defmodule CaramelKitchen.Nutrition do
 
   defp fetch_from_nutritionix(query, app_id, app_key) do
     case Req.post(@nutritionix_url,
-      headers: [
-        {"x-app-id",  app_id},
-        {"x-app-key", app_key},
-        {"Content-Type", "application/json"}
-      ],
-      json: %{query: query},
-      receive_timeout: 10_000
-    ) do
+           headers: [
+             {"x-app-id", app_id},
+             {"x-app-key", app_key},
+             {"Content-Type", "application/json"}
+           ],
+           json: %{query: query},
+           receive_timeout: 10_000
+         ) do
       {:ok, %{status: 200, body: %{"foods" => foods}}} ->
         totals = aggregate_foods(foods)
         {:ok, totals}
@@ -88,15 +90,17 @@ defmodule CaramelKitchen.Nutrition do
   end
 
   defp aggregate_foods(foods) do
-    Enum.reduce(foods, %{calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fibre_g: 0, sodium_mg: 0},
+    Enum.reduce(
+      foods,
+      %{calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fibre_g: 0, sodium_mg: 0},
       fn food, acc ->
         %{
-          calories:  acc.calories  + round(food["nf_calories"]         || 0),
-          protein_g: acc.protein_g + Float.round((food["nf_protein"]   || 0) * 1.0, 1),
-          carbs_g:   acc.carbs_g   + Float.round((food["nf_total_carbohydrate"] || 0) * 1.0, 1),
-          fat_g:     acc.fat_g     + Float.round((food["nf_total_fat"] || 0) * 1.0, 1),
-          fibre_g:   acc.fibre_g   + Float.round((food["nf_dietary_fiber"] || 0) * 1.0, 1),
-          sodium_mg: acc.sodium_mg + round(food["nf_sodium"]           || 0)
+          calories: acc.calories + round(food["nf_calories"] || 0),
+          protein_g: acc.protein_g + Float.round((food["nf_protein"] || 0) * 1.0, 1),
+          carbs_g: acc.carbs_g + Float.round((food["nf_total_carbohydrate"] || 0) * 1.0, 1),
+          fat_g: acc.fat_g + Float.round((food["nf_total_fat"] || 0) * 1.0, 1),
+          fibre_g: acc.fibre_g + Float.round((food["nf_dietary_fiber"] || 0) * 1.0, 1),
+          sodium_mg: acc.sodium_mg + round(food["nf_sodium"] || 0)
         }
       end
     )
@@ -104,22 +108,23 @@ defmodule CaramelKitchen.Nutrition do
 
   defp divide_by_servings(totals, serving_size) when serving_size > 0 do
     %{
-      calories:  round(totals.calories  / serving_size),
+      calories: round(totals.calories / serving_size),
       protein_g: Float.round(totals.protein_g / serving_size, 1),
-      carbs_g:   Float.round(totals.carbs_g   / serving_size, 1),
-      fat_g:     Float.round(totals.fat_g     / serving_size, 1),
-      fibre_g:   Float.round(totals.fibre_g   / serving_size, 1),
+      carbs_g: Float.round(totals.carbs_g / serving_size, 1),
+      fat_g: Float.round(totals.fat_g / serving_size, 1),
+      fibre_g: Float.round(totals.fibre_g / serving_size, 1),
       sodium_mg: round(totals.sodium_mg / serving_size)
     }
   end
+
   defp divide_by_servings(totals, _), do: totals
 
   defp ingredients_to_query(ingredients) do
     ingredients
     |> Enum.map(fn ing ->
-      qty  = ing["quantity"] || ing[:quantity] || 1
-      unit = ing["unit"]     || ing[:unit]     || ""
-      name = ing["name"]     || ing[:name]     || ""
+      qty = ing["quantity"] || ing[:quantity] || 1
+      unit = ing["unit"] || ing[:unit] || ""
+      name = ing["name"] || ing[:name] || ""
       "#{qty} #{unit} #{name}"
     end)
     |> Enum.join(", ")

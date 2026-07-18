@@ -8,19 +8,19 @@ defmodule CaramelKitchen.Shopping do
   alias CaramelKitchen.MealPlans
 
   @grocery_categories %{
-    "produce"   => ~w(vegetable fruit herb lettuce tomato onion garlic pepper),
-    "protein"   => ~w(chicken beef lamb fish prawn egg tofu legume bean lentil),
-    "dairy"     => ~w(milk cheese butter yoghurt cream),
-    "grains"    => ~w(rice pasta flour bread oat noodle),
-    "pantry"    => ~w(oil salt sugar spice sauce stock vinegar),
-    "frozen"    => ~w(frozen),
-    "drinks"    => ~w(water juice milk tea coffee)
+    "produce" => ~w(vegetable fruit herb lettuce tomato onion garlic pepper),
+    "protein" => ~w(chicken beef lamb fish prawn egg tofu legume bean lentil),
+    "dairy" => ~w(milk cheese butter yoghurt cream),
+    "grains" => ~w(rice pasta flour bread oat noodle),
+    "pantry" => ~w(oil salt sugar spice sauce stock vinegar),
+    "frozen" => ~w(frozen),
+    "drinks" => ~w(water juice milk tea coffee)
   }
 
   # ── Auto-generate from meal plan ──────────────────────────────
 
   def auto_generate_from_plan(meal_plan_id, user_id, opts \\ []) do
-    meal_plan    = MealPlans.get_plan!(meal_plan_id)
+    meal_plan = MealPlans.get_plan!(meal_plan_id)
     servings_mul = Keyword.get(opts, :servings_multiplier, 1.0)
 
     recipe_ids =
@@ -34,14 +34,17 @@ defmodule CaramelKitchen.Shopping do
     items = aggregate_ingredients(recipes, servings_mul, meal_plan.days)
 
     %ShoppingList{}
-    |> Ecto.Changeset.cast(%{
-      user_id:             user_id,
-      meal_plan_id:        meal_plan_id,
-      name:                "Shopping — #{meal_plan.name}",
-      items:               items,
-      servings_multiplier: servings_mul,
-      share_token:         generate_share_token()
-    }, [:user_id, :meal_plan_id, :name, :items, :servings_multiplier, :share_token])
+    |> Ecto.Changeset.cast(
+      %{
+        user_id: user_id,
+        meal_plan_id: meal_plan_id,
+        name: "Shopping — #{meal_plan.name}",
+        items: items,
+        servings_multiplier: servings_mul,
+        share_token: generate_share_token()
+      },
+      [:user_id, :meal_plan_id, :name, :items, :servings_multiplier, :share_token]
+    )
     |> Repo.insert()
   end
 
@@ -58,13 +61,16 @@ defmodule CaramelKitchen.Shopping do
       where: l.user_id == ^user_id,
       order_by: [desc: l.inserted_at],
       limit: 20
-    ) |> Repo.all()
+    )
+    |> Repo.all()
   end
 
   def create_list(user_id, attrs) do
     %ShoppingList{}
-    |> Ecto.Changeset.cast(Map.put(attrs, :user_id, user_id),
-        [:user_id, :name, :items, :meal_plan_id])
+    |> Ecto.Changeset.cast(
+      Map.put(attrs, :user_id, user_id),
+      [:user_id, :name, :items, :meal_plan_id]
+    )
     |> Ecto.Changeset.validate_required([:user_id, :items])
     |> Ecto.Changeset.put_change(:share_token, generate_share_token())
     |> Repo.insert()
@@ -74,6 +80,7 @@ defmodule CaramelKitchen.Shopping do
     with {:ok, list} <- get_list(list_id),
          true <- list.user_id == user_id do
       checked = list.checked_ids |> List.insert_at(-1, item_index) |> Enum.uniq()
+
       list
       |> Ecto.Changeset.change(%{checked_ids: checked})
       |> Repo.update()
@@ -86,6 +93,7 @@ defmodule CaramelKitchen.Shopping do
     with {:ok, list} <- get_list(list_id),
          true <- list.user_id == user_id do
       checked = Enum.reject(list.checked_ids, &(&1 == item_index))
+
       list
       |> Ecto.Changeset.change(%{checked_ids: checked})
       |> Repo.update()
@@ -96,7 +104,8 @@ defmodule CaramelKitchen.Shopping do
 
   def whatsapp_share_url(%ShoppingList{} = list) do
     base_url = Application.get_env(:caramel_kitchen, :app_url, "https://caramelkitchen.app")
-    link     = "#{base_url}/shopping/shared/#{list.share_token}"
+    link = "#{base_url}/shopping/shared/#{list.share_token}"
+
     items_text =
       list.items
       |> Enum.take(10)
@@ -114,17 +123,18 @@ defmodule CaramelKitchen.Shopping do
 
     recipes
     |> Enum.flat_map(fn recipe ->
-      multiplier = Map.get(serving_map, recipe.id, 1) * servings_multiplier / max(recipe.serving_size, 1)
+      multiplier =
+        Map.get(serving_map, recipe.id, 1) * servings_multiplier / max(recipe.serving_size, 1)
 
       Enum.map(recipe.ingredients, fn ing ->
         %{
-          "name"        => ing["name"],
-          "quantity"    => round_qty(ing["quantity"] * multiplier),
-          "unit"        => ing["unit"] || "",
-          "category"    => classify_ingredient(ing["name"]),
-          "recipe_ids"  => [recipe.id],
-          "notes"       => ing["notes"],
-          "checked"     => false
+          "name" => ing["name"],
+          "quantity" => round_qty(ing["quantity"] * multiplier),
+          "unit" => ing["unit"] || "",
+          "category" => classify_ingredient(ing["name"]),
+          "recipe_ids" => [recipe.id],
+          "notes" => ing["notes"],
+          "checked" => false
         }
       end)
     end)
@@ -137,7 +147,7 @@ defmodule CaramelKitchen.Shopping do
     |> Enum.flat_map(fn d -> d["meals"] end)
     |> Enum.group_by(& &1["recipe_id"])
     |> Map.new(fn {recipe_id, meals} ->
-      {recipe_id, Enum.sum(Enum.map(meals, & &1["servings"] || 1))}
+      {recipe_id, Enum.sum(Enum.map(meals, &(&1["servings"] || 1)))}
     end)
   end
 
@@ -146,7 +156,7 @@ defmodule CaramelKitchen.Shopping do
     |> Enum.group_by(fn i -> {String.downcase(i["name"]), i["unit"]} end)
     |> Map.values()
     |> Enum.map(fn [first | rest] ->
-      merged_qty     = Enum.reduce(rest, first["quantity"], fn i, acc -> acc + i["quantity"] end)
+      merged_qty = Enum.reduce(rest, first["quantity"], fn i, acc -> acc + i["quantity"] end)
       merged_recipes = Enum.flat_map([first | rest], & &1["recipe_ids"]) |> Enum.uniq()
       Map.merge(first, %{"quantity" => merged_qty, "recipe_ids" => merged_recipes})
     end)
@@ -154,6 +164,7 @@ defmodule CaramelKitchen.Shopping do
 
   defp classify_ingredient(name) do
     lower = String.downcase(name)
+
     Enum.find_value(@grocery_categories, "other", fn {category, keywords} ->
       if Enum.any?(keywords, &String.contains?(lower, &1)), do: category
     end)

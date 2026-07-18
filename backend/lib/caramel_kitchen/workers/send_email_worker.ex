@@ -38,9 +38,10 @@ defmodule CaramelKitchen.Workers.SendEmailWorker do
   end
 
   defp dispatch("plan_reminder", user, %{"plan_id" => plan_id}) do
-    with {:ok, plan} <- CaramelKitchen.Repo.fetch(
-           from p in CaramelKitchen.MealPlans.MealPlan, where: p.id == ^plan_id
-         ) do
+    with {:ok, plan} <-
+           CaramelKitchen.Repo.fetch(
+             from p in CaramelKitchen.MealPlans.MealPlan, where: p.id == ^plan_id
+           ) do
       user |> Emails.meal_plan_reminder(plan) |> deliver()
     else
       _ ->
@@ -56,8 +57,10 @@ defmodule CaramelKitchen.Workers.SendEmailWorker do
 
   defp deliver(email) do
     case Mailer.deliver(email) do
-      {:ok, _}     -> :ok
-      {:error, r}  ->
+      {:ok, _} ->
+        :ok
+
+      {:error, r} ->
         Logger.error("Email delivery failed: #{inspect(r)}")
         {:error, r}
     end

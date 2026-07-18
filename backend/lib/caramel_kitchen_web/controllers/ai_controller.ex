@@ -6,19 +6,20 @@ defmodule CaramelKitchenWeb.AIController do
 
   # POST /api/v1/ai/chat
   def chat(conn, %{"message" => message} = params) do
-    user       = conn.assigns.current_user
+    user = conn.assigns.current_user
     session_id = params["session_id"] || generate_session_id(user.id)
 
     case Orchestrator.chat(user, session_id, message) do
       {:ok, response} ->
         decoded = parse_ai_response(response)
+
         json(conn, %{
           data: %{
-            session_id:   session_id,
-            reply:        decoded["reply"] || response,
-            recipe_ids:   decoded["recipe_ids"] || [],
-            tip:          decoded["tip"],
-            stream:       false
+            session_id: session_id,
+            reply: decoded["reply"] || response,
+            recipe_ids: decoded["recipe_ids"] || [],
+            tip: decoded["tip"],
+            stream: false
           }
         })
 
@@ -32,16 +33,16 @@ defmodule CaramelKitchenWeb.AIController do
     user = conn.assigns.current_user
 
     with {:ok, audio, conn} <- read_audio(conn, params),
-         {:ok, transcript}  <- Orchestrator.transcribe_voice(audio),
-         session_id          = params["session_id"] || generate_session_id(user.id),
+         {:ok, transcript} <- Orchestrator.transcribe_voice(audio),
+         session_id = params["session_id"] || generate_session_id(user.id),
          {:ok, ai_response} <- Orchestrator.chat(user, session_id, transcript) do
-
       decoded = parse_ai_response(ai_response)
+
       json(conn, %{
         data: %{
           session_id: session_id,
           transcript: transcript,
-          reply:      decoded["reply"] || ai_response,
+          reply: decoded["reply"] || ai_response,
           recipe_ids: decoded["recipe_ids"] || []
         }
       })
@@ -62,9 +63,10 @@ defmodule CaramelKitchenWeb.AIController do
 
   defp parse_ai_response(text) do
     clean = text |> String.replace(Regex.compile!("```json|```"), "") |> String.trim()
+
     case Jason.decode(clean) do
       {:ok, map} -> map
-      _          -> %{"reply" => text}
+      _ -> %{"reply" => text}
     end
   end
 
@@ -78,6 +80,7 @@ defmodule CaramelKitchenWeb.AIController do
       %Plug.Upload{path: path, content_type: _ct} ->
         audio = File.read!(path)
         {:ok, audio, conn}
+
       _ ->
         with {:ok, body, conn} <- Plug.Conn.read_body(conn, length: 25_000_000) do
           {:ok, body, conn}
@@ -112,7 +115,7 @@ defmodule CaramelKitchenWeb.InteractionController do
 
   # POST /api/v1/recipes/:id/rate
   def rate(conn, %{"id" => recipe_id, "rating" => rating_str}) do
-    user   = conn.assigns.current_user
+    user = conn.assigns.current_user
     rating = String.to_integer(to_string(rating_str))
 
     if rating in 1..5 do
@@ -127,23 +130,34 @@ defmodule CaramelKitchenWeb.InteractionController do
 
   # GET /api/v1/me/saved
   def saved_recipes(conn, params) do
-    user   = conn.assigns.current_user
-    limit  = min(String.to_integer(params["limit"] || "20"), 50)
+    user = conn.assigns.current_user
+    limit = min(String.to_integer(params["limit"] || "20"), 50)
 
     import Ecto.Query
+
     interactions =
       CaramelKitchen.Repo.all(
         from i in CaramelKitchen.UserRecipeInteraction,
-        where: i.user_id == ^user.id and i.action == "saved",
-        order_by: [desc: i.inserted_at],
-        limit: ^limit,
-        preload: [:recipe]
+          where: i.user_id == ^user.id and i.action == "saved",
+          order_by: [desc: i.inserted_at],
+          limit: ^limit,
+          preload: [:recipe]
       )
 
-    json(conn, %{data: Enum.map(interactions, fn i ->
-      %{saved_at: i.inserted_at, recipe: %{id: i.recipe.id, title: i.recipe.title,
-        thumbnail_url: i.recipe.thumbnail_url, taste_tags: i.recipe.taste_tags}}
-    end)})
+    json(conn, %{
+      data:
+        Enum.map(interactions, fn i ->
+          %{
+            saved_at: i.inserted_at,
+            recipe: %{
+              id: i.recipe.id,
+              title: i.recipe.title,
+              thumbnail_url: i.recipe.thumbnail_url,
+              taste_tags: i.recipe.taste_tags
+            }
+          }
+        end)
+    })
   end
 
   defp record_interaction(conn, recipe_id, action) do
@@ -152,11 +166,13 @@ defmodule CaramelKitchenWeb.InteractionController do
     with {:ok, _recipe} <- Recipes.get_recipe(recipe_id) do
       VectorUpdater.enqueue(user.id, recipe_id, action)
 
-      field = case action do
-        :saved   -> "save_count"
-        :cooked  -> "cook_count"
-        :skipped -> nil
-      end
+      field =
+        case action do
+          :saved -> "save_count"
+          :cooked -> "cook_count"
+          :skipped -> nil
+        end
+
       if field, do: Recipes.increment_engagement(recipe_id, field)
 
       json(conn, %{data: %{action: action, recipe_id: recipe_id}})
@@ -174,7 +190,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
 
   # GET /api/v1/meal-plans
   def index(conn, _params) do
-    user  = conn.assigns.current_user
+    user = conn.assigns.current_user
     plans = MealPlans.list_plans(user.id)
     json(conn, %{data: Enum.map(plans, &render_plan_summary/1)})
   end
@@ -182,6 +198,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
   # GET /api/v1/meal-plans/active
   def active(conn, _params) do
     user = conn.assigns.current_user
+
     with {:ok, plan} <- MealPlans.get_active_plan(user.id) do
       json(conn, %{data: render_plan_full(plan)})
     end
@@ -190,12 +207,17 @@ defmodule CaramelKitchenWeb.MealPlanController do
   # POST /api/v1/meal-plans/generate
   def generate(conn, %{"goal_type" => goal_type}) do
     user = conn.assigns.current_user
+
     with {:ok, plan} <- MealPlans.generate_plan(user, goal_type) do
       conn |> put_status(:created) |> json(%{data: render_plan_full(plan)})
     else
       {:error, :insufficient_recipes} ->
-        conn |> put_status(422) |> json(%{error: "insufficient_recipes",
-          message: "Not enough recipes available for this goal type yet"})
+        conn
+        |> put_status(422)
+        |> json(%{
+          error: "insufficient_recipes",
+          message: "Not enough recipes available for this goal type yet"
+        })
     end
   end
 
@@ -218,6 +240,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
   # GET /api/v1/meal-plans/:id/macros/:day
   def daily_macros(conn, %{"id" => id, "day" => day_offset}) do
     plan = MealPlans.get_plan!(id)
+
     with {:ok, day} <- MealPlans.daily_summary(plan, String.to_integer(day_offset)) do
       json(conn, %{data: day})
     end
@@ -233,6 +256,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
   # GET /api/v1/meal-plans/:id/shopping
   def shopping_list(conn, %{"id" => id}) do
     user = conn.assigns.current_user
+
     with {:ok, list} <- CaramelKitchen.Shopping.auto_generate_from_plan(id, user.id) do
       json(conn, %{data: %{id: list.id, items: list.items, share_token: list.share_token}})
     end
@@ -240,21 +264,21 @@ defmodule CaramelKitchenWeb.MealPlanController do
 
   defp render_plan_summary(plan) do
     %{
-      id:             plan.id,
-      goal_type:      plan.goal_type,
-      name:           plan.name,
-      week_start:     plan.week_start,
-      week_end:       plan.week_end,
+      id: plan.id,
+      goal_type: plan.goal_type,
+      name: plan.name,
+      week_start: plan.week_start,
+      week_end: plan.week_end,
       calorie_target: plan.calorie_target,
-      is_active:      plan.is_active,
-      inserted_at:    plan.inserted_at
+      is_active: plan.is_active,
+      inserted_at: plan.inserted_at
     }
   end
 
   defp render_plan_full(plan) do
     Map.merge(render_plan_summary(plan), %{
-      macro_split:    plan.macro_split,
-      days:           plan.days,
+      macro_split: plan.macro_split,
+      days: plan.days,
       is_ai_generated: plan.is_ai_generated
     })
   end

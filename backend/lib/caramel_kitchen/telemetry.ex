@@ -78,9 +78,9 @@ defmodule CaramelKitchen.Analytics do
 
   @doc "Top performing recipes for creator dashboard."
   def top_recipes(creator_id, opts \\ []) do
-    limit  = Keyword.get(opts, :limit, 10)
+    limit = Keyword.get(opts, :limit, 10)
     period = Keyword.get(opts, :period, :last_30_days)
-    since  = period_to_datetime(period)
+    since = period_to_datetime(period)
 
     from(r in Recipe,
       where: r.creator_id == ^creator_id and r.status == "live",
@@ -88,14 +88,14 @@ defmodule CaramelKitchen.Analytics do
       order_by: [desc: r.engagement_score],
       limit: ^limit,
       select: %{
-        id:             r.id,
-        title:          r.title,
-        view_count:     r.view_count,
-        save_count:     r.save_count,
-        cook_count:     r.cook_count,
-        avg_rating:     r.avg_rating,
+        id: r.id,
+        title: r.title,
+        view_count: r.view_count,
+        save_count: r.save_count,
+        cook_count: r.cook_count,
+        avg_rating: r.avg_rating,
         engagement_score: r.engagement_score,
-        published_at:   r.published_at
+        published_at: r.published_at
       }
     )
     |> Repo.all()
@@ -114,16 +114,18 @@ defmodule CaramelKitchen.Analytics do
     # Note: actual vector aggregation done via raw SQL for pgvector AVG
     |> then(fn base ->
       case Repo.query(
-        "SELECT AVG(taste_vector) as avg_vector, COUNT(*) as total FROM users WHERE taste_vector IS NOT NULL",
-        []
-      ) do
+             "SELECT AVG(taste_vector) as avg_vector, COUNT(*) as total FROM users WHERE taste_vector IS NOT NULL",
+             []
+           ) do
         {:ok, %{rows: [[avg, total]]}} ->
           Map.merge(base || %{}, %{
             avg_vector: avg,
             total_users: total,
             dimensions: ~w(sour sweet tangy spicy savory bitter umami mild)
           })
-        _ -> %{error: "unavailable"}
+
+        _ ->
+          %{error: "unavailable"}
       end
     end)
   end
@@ -132,36 +134,43 @@ defmodule CaramelKitchen.Analytics do
   def ai_query_stats(_creator_id, period \\ :last_7_days) do
     since = period_to_datetime(period)
 
-    total = Repo.aggregate(
-      from(q in "ai_queries",
-        where: is_nil(^since) or q.inserted_at >= ^since
-      ),
-      :count, :id
-    )
+    total =
+      Repo.aggregate(
+        from(q in "ai_queries",
+          where: is_nil(^since) or q.inserted_at >= ^since
+        ),
+        :count,
+        :id
+      )
 
     %{
       total_queries: total,
-      period:        to_string(period)
+      period: to_string(period)
     }
   end
 
   @doc "User growth stats for admin dashboard."
   def user_growth_stats do
-    now    = DateTime.utc_now()
-    last_7  = DateTime.add(now, -7  * 86_400, :second)
+    now = DateTime.utc_now()
+    last_7 = DateTime.add(now, -7 * 86_400, :second)
     last_30 = DateTime.add(now, -30 * 86_400, :second)
 
     %{
-      total:        Repo.aggregate(User, :count, :id),
-      last_7_days:  Repo.aggregate(from(u in User, where: u.inserted_at >= ^last_7),  :count, :id),
-      last_30_days: Repo.aggregate(from(u in User, where: u.inserted_at >= ^last_30), :count, :id),
-      premium:      Repo.aggregate(from(u in User, where: u.subscription_tier != "free"), :count, :id),
-      creators:     Repo.aggregate(from(u in User, where: u.role == "creator"), :count, :id)
+      total: Repo.aggregate(User, :count, :id),
+      last_7_days: Repo.aggregate(from(u in User, where: u.inserted_at >= ^last_7), :count, :id),
+      last_30_days:
+        Repo.aggregate(from(u in User, where: u.inserted_at >= ^last_30), :count, :id),
+      premium: Repo.aggregate(from(u in User, where: u.subscription_tier != "free"), :count, :id),
+      creators: Repo.aggregate(from(u in User, where: u.role == "creator"), :count, :id)
     }
   end
 
-  defp period_to_datetime(:last_7_days),  do: DateTime.add(DateTime.utc_now(), -7  * 86_400, :second)
-  defp period_to_datetime(:last_30_days), do: DateTime.add(DateTime.utc_now(), -30 * 86_400, :second)
-  defp period_to_datetime(:all_time),     do: nil
-  defp period_to_datetime(_),             do: nil
+  defp period_to_datetime(:last_7_days),
+    do: DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
+
+  defp period_to_datetime(:last_30_days),
+    do: DateTime.add(DateTime.utc_now(), -30 * 86_400, :second)
+
+  defp period_to_datetime(:all_time), do: nil
+  defp period_to_datetime(_), do: nil
 end

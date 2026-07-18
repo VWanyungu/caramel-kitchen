@@ -1,8 +1,8 @@
 defmodule CaramelKitchenWeb.UserSocket do
   use Phoenix.Socket
 
-  channel "ai:*",      CaramelKitchenWeb.AIChannel
-  channel "feed:*",    CaramelKitchenWeb.FeedChannel
+  channel "ai:*", CaramelKitchenWeb.AIChannel
+  channel "feed:*", CaramelKitchenWeb.FeedChannel
   channel "cooking:*", CaramelKitchenWeb.CookingChannel
 
   @impl true
@@ -10,6 +10,7 @@ defmodule CaramelKitchenWeb.UserSocket do
     case CaramelKitchen.Auth.Guardian.resource_from_token(token) do
       {:ok, user, _claims} ->
         {:ok, assign(socket, :current_user, user)}
+
       _ ->
         :error
     end
@@ -35,7 +36,7 @@ defmodule CaramelKitchenWeb.AIChannel do
 
   # Client sends a message — server streams tokens back
   def handle_in("message", %{"text" => text}, socket) do
-    user       = socket.assigns.current_user
+    user = socket.assigns.current_user
     session_id = socket.assigns.session_id
 
     # Subscribe to PubSub stream for this session
@@ -87,11 +88,12 @@ defmodule CaramelKitchenWeb.FeedChannel do
 
   def handle_info({:new_recipe, recipe}, socket) do
     push(socket, "new_recipe", %{
-      id:            recipe.id,
-      title:         recipe.title,
+      id: recipe.id,
+      title: recipe.title,
       thumbnail_url: recipe.thumbnail_url,
-      taste_tags:    recipe.taste_tags
+      taste_tags: recipe.taste_tags
     })
+
     {:noreply, socket}
   end
 
@@ -99,6 +101,7 @@ defmodule CaramelKitchenWeb.FeedChannel do
     if socket.assigns.current_user.id == user_id do
       push(socket, "taste_updated", %{})
     end
+
     {:noreply, socket}
   end
 end
@@ -117,23 +120,24 @@ defmodule CaramelKitchenWeb.CookingChannel do
 
   # Client: "next step" voice command
   def handle_in("next_step", _params, socket) do
-    user      = socket.assigns.current_user
+    user = socket.assigns.current_user
     recipe_id = socket.assigns.recipe_id
-    step      = socket.assigns.step
+    step = socket.assigns.step
 
     recipe = CaramelKitchen.Recipes.get_recipe!(recipe_id)
-    steps  = recipe.steps
+    steps = recipe.steps
 
     if step < length(steps) do
       current_step = Enum.at(steps, step)
-      instruction  = current_step["instruction"]
+      instruction = current_step["instruction"]
 
       # AI reads back the step with TTS
       session_id = "cooking:#{user.id}:#{recipe_id}"
-      prompt     = "[VOICE_COOKING] Read step #{step + 1}: #{instruction}"
+      prompt = "[VOICE_COOKING] Read step #{step + 1}: #{instruction}"
 
       Task.Supervisor.start_child(CaramelKitchen.AI.TaskSupervisor, fn ->
         {:ok, response} = Orchestrator.chat(user, session_id, prompt)
+
         Phoenix.PubSub.broadcast(
           CaramelKitchen.PubSub,
           "cooking:#{recipe_id}",

@@ -11,13 +11,14 @@ defmodule CaramelKitchen.Workers.PublishRecipeWorker do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"recipe_id" => id}}) do
     with {:ok, recipe} <- Recipes.get_recipe(id),
-         {:ok, _}      <- Recipes.publish_recipe(recipe) do
+         {:ok, _} <- Recipes.publish_recipe(recipe) do
       Logger.info("Published recipe #{id}")
       :ok
     else
       {:error, :not_found} ->
         Logger.warning("Recipe #{id} not found for publishing")
         {:cancel, "recipe_not_found"}
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -34,18 +35,19 @@ defmodule CaramelKitchen.Workers.EngagementWorker do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"recipe_id" => recipe_id, "action" => action}}) do
     field = action_to_field(action)
+
     if field do
       Recipes.increment_engagement(recipe_id, field)
     end
+
     :ok
   end
 
-  defp action_to_field("view"),  do: "view_count"
-  defp action_to_field("save"),  do: "save_count"
-  defp action_to_field("cook"),  do: "cook_count"
-  defp action_to_field(_),       do: nil
+  defp action_to_field("view"), do: "view_count"
+  defp action_to_field("save"), do: "save_count"
+  defp action_to_field("cook"), do: "cook_count"
+  defp action_to_field(_), do: nil
 end
-
 
 defmodule CaramelKitchen.Workers.TasteVectorCleanupWorker do
   @moduledoc "Oban cron: re-normalise drift in taste vectors once daily."
@@ -61,7 +63,7 @@ defmodule CaramelKitchen.Workers.TasteVectorCleanupWorker do
     users_to_normalise =
       Repo.all(
         from u in User,
-        where: not is_nil(u.taste_vector) and u.taste_survey_done == true
+          where: not is_nil(u.taste_vector) and u.taste_survey_done == true
       )
 
     Enum.each(users_to_normalise, fn user ->
@@ -82,7 +84,7 @@ defmodule CaramelKitchen.Workers.TasteVectorCleanupWorker do
       cond do
         v > 0.95 -> v * 0.95
         v < 0.05 -> v + 0.02
-        true     -> v
+        true -> v
       end
       |> Float.round(4)
     end)

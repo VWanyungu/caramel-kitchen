@@ -1,4 +1,4 @@
-  # Appended to accounts.ex as a patch module — merged into Accounts context
+# Appended to accounts.ex as a patch module — merged into Accounts context
 defmodule CaramelKitchen.Accounts.TierUpdater do
   @moduledoc false
   alias CaramelKitchen.Repo

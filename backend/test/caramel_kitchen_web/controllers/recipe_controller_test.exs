@@ -4,7 +4,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
   describe "GET /api/v1/recipes (public)" do
     setup do
       insert_list(5, :recipe, status: "live")
-      insert(:recipe, status: "draft")  # should not appear
+      # should not appear
+      insert(:recipe, status: "draft")
       :ok
     end
 
@@ -32,7 +33,7 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
 
     test "6-dimensional filtering works together", %{conn: conn} do
       # Target recipe that matches all filters
-      insert(:recipe, 
+      insert(:recipe,
         status: "live",
         dish_category: "salads",
         primary_method: "mixing",
@@ -43,21 +44,81 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       )
 
       # Decoy recipes that fail one of the filters
-      insert(:recipe, status: "live", dish_category: "soups", primary_method: "mixing", dietary_flags: ["vegan", "gluten_free"], allergens: [], course: "starter", total_time_mins: 15) # Fails category
-      insert(:recipe, status: "live", dish_category: "salads", primary_method: "baking", dietary_flags: ["vegan", "gluten_free"], allergens: [], course: "starter", total_time_mins: 15) # Fails method
-      insert(:recipe, status: "live", dish_category: "salads", primary_method: "mixing", dietary_flags: ["gluten_free"], allergens: [], course: "starter", total_time_mins: 15) # Fails dietary
-      insert(:recipe, status: "live", dish_category: "salads", primary_method: "mixing", dietary_flags: ["vegan", "gluten_free"], allergens: ["nuts"], course: "starter", total_time_mins: 15) # Fails allergens
-      insert(:recipe, status: "live", dish_category: "salads", primary_method: "mixing", dietary_flags: ["vegan", "gluten_free"], allergens: [], course: "main", total_time_mins: 15) # Fails course
-      insert(:recipe, status: "live", dish_category: "salads", primary_method: "mixing", dietary_flags: ["vegan", "gluten_free"], allergens: [], course: "starter", total_time_mins: 45) # Fails time limit
-
-      query = URI.encode_query(%{
-        category: "salads",
-        cooking_method: "mixing",
-        dietary: "vegan,gluten_free",
-        exclude_allergens: "nuts",
+      # Fails category
+      insert(:recipe,
+        status: "live",
+        dish_category: "soups",
+        primary_method: "mixing",
+        dietary_flags: ["vegan", "gluten_free"],
+        allergens: [],
         course: "starter",
-        max_time: 30
-      })
+        total_time_mins: 15
+      )
+
+      # Fails method
+      insert(:recipe,
+        status: "live",
+        dish_category: "salads",
+        primary_method: "baking",
+        dietary_flags: ["vegan", "gluten_free"],
+        allergens: [],
+        course: "starter",
+        total_time_mins: 15
+      )
+
+      # Fails dietary
+      insert(:recipe,
+        status: "live",
+        dish_category: "salads",
+        primary_method: "mixing",
+        dietary_flags: ["gluten_free"],
+        allergens: [],
+        course: "starter",
+        total_time_mins: 15
+      )
+
+      # Fails allergens
+      insert(:recipe,
+        status: "live",
+        dish_category: "salads",
+        primary_method: "mixing",
+        dietary_flags: ["vegan", "gluten_free"],
+        allergens: ["nuts"],
+        course: "starter",
+        total_time_mins: 15
+      )
+
+      # Fails course
+      insert(:recipe,
+        status: "live",
+        dish_category: "salads",
+        primary_method: "mixing",
+        dietary_flags: ["vegan", "gluten_free"],
+        allergens: [],
+        course: "main",
+        total_time_mins: 15
+      )
+
+      # Fails time limit
+      insert(:recipe,
+        status: "live",
+        dish_category: "salads",
+        primary_method: "mixing",
+        dietary_flags: ["vegan", "gluten_free"],
+        allergens: [],
+        course: "starter",
+        total_time_mins: 45
+      )
+
+      query =
+        URI.encode_query(%{
+          category: "salads",
+          cooking_method: "mixing",
+          dietary: "vegan,gluten_free",
+          exclude_allergens: "nuts",
+          course: "starter",
+          max_time: 30
+        })
 
       conn = get(conn, "/api/v1/recipes?#{query}")
       body = json_response(conn, 200)
@@ -74,15 +135,15 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
   describe "GET /api/v1/recipes/search" do
     test "combines search query with filters", %{conn: conn} do
       # Recipe matching both text and filters
-      insert(:recipe, 
+      insert(:recipe,
         title: "Spicy Vegan Taco",
         status: "live",
         dish_category: "mexican",
         dietary_flags: ["vegan"]
       )
-      
+
       # Matches text, fails filter
-      insert(:recipe, 
+      insert(:recipe,
         title: "Spicy Beef Taco",
         status: "live",
         dish_category: "mexican",
@@ -90,7 +151,7 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       )
 
       # Matches filter, fails text
-      insert(:recipe, 
+      insert(:recipe,
         title: "Mild Vegan Wrap",
         status: "live",
         dish_category: "mexican",
@@ -109,10 +170,10 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
   describe "GET /api/v1/recipes/:id" do
     test "returns recipe detail", %{conn: conn} do
       recipe = insert(:recipe, status: "live")
-      conn   = get(conn, "/api/v1/recipes/#{recipe.id}")
-      body   = json_response(conn, 200)
+      conn = get(conn, "/api/v1/recipes/#{recipe.id}")
+      body = json_response(conn, 200)
 
-      assert body["data"]["id"]    == recipe.id
+      assert body["data"]["id"] == recipe.id
       assert body["data"]["title"] == recipe.title
       assert body["data"]["ingredients"]
       assert body["data"]["steps"]

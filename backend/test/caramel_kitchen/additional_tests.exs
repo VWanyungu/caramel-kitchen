@@ -7,7 +7,7 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdaterTest do
 
   describe "enqueue/3 and flush" do
     test "buffers events and applies delta on flush" do
-      user   = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+      user = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
       recipe = insert(:recipe, taste_profile: [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0])
 
       VectorUpdater.enqueue(user.id, recipe.id, :cooked)
@@ -16,7 +16,7 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdaterTest do
       Process.sleep(2_500)
 
       updated = Repo.get!(User, user.id)
-      vec     = User.taste_vector_list(updated)
+      vec = User.taste_vector_list(updated)
 
       # spicy (index 3) and savory (index 4) should increase
       assert Enum.at(vec, 3) > 0.5
@@ -26,14 +26,14 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdaterTest do
     end
 
     test "clamps vector values to [0.0, 1.0]" do
-      user   = insert(:user, taste_vector: [0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+      user = insert(:user, taste_vector: [0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
       recipe = insert(:recipe, taste_profile: [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
       VectorUpdater.enqueue(user.id, recipe.id, :rated_5)
       Process.sleep(2_500)
 
       updated = Repo.get!(User, user.id)
-      vec     = User.taste_vector_list(updated)
+      vec = User.taste_vector_list(updated)
       assert Enum.at(vec, 0) == 1.0
     end
   end
@@ -46,25 +46,39 @@ defmodule CaramelKitchen.ShoppingTest do
 
   describe "auto_generate_from_plan/2" do
     test "generates a list with merged ingredients" do
-      user    = insert(:premium_user)
-      recipe1 = insert(:recipe, ingredients: [
-        %{"name" => "chicken", "quantity" => 500, "unit" => "g"},
-        %{"name" => "garlic",  "quantity" => 3,   "unit" => "cloves"}
-      ], serving_size: 2)
-      recipe2 = insert(:recipe, ingredients: [
-        %{"name" => "chicken", "quantity" => 300, "unit" => "g"},
-        %{"name" => "onion",   "quantity" => 1,   "unit" => "whole"}
-      ], serving_size: 2)
+      user = insert(:premium_user)
 
-      plan = insert(:meal_plan,
-        user_id: user.id,
-        days: [
-          %{"date_offset" => 0, "meals" => [
-            %{"slot" => "lunch",  "recipe_id" => recipe1.id, "servings" => 2},
-            %{"slot" => "dinner", "recipe_id" => recipe2.id, "servings" => 2}
-          ]}
-        ]
-      )
+      recipe1 =
+        insert(:recipe,
+          ingredients: [
+            %{"name" => "chicken", "quantity" => 500, "unit" => "g"},
+            %{"name" => "garlic", "quantity" => 3, "unit" => "cloves"}
+          ],
+          serving_size: 2
+        )
+
+      recipe2 =
+        insert(:recipe,
+          ingredients: [
+            %{"name" => "chicken", "quantity" => 300, "unit" => "g"},
+            %{"name" => "onion", "quantity" => 1, "unit" => "whole"}
+          ],
+          serving_size: 2
+        )
+
+      plan =
+        insert(:meal_plan,
+          user_id: user.id,
+          days: [
+            %{
+              "date_offset" => 0,
+              "meals" => [
+                %{"slot" => "lunch", "recipe_id" => recipe1.id, "servings" => 2},
+                %{"slot" => "dinner", "recipe_id" => recipe2.id, "servings" => 2}
+              ]
+            }
+          ]
+        )
 
       {:ok, list} = Shopping.auto_generate_from_plan(plan.id, user.id)
 
@@ -91,10 +105,20 @@ defmodule CaramelKitchen.ShoppingTest do
     test "returns a valid WhatsApp URL" do
       user = insert(:user)
       plan = insert(:meal_plan, user_id: user.id, days: [])
-      {:ok, list} = Shopping.create_list(user.id, %{
-        name:  "Test List",
-        items: [%{"name" => "eggs", "quantity" => 6, "unit" => "whole", "category" => "protein", "checked" => false}]
-      })
+
+      {:ok, list} =
+        Shopping.create_list(user.id, %{
+          name: "Test List",
+          items: [
+            %{
+              "name" => "eggs",
+              "quantity" => 6,
+              "unit" => "whole",
+              "category" => "protein",
+              "checked" => false
+            }
+          ]
+        })
 
       url = Shopping.whatsapp_share_url(list)
       assert String.starts_with?(url, "https://wa.me/")
@@ -105,10 +129,20 @@ defmodule CaramelKitchen.ShoppingTest do
   describe "check_item/3 and uncheck_item/3" do
     test "checks and unchecks items" do
       user = insert(:user)
-      {:ok, list} = Shopping.create_list(user.id, %{
-        name:  "Groceries",
-        items: [%{"name" => "milk", "quantity" => 1, "unit" => "litre", "category" => "dairy", "checked" => false}]
-      })
+
+      {:ok, list} =
+        Shopping.create_list(user.id, %{
+          name: "Groceries",
+          items: [
+            %{
+              "name" => "milk",
+              "quantity" => 1,
+              "unit" => "litre",
+              "category" => "dairy",
+              "checked" => false
+            }
+          ]
+        })
 
       {:ok, checked} = Shopping.check_item(list.id, 0, user.id)
       assert 0 in checked.checked_ids
@@ -120,9 +154,12 @@ defmodule CaramelKitchen.ShoppingTest do
     test "rejects check from wrong user" do
       user1 = insert(:user)
       user2 = insert(:user)
-      {:ok, list} = Shopping.create_list(user1.id, %{
-        name: "Private", items: []
-      })
+
+      {:ok, list} =
+        Shopping.create_list(user1.id, %{
+          name: "Private",
+          items: []
+        })
 
       assert {:error, :unauthorized} = Shopping.check_item(list.id, 0, user2.id)
     end
@@ -140,9 +177,9 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
 
     test "creates a recipe successfully", %{conn: conn} do
       params = %{
-        title:          "Pepper Soup",
-        description:    "Spicy West African pepper soup",
-        ingredients:    [
+        title: "Pepper Soup",
+        description: "Spicy West African pepper soup",
+        ingredients: [
           %{name: "goat meat", quantity: 500, unit: "g"},
           %{name: "uziza leaves", quantity: 1, unit: "handful"}
         ],
@@ -151,13 +188,13 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
           %{order: 2, instruction: "Cook meat with spices until tender"},
           %{order: 3, instruction: "Add pepper soup spice mix and simmer 15 minutes"}
         ],
-        dish_category:  "soups_stews",
-        course:         "soup",
+        dish_category: "soups_stews",
+        course: "soup",
         primary_method: "boiling",
-        difficulty:     "beginner",
-        taste_tags:     ["spicy", "savory", "umami"],
-        dietary_flags:  ["halal", "gluten_free"],
-        calories:       280,
+        difficulty: "beginner",
+        taste_tags: ["spicy", "savory", "umami"],
+        dietary_flags: ["halal", "gluten_free"],
+        calories: 280,
         prep_time_mins: 15,
         cook_time_mins: 45
       }
@@ -165,8 +202,8 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
       conn = post(conn, "/api/v1/admin/recipes", params)
       body = json_response(conn, 201)
 
-      assert body["data"]["title"]    == "Pepper Soup"
-      assert body["data"]["status"]   == "draft"
+      assert body["data"]["title"] == "Pepper Soup"
+      assert body["data"]["status"] == "draft"
       assert body["data"]["taste_tags"] == ["spicy", "savory", "umami"]
     end
 
@@ -179,11 +216,12 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
 
     test "rejects recipe with too many taste tags", %{conn: conn} do
       params = %{
-        title:          "Over-tagged Recipe",
-        ingredients:    [%{name: "salt", quantity: 1, unit: "tsp"}],
-        steps:          [%{order: 1, instruction: "Add salt"}],
+        title: "Over-tagged Recipe",
+        ingredients: [%{name: "salt", quantity: 1, unit: "tsp"}],
+        steps: [%{order: 1, instruction: "Add salt"}],
         primary_method: "raw",
-        taste_tags:     ["spicy", "savory", "sweet", "sour", "bitter"]  # 5 tags — max is 4
+        # 5 tags — max is 4
+        taste_tags: ["spicy", "savory", "sweet", "sour", "bitter"]
       }
 
       conn = post(conn, "/api/v1/admin/recipes", params)
@@ -198,16 +236,22 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
     end
 
     test "blocks publish when no video attached", %{conn: conn, creator: creator} do
-      recipe = insert(:draft_recipe, creator_id: creator.id,
-                      taste_tags: ["spicy"], video_url: nil)
+      recipe =
+        insert(:draft_recipe, creator_id: creator.id, taste_tags: ["spicy"], video_url: nil)
+
       conn = post(conn, "/api/v1/admin/recipes/#{recipe.id}/publish")
       body = json_response(conn, 422)
       assert body["error"] == "video_required"
     end
 
     test "blocks publish when no taste tags", %{conn: conn, creator: creator} do
-      recipe = insert(:draft_recipe, creator_id: creator.id,
-                      taste_tags: [], video_url: "https://cdn.example.com/v.mp4")
+      recipe =
+        insert(:draft_recipe,
+          creator_id: creator.id,
+          taste_tags: [],
+          video_url: "https://cdn.example.com/v.mp4"
+        )
+
       conn = post(conn, "/api/v1/admin/recipes/#{recipe.id}/publish")
       body = json_response(conn, 422)
       assert body["error"] == "taste_tags_required"
@@ -221,15 +265,24 @@ defmodule CaramelKitchenWeb.ShoppingControllerTest do
   describe "GET /api/v1/shopping/shared/:token" do
     test "returns shared list by token without auth", %{conn: conn} do
       user = insert(:user)
-      {:ok, list} = CaramelKitchen.Shopping.create_list(user.id, %{
-        name:  "Shared Groceries",
-        items: [%{"name" => "bread", "quantity" => 1, "unit" => "loaf",
-                  "category" => "grains", "checked" => false}]
-      })
+
+      {:ok, list} =
+        CaramelKitchen.Shopping.create_list(user.id, %{
+          name: "Shared Groceries",
+          items: [
+            %{
+              "name" => "bread",
+              "quantity" => 1,
+              "unit" => "loaf",
+              "category" => "grains",
+              "checked" => false
+            }
+          ]
+        })
 
       conn = get(conn, "/api/v1/shopping/shared/#{list.share_token}")
       body = json_response(conn, 200)
-      assert body["data"]["name"]    == "Shared Groceries"
+      assert body["data"]["name"] == "Shared Groceries"
       assert length(body["data"]["items"]) == 1
     end
 

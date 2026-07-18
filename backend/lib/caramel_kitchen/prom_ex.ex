@@ -14,9 +14,9 @@ defmodule CaramelKitchen.PromEx do
       # Built-in plugins
       Plugins.Application,
       Plugins.Beam,
-      {Plugins.Phoenix,   router: CaramelKitchenWeb.Router, endpoint: CaramelKitchenWeb.Endpoint},
-      {Plugins.Ecto,      repos: [CaramelKitchen.Repo]},
-      {Plugins.Oban,      queues: [:default, :content, :email, :analytics, :maintenance, :ai]},
+      {Plugins.Phoenix, router: CaramelKitchenWeb.Router, endpoint: CaramelKitchenWeb.Endpoint},
+      {Plugins.Ecto, repos: [CaramelKitchen.Repo]},
+      {Plugins.Oban, queues: [:default, :content, :email, :analytics, :maintenance, :ai]},
 
       # Custom business metrics plugin
       CaramelKitchen.PromEx.CustomPlugin
@@ -26,7 +26,7 @@ defmodule CaramelKitchen.PromEx do
   @impl true
   def dashboard_assigns do
     [
-      datasource_id:         "prometheus",
+      datasource_id: "prometheus",
       default_selected_interval: "30s"
     ]
   end
@@ -115,13 +115,17 @@ defmodule CaramelKitchen.PromEx.CustomPlugin do
   def execute_polling_metrics do
     import Ecto.Query
 
-    user_count   = CaramelKitchen.Repo.aggregate(CaramelKitchen.Accounts.User, :count, :id)
-    recipe_count = CaramelKitchen.Repo.aggregate(
-      from(r in CaramelKitchen.Recipes.Recipe, where: r.status == "live"), :count, :id
-    )
+    user_count = CaramelKitchen.Repo.aggregate(CaramelKitchen.Accounts.User, :count, :id)
 
-    :telemetry.execute([:caramel_kitchen, :users, :count],    %{count: user_count},   %{})
-    :telemetry.execute([:caramel_kitchen, :recipes, :count],  %{count: recipe_count}, %{})
+    recipe_count =
+      CaramelKitchen.Repo.aggregate(
+        from(r in CaramelKitchen.Recipes.Recipe, where: r.status == "live"),
+        :count,
+        :id
+      )
+
+    :telemetry.execute([:caramel_kitchen, :users, :count], %{count: user_count}, %{})
+    :telemetry.execute([:caramel_kitchen, :recipes, :count], %{count: recipe_count}, %{})
   rescue
     _ -> :ok
   end

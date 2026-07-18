@@ -6,25 +6,26 @@ config :caramel_kitchen, CaramelKitchen.Repo,
   password: "postgres",
   hostname: "localhost",
   database: "caramel_kitchen_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool:      Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 10,
+  types: CaramelKitchen.PostgresTypes
 
 config :caramel_kitchen, CaramelKitchenWeb.Endpoint,
-  http:            [ip: {127, 0, 0, 1}, port: 4002],
+  http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "test_secret_key_base_caramel_kitchen_at_least_64_chars_long_ok_here",
-  server:          false
+  server: false
 
 config :caramel_kitchen,
-  redis_url:      "redis://localhost:6379",
-  redis_host:     "localhost",
+  redis_url: "redis://localhost:6379",
+  redis_host: "localhost",
   openai_api_key: "sk-test-placeholder",
-  s3_bucket:      "caramel-kitchen-test",
-  cdn_url:        "http://localhost:9000",
-  app_url:        "http://localhost:4002",
-  nutritionix_app_id:  nil,
+  s3_bucket: "caramel-kitchen-test",
+  cdn_url: "http://localhost:9000",
+  app_url: "http://localhost:4002",
+  nutritionix_app_id: nil,
   nutritionix_app_key: nil,
-  fcm_server_key:      nil,
-  stripe_webhook_secret:   "whsec_test",
+  fcm_server_key: nil,
+  stripe_webhook_secret: "whsec_test",
   stripe_premium_price_id: "price_test",
   stripe_creator_price_id: "price_test_creator"
 
@@ -36,4 +37,5 @@ config :caramel_kitchen, Oban, testing: :inline
 
 config :logger, level: :warning
 
-config :bcrypt_elixir, log_rounds: 4   # Speed up bcrypt in tests
+# Speed up bcrypt in tests
+config :bcrypt_elixir, log_rounds: 4

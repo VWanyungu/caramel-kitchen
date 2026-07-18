@@ -6,6 +6,8 @@ config :caramel_kitchen,
   ecto_repos: [CaramelKitchen.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
+config :caramel_kitchen, CaramelKitchen.Repo, types: CaramelKitchen.PostgresTypes
+
 config :caramel_kitchen, CaramelKitchenWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [
@@ -29,15 +31,16 @@ config :caramel_kitchen, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.PG,
   queues: [
-    default:     10,
-    content:     5,
-    email:       10,
-    analytics:   20,
+    default: 10,
+    content: 5,
+    email: 10,
+    analytics: 20,
     maintenance: 2,
-    ai:          5
+    ai: 5
   ],
   plugins: [
-    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},  # 7 days
+    # 7 days
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},
     {Oban.Plugins.Cron,
      crontab: [
        {"0 2 * * *", CaramelKitchen.Workers.TasteVectorCleanupWorker},
@@ -62,10 +65,12 @@ config :fun_with_flags, :persistence,
 
 # Hammer Rate Limiter
 config :hammer,
-  backend: {Hammer.Backend.ETS, [
-    expiry_ms: 60_000 * 60 * 4,
-    cleanup_interval_ms: 60_000 * 10
-  ]}
+  backend:
+    {Hammer.Backend.ETS,
+     [
+       expiry_ms: 60_000 * 60 * 4,
+       cleanup_interval_ms: 60_000 * 10
+     ]}
 
 # Sentry error tracking
 config :sentry,

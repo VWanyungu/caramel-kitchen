@@ -23,20 +23,18 @@ defmodule CaramelKitchen.Application do
 
       # 5. L1 Cache (ETS via ConCache)
       {ConCache,
-        [
-          name:               :caramel_cache,
-          ttl_check_interval: :timer.seconds(30),
-          global_ttl:         :timer.seconds(60),
-          ets_options:        [:named_table,
-                               read_concurrency: true, write_concurrency: true]
-        ]},
+       [
+         name: :caramel_cache,
+         ttl_check_interval: :timer.seconds(30),
+         global_ttl: :timer.seconds(60),
+         ets_options: [:named_table, read_concurrency: true, write_concurrency: true]
+       ]},
 
       # 6. Redis connection pool (L2 cache + rate limiter)
       {Redix, {redis_url(), [name: :redix, socket_opts: [keepalive: true]]}},
 
       # 7. Rate limiter (Hammer backed by Redis)
-      {Hammer.Backend.Redis,
-        [expiry_ms: 60_000 * 60 * 2, redix_config: [host: redis_host()]]},
+      {Hammer.Backend.Redis, [expiry_ms: 60_000 * 60 * 2, redix_config: [host: redis_host()]]},
 
       # 8. Background jobs (Oban)
       {Oban, Application.fetch_env!(:caramel_kitchen, Oban)},
@@ -63,6 +61,7 @@ defmodule CaramelKitchen.Application do
       {:ok, pid} ->
         attach_oban_telemetry()
         {:ok, pid}
+
       error ->
         error
     end
@@ -87,7 +86,7 @@ defmodule CaramelKitchen.Application do
     )
   end
 
-  defp redis_url,  do: Application.get_env(:caramel_kitchen, :redis_url,  "redis://localhost:6379")
+  defp redis_url, do: Application.get_env(:caramel_kitchen, :redis_url, "redis://localhost:6379")
   defp redis_host, do: Application.get_env(:caramel_kitchen, :redis_host, "localhost")
 end
 
@@ -100,10 +99,15 @@ defmodule CaramelKitchen.ObanLogger do
 
   def handle_event([:oban, :job, :stop], %{duration: dur}, meta, _) do
     ms = System.convert_time_unit(dur, :native, :millisecond)
-    Logger.info("[Oban] complete worker=#{meta.worker} queue=#{meta.queue} id=#{meta.id} duration_ms=#{ms}")
+
+    Logger.info(
+      "[Oban] complete worker=#{meta.worker} queue=#{meta.queue} id=#{meta.id} duration_ms=#{ms}"
+    )
   end
 
   def handle_event([:oban, :job, :exception], _measure, meta, _) do
-    Logger.error("[Oban] failed   worker=#{meta.worker} queue=#{meta.queue} id=#{meta.id} error=#{inspect(meta.reason)}")
+    Logger.error(
+      "[Oban] failed   worker=#{meta.worker} queue=#{meta.queue} id=#{meta.id} error=#{inspect(meta.reason)}"
+    )
   end
 end

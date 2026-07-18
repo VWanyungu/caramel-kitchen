@@ -14,57 +14,58 @@ defmodule CaramelKitchen.Recipes.Recipe do
   schema "recipes" do
     belongs_to :creator, CaramelKitchen.Accounts.User
 
-    field :slug,               :string
-    field :title,              :string
-    field :description,        :string
-    field :ingredients,        {:array, :map}, default: []
-    field :steps,              {:array, :map}, default: []
-    field :serving_size,       :integer, default: 2
-    field :thumbnail_url,      :string
-    field :video_url,          :string
-    field :video_key,          :string
+    field :slug, :string
+    field :title, :string
+    field :description, :string
+    field :ingredients, {:array, :map}, default: []
+    field :steps, {:array, :map}, default: []
+    field :serving_size, :integer, default: 2
+    field :thumbnail_url, :string
+    field :video_url, :string
+    field :video_key, :string
     field :video_duration_secs, :integer
 
     # Classification
-    field :dish_category,      :string
-    field :course,             :string
-    field :primary_method,     :string
-    field :secondary_method,   :string
-    field :difficulty,         :string, default: "beginner"
-    field :cuisine_origin,     {:array, :string}, default: []
+    field :dish_category, :string
+    field :course, :string
+    field :primary_method, :string
+    field :secondary_method, :string
+    field :difficulty, :string, default: "beginner"
+    field :cuisine_origin, {:array, :string}, default: []
 
     # Time
-    field :prep_time_mins,     :integer, default: 0
-    field :cook_time_mins,     :integer, default: 0
-    field :total_time_mins,    :integer, default: 0
+    field :prep_time_mins, :integer, default: 0
+    field :cook_time_mins, :integer, default: 0
+    field :total_time_mins, :integer, default: 0
 
     # Taste
-    field :taste_tags,         {:array, :string}, default: []
-    field :taste_profile,      Pgvector.Ecto.Vector
+    field :taste_tags, {:array, :string}, default: []
+    field :taste_profile, Pgvector.Ecto.Vector
 
     # Dietary
-    field :dietary_flags,      {:array, :string}, default: []
-    field :allergens,          {:array, :string}, default: []
+    field :dietary_flags, {:array, :string}, default: []
+    field :allergens, {:array, :string}, default: []
 
     # Nutrition
-    field :calories,           :integer
-    field :macros,             :map, default: %{}
+    field :calories, :integer
+    field :macros, :map, default: %{}
 
     # Engagement
-    field :view_count,         :integer, default: 0
-    field :save_count,         :integer, default: 0
-    field :cook_count,         :integer, default: 0
-    field :avg_rating,         :decimal
-    field :rating_count,       :integer, default: 0
-    field :engagement_score,   :float, default: 0.0
+    field :view_count, :integer, default: 0
+    field :save_count, :integer, default: 0
+    field :cook_count, :integer, default: 0
+    field :avg_rating, :decimal
+    field :rating_count, :integer, default: 0
+    field :engagement_score, :float, default: 0.0
 
     # Publishing
-    field :status,             :string, default: "draft"
-    field :published_at,       :utc_datetime
-    field :scheduled_at,       :utc_datetime
-    field :featured_until,     :utc_datetime
+    field :status, :string, default: "draft"
+    field :published_at, :utc_datetime
+    field :scheduled_at, :utc_datetime
+    field :featured_until, :utc_datetime
 
-    field :search_vector,      :string  # tsvector, read-only
+    # tsvector, read-only
+    field :search_vector, :string
 
     timestamps(type: :utc_datetime)
   end
@@ -74,11 +75,27 @@ defmodule CaramelKitchen.Recipes.Recipe do
   def creation_changeset(recipe, attrs) do
     recipe
     |> cast(attrs, [
-      :title, :description, :ingredients, :steps, :serving_size,
-      :dish_category, :course, :primary_method, :secondary_method,
-      :difficulty, :cuisine_origin, :prep_time_mins, :cook_time_mins,
-      :taste_tags, :dietary_flags, :allergens,
-      :calories, :macros, :status, :scheduled_at, :creator_id
+      :title,
+      :description,
+      :ingredients,
+      :steps,
+      :serving_size,
+      :dish_category,
+      :course,
+      :primary_method,
+      :secondary_method,
+      :difficulty,
+      :cuisine_origin,
+      :prep_time_mins,
+      :cook_time_mins,
+      :taste_tags,
+      :dietary_flags,
+      :allergens,
+      :calories,
+      :macros,
+      :status,
+      :scheduled_at,
+      :creator_id
     ])
     |> validate_required([:title, :ingredients, :steps, :primary_method, :creator_id])
     |> validate_length(:title, min: 3, max: 255)
@@ -101,12 +118,31 @@ defmodule CaramelKitchen.Recipes.Recipe do
   def update_changeset(recipe, attrs) do
     recipe
     |> cast(attrs, [
-      :title, :description, :ingredients, :steps, :serving_size,
-      :dish_category, :course, :primary_method, :secondary_method,
-      :difficulty, :cuisine_origin, :prep_time_mins, :cook_time_mins,
-      :taste_tags, :dietary_flags, :allergens, :calories, :macros,
-      :thumbnail_url, :video_url, :video_key, :video_duration_secs,
-      :status, :scheduled_at, :featured_until
+      :title,
+      :description,
+      :ingredients,
+      :steps,
+      :serving_size,
+      :dish_category,
+      :course,
+      :primary_method,
+      :secondary_method,
+      :difficulty,
+      :cuisine_origin,
+      :prep_time_mins,
+      :cook_time_mins,
+      :taste_tags,
+      :dietary_flags,
+      :allergens,
+      :calories,
+      :macros,
+      :thumbnail_url,
+      :video_url,
+      :video_key,
+      :video_duration_secs,
+      :status,
+      :scheduled_at,
+      :featured_until
     ])
     |> validate_required([:title, :ingredients, :steps])
     |> validate_subset(:taste_tags, @valid_taste_tags)
@@ -148,12 +184,24 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
   defp put_slug(%Ecto.Changeset{valid?: true} = cs) do
     case get_field(cs, :title) do
-      nil -> cs
+      nil ->
+        cs
+
       title ->
-        slug = title |> String.downcase() |> String.replace(Regex.compile!("[^a-z0-9]+"), "-") |> String.trim("-")
-        put_change(cs, :slug, "#{slug}-#{:crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)}")
+        slug =
+          title
+          |> String.downcase()
+          |> String.replace(Regex.compile!("[^a-z0-9]+"), "-")
+          |> String.trim("-")
+
+        put_change(
+          cs,
+          :slug,
+          "#{slug}-#{:crypto.strong_rand_bytes(4) |> Base.encode16(case: :lower)}"
+        )
     end
   end
+
   defp put_slug(cs), do: cs
 
   # Map taste tags to a float vector for similarity search
@@ -163,31 +211,46 @@ defmodule CaramelKitchen.Recipes.Recipe do
     vector = Enum.map(dimensions, fn dim -> if dim in tags, do: 1.0, else: 0.0 end)
     put_change(cs, :taste_profile, vector)
   end
+
   defp compute_taste_profile(cs), do: cs
 
   defp validate_ingredients(cs) do
     case get_field(cs, :ingredients) do
-      [] -> add_error(cs, :ingredients, "must have at least one ingredient")
+      [] ->
+        add_error(cs, :ingredients, "must have at least one ingredient")
+
       ingredients when is_list(ingredients) ->
-        if Enum.all?(ingredients, &valid_ingredient?/1), do: cs,
+        if Enum.all?(ingredients, &valid_ingredient?/1),
+          do: cs,
           else: add_error(cs, :ingredients, "each ingredient must have name and quantity")
-      _ -> cs
+
+      _ ->
+        cs
     end
   end
 
   defp validate_steps(cs) do
     case get_field(cs, :steps) do
-      [] -> add_error(cs, :steps, "must have at least one step")
+      [] ->
+        add_error(cs, :steps, "must have at least one step")
+
       steps when is_list(steps) ->
-        if Enum.all?(steps, &valid_step?/1), do: cs,
+        if Enum.all?(steps, &valid_step?/1),
+          do: cs,
           else: add_error(cs, :steps, "each step must have order and instruction")
-      _ -> cs
+
+      _ ->
+        cs
     end
   end
 
-  defp valid_ingredient?(%{"name" => n, "quantity" => q}) when is_binary(n) and not is_nil(q), do: true
+  defp valid_ingredient?(%{"name" => n, "quantity" => q}) when is_binary(n) and not is_nil(q),
+    do: true
+
   defp valid_ingredient?(_), do: false
 
-  defp valid_step?(%{"order" => o, "instruction" => i}) when is_integer(o) and is_binary(i), do: true
+  defp valid_step?(%{"order" => o, "instruction" => i}) when is_integer(o) and is_binary(i),
+    do: true
+
   defp valid_step?(_), do: false
 end
