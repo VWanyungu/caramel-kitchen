@@ -13,10 +13,10 @@ defmodule CaramelKitchen.AI.PromptBuilder do
   - Known allergens
   """
   def build_system_prompt(%User{} = user) do
-    top_tastes   = top_taste_dims(user)
-    dietary_str  = format_dietary(user.dietary_flags)
+    top_tastes = top_taste_dims(user)
+    dietary_str = format_dietary(user.dietary_flags)
     allergen_str = format_allergens(user.allergy_flags)
-    goal_str     = format_goal(user.goal_type)
+    goal_str = format_goal(user.goal_type)
 
     """
     You are a personal chef assistant for Caramel Kitchen, a smart recipe discovery app.
@@ -91,6 +91,7 @@ defmodule CaramelKitchen.AI.PromptBuilder do
   # ── Private ───────────────────────────────────────────────────
 
   defp top_taste_dims(%User{taste_vector: nil}), do: "no preference set yet"
+
   defp top_taste_dims(%User{taste_vector: vec}) do
     vec
     |> Pgvector.to_list()
@@ -108,15 +109,16 @@ defmodule CaramelKitchen.AI.PromptBuilder do
   defp format_allergens(allergens), do: Enum.join(allergens, ", ")
 
   defp format_goal(nil), do: "general healthy eating"
-  defp format_goal("gym_muscle"),    do: "Gym & Muscle Gain (high protein, 2800-3500 kcal)"
-  defp format_goal("weight_loss"),   do: "Weight Loss (calorie deficit, 1200-1600 kcal)"
-  defp format_goal("weight_gain"),   do: "Weight Gain (calorie surplus, 3000-4000 kcal)"
-  defp format_goal("balanced"),      do: "Balanced & Healthy (maintenance, 1800-2200 kcal)"
-  defp format_goal("keto"),          do: "Keto / Low Carb (under 50g carbs/day)"
-  defp format_goal(other),           do: other
+  defp format_goal("gym_muscle"), do: "Gym & Muscle Gain (high protein, 2800-3500 kcal)"
+  defp format_goal("weight_loss"), do: "Weight Loss (calorie deficit, 1200-1600 kcal)"
+  defp format_goal("weight_gain"), do: "Weight Gain (calorie surplus, 3000-4000 kcal)"
+  defp format_goal("balanced"), do: "Balanced & Healthy (maintenance, 1800-2200 kcal)"
+  defp format_goal("keto"), do: "Keto / Low Carb (under 50g carbs/day)"
+  defp format_goal(other), do: other
 
   defp format_macros(%{protein_pct: p, carbs_pct: c, fat_pct: f}) do
     "Protein #{p}% / Carbs #{c}% / Fat #{f}%"
   end
+
   defp format_macros(_), do: "balanced"
 end

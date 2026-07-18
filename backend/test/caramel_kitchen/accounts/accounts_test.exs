@@ -7,16 +7,16 @@ defmodule CaramelKitchen.AccountsTest do
   describe "register_user/1" do
     test "registers with valid attributes" do
       attrs = %{
-        "email"                 => "newuser@example.com",
-        "password"              => "SecurePass123",
+        "email" => "newuser@example.com",
+        "password" => "SecurePass123",
         "password_confirmation" => "SecurePass123",
-        "name"                  => "New User"
+        "name" => "New User"
       }
 
       assert {:ok, %User{} = user} = Accounts.register_user(attrs)
       assert user.email == "newuser@example.com"
-      assert user.name  == "New User"
-      assert user.role  == "user"
+      assert user.name == "New User"
+      assert user.role == "user"
       assert user.subscription_tier == "free"
       assert user.taste_survey_done == false
       assert is_nil(user.taste_vector)
@@ -24,11 +24,12 @@ defmodule CaramelKitchen.AccountsTest do
 
     test "downcases email on registration" do
       attrs = %{
-        "email"                 => "USER@EXAMPLE.COM",
-        "password"              => "SecurePass123",
+        "email" => "USER@EXAMPLE.COM",
+        "password" => "SecurePass123",
         "password_confirmation" => "SecurePass123",
-        "name"                  => "Test"
+        "name" => "Test"
       }
+
       assert {:ok, user} = Accounts.register_user(attrs)
       assert user.email == "user@example.com"
     end
@@ -37,10 +38,10 @@ defmodule CaramelKitchen.AccountsTest do
       insert(:user, email: "taken@example.com")
 
       attrs = %{
-        "email"                 => "taken@example.com",
-        "password"              => "SecurePass123",
+        "email" => "taken@example.com",
+        "password" => "SecurePass123",
         "password_confirmation" => "SecurePass123",
-        "name"                  => "Test"
+        "name" => "Test"
       }
 
       assert {:error, changeset} = Accounts.register_user(attrs)
@@ -49,33 +50,36 @@ defmodule CaramelKitchen.AccountsTest do
 
     test "rejects short password" do
       attrs = %{
-        "email"                 => "x@example.com",
-        "password"              => "short",
+        "email" => "x@example.com",
+        "password" => "short",
         "password_confirmation" => "short",
-        "name"                  => "Test"
+        "name" => "Test"
       }
+
       assert {:error, changeset} = Accounts.register_user(attrs)
       assert errors_on(changeset).password != []
     end
 
     test "rejects password without number" do
       attrs = %{
-        "email"                 => "x@example.com",
-        "password"              => "passwordonly",
+        "email" => "x@example.com",
+        "password" => "passwordonly",
         "password_confirmation" => "passwordonly",
-        "name"                  => "Test"
+        "name" => "Test"
       }
+
       assert {:error, changeset} = Accounts.register_user(attrs)
       assert errors_on(changeset).password != []
     end
 
     test "rejects mismatched passwords" do
       attrs = %{
-        "email"                 => "x@example.com",
-        "password"              => "SecurePass123",
+        "email" => "x@example.com",
+        "password" => "SecurePass123",
         "password_confirmation" => "DifferentPass456",
-        "name"                  => "Test"
+        "name" => "Test"
       }
+
       assert {:error, changeset} = Accounts.register_user(attrs)
       assert errors_on(changeset).password_confirmation != []
     end
@@ -83,8 +87,12 @@ defmodule CaramelKitchen.AccountsTest do
 
   describe "authenticate/2" do
     setup do
-      user = insert(:user, email: "auth@example.com",
-                           password_hash: Bcrypt.hash_pwd_salt("correct_pass1"))
+      user =
+        insert(:user,
+          email: "auth@example.com",
+          password_hash: Bcrypt.hash_pwd_salt("correct_pass1")
+        )
+
       {:ok, user: user}
     end
 
@@ -101,37 +109,40 @@ defmodule CaramelKitchen.AccountsTest do
 
     test "returns error for wrong password" do
       assert {:error, :invalid_credentials} =
-        Accounts.authenticate("auth@example.com", "wrong_password")
+               Accounts.authenticate("auth@example.com", "wrong_password")
     end
 
     test "returns error for unknown email" do
       assert {:error, :invalid_credentials} =
-        Accounts.authenticate("nobody@example.com", "any_pass")
+               Accounts.authenticate("nobody@example.com", "any_pass")
     end
 
     test "returns error for deactivated account" do
-      user = insert(:user,
-        email: "deac@example.com",
-        password_hash: Bcrypt.hash_pwd_salt("pass123"),
-        deactivated_at: DateTime.utc_now() |> DateTime.truncate(:second)
-      )
+      user =
+        insert(:user,
+          email: "deac@example.com",
+          password_hash: Bcrypt.hash_pwd_salt("pass123"),
+          deactivated_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        )
+
       assert {:error, :account_deactivated} =
-        Accounts.authenticate("deac@example.com", "pass123")
+               Accounts.authenticate("deac@example.com", "pass123")
     end
   end
 
   describe "submit_taste_survey/2" do
     test "stores normalised 8-dim vector" do
       user = insert(:user)
+
       responses = [
-        %{taste: "sour",   score: 5},
-        %{taste: "sweet",  score: 1},
-        %{taste: "spicy",  score: 4},
+        %{taste: "sour", score: 5},
+        %{taste: "sweet", score: 1},
+        %{taste: "spicy", score: 4},
         %{taste: "savory", score: 3},
-        %{taste: "tangy",  score: 2},
+        %{taste: "tangy", score: 2},
         %{taste: "bitter", score: 1},
-        %{taste: "umami",  score: 5},
-        %{taste: "mild",   score: 2}
+        %{taste: "umami", score: 5},
+        %{taste: "mild", score: 2}
       ]
 
       assert {:ok, updated} = Accounts.submit_taste_survey(user, responses)
@@ -148,7 +159,8 @@ defmodule CaramelKitchen.AccountsTest do
 
     test "defaults missing dimensions to 0.5" do
       user = insert(:user)
-      responses = [%{taste: "spicy", score: 5}]  # only one dimension provided
+      # only one dimension provided
+      responses = [%{taste: "spicy", score: 5}]
 
       assert {:ok, updated} = Accounts.submit_taste_survey(user, responses)
       vec = User.taste_vector_list(updated)
@@ -159,8 +171,9 @@ defmodule CaramelKitchen.AccountsTest do
 
   describe "update_taste_vector/3" do
     test "applies positive delta for cooked action" do
-      user   = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-      profile = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]  # spicy + savory recipe
+      user = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+      # spicy + savory recipe
+      profile = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]
 
       assert {:ok, updated} = Accounts.update_taste_vector(user, profile, :cooked)
       vec = User.taste_vector_list(updated)
@@ -172,8 +185,9 @@ defmodule CaramelKitchen.AccountsTest do
     end
 
     test "applies negative delta for skipped action" do
-      user    = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-      profile = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # pure sour recipe
+      user = insert(:user, taste_vector: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+      # pure sour recipe
+      profile = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert {:ok, updated} = Accounts.update_taste_vector(user, profile, :skipped)
       vec = User.taste_vector_list(updated)
@@ -184,7 +198,7 @@ defmodule CaramelKitchen.AccountsTest do
 
     test "clamps vector values between 0.0 and 1.0" do
       # Start with vector already at 0.95
-      user    = insert(:user, taste_vector: [0.97, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+      user = insert(:user, taste_vector: [0.97, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
       profile = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert {:ok, updated} = Accounts.update_taste_vector(user, profile, :rated_5)
@@ -198,7 +212,7 @@ defmodule CaramelKitchen.AccountsTest do
 
   defp errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+      Regex.replace(Regex.compile!("%{(\\w+)}"), msg, fn _, key ->
         opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
       end)
     end)

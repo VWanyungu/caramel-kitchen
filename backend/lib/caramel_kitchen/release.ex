@@ -21,11 +21,13 @@ defmodule CaramelKitchen.Release do
 
   def seed do
     load_app()
+
     for repo <- repos() do
-      {:ok, _, _} = Ecto.Migrator.with_repo(repo, fn _repo ->
-        seed_file = Path.join([:code.priv_dir(@app), "repo", "seeds.exs"])
-        if File.exists?(seed_file), do: Code.eval_file(seed_file)
-      end)
+      {:ok, _, _} =
+        Ecto.Migrator.with_repo(repo, fn _repo ->
+          seed_file = Path.join([:code.priv_dir(@app), "repo", "seeds.exs"])
+          if File.exists?(seed_file), do: Code.eval_file(seed_file)
+        end)
     end
   end
 

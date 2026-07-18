@@ -9,7 +9,7 @@ defmodule CaramelKitchenWeb.Plugs.AuthenticateUser do
 
   def call(conn, _opts) do
     with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
-         {:ok, user, claims}  <- Guardian.resource_from_token(token, %{"typ" => "access"}) do
+         {:ok, user, claims} <- Guardian.resource_from_token(token, %{"typ" => "access"}) do
       conn
       |> assign(:current_user, user)
       |> assign(:jwt_claims, claims)
@@ -37,7 +37,7 @@ defmodule CaramelKitchenWeb.Plugs.RequirePremium do
       conn
       |> put_status(:payment_required)
       |> json(%{
-        error:   "premium_required",
+        error: "premium_required",
         message: "This feature requires a Premium subscription",
         upgrade_url: "/subscription/checkout"
       })
@@ -92,8 +92,8 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
   def init(opts), do: opts
 
   def call(conn, opts) do
-    scale  = Keyword.get(opts, :scale, 60_000)
-    limit  = Keyword.get(opts, :limit, 100)
+    scale = Keyword.get(opts, :scale, 60_000)
+    limit = Keyword.get(opts, :limit, 100)
     bucket = Keyword.get(opts, :bucket, "api")
 
     identifier = rate_limit_key(conn, bucket)
@@ -107,15 +107,18 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
         |> put_resp_header("x-ratelimit-limit", to_string(limit))
         |> put_resp_header("retry-after", "60")
         |> put_status(:too_many_requests)
-        |> json(%{error: "rate_limit_exceeded", message: "Too many requests. Please try again later."})
+        |> json(%{
+          error: "rate_limit_exceeded",
+          message: "Too many requests. Please try again later."
+        })
         |> halt()
     end
   end
 
   defp rate_limit_key(conn, bucket) do
-    user_id = get_in(conn.assigns, [:current_user, :id])
-    ip      = conn.remote_ip |> Tuple.to_list() |> Enum.join(".")
-    key     = user_id || ip
+    user_id = if user = conn.assigns[:current_user], do: user.id
+    ip = conn.remote_ip |> Tuple.to_list() |> Enum.join(".")
+    key = user_id || ip
     "#{bucket}:#{key}"
   end
 end
@@ -128,7 +131,7 @@ defmodule CaramelKitchenWeb.Plugs.VerifyStripeSignature do
   def init(opts), do: opts
 
   def call(conn, _opts) do
-    secret    = Application.fetch_env!(:caramel_kitchen, :stripe_webhook_secret)
+    secret = Application.fetch_env!(:caramel_kitchen, :stripe_webhook_secret)
     signature = get_req_header(conn, "stripe-signature") |> List.first()
 
     with {:ok, body, conn} <- read_body(conn),
@@ -148,9 +151,10 @@ defmodule CaramelKitchenWeb.Plugs.VerifyStripeSignature do
   defp verify_signature(body, signature, secret) when is_binary(signature) do
     case Stripe.Webhook.construct_event(body, signature, secret) do
       {:ok, _} -> :ok
-      _        -> :error
+      _ -> :error
     end
   end
+
   defp verify_signature(_, nil, _), do: :error
 end
 
@@ -162,6 +166,7 @@ defmodule CaramelKitchenWeb.Plugs.TrackRequest do
 
   def call(conn, _opts) do
     start_time = System.monotonic_time(:millisecond)
+
     conn
     |> assign(:request_start, start_time)
     |> put_resp_header("x-request-id", generate_request_id())

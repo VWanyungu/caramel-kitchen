@@ -7,6 +7,7 @@ defmodule CaramelKitchen.MealPlans.Supervisor do
     children = [
       {Task.Supervisor, name: CaramelKitchen.MealPlans.TaskSupervisor}
     ]
+
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

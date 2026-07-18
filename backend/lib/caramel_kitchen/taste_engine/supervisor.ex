@@ -9,6 +9,7 @@ defmodule CaramelKitchen.TasteEngine.Supervisor do
       CaramelKitchen.TasteEngine.VectorUpdater,
       CaramelKitchen.TasteEngine.FeedRanker
     ]
+
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

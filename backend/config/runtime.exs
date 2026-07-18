@@ -36,18 +36,18 @@ if config_env() == :prod do
     server: true
 
   config :caramel_kitchen,
-    redis_url:     System.get_env("REDIS_URL", "redis://localhost:6379"),
-    redis_host:    System.get_env("REDIS_HOST", "localhost"),
+    redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
+    redis_host: System.get_env("REDIS_HOST", "localhost"),
     openai_api_key: System.fetch_env!("OPENAI_API_KEY"),
-    s3_bucket:     System.get_env("S3_BUCKET", "caramel-kitchen-videos"),
-    cdn_url:       System.get_env("CDN_URL", "https://cdn.caramelkitchen.app"),
-    app_url:       "https://#{host}",
+    s3_bucket: System.get_env("S3_BUCKET", "caramel-kitchen-videos"),
+    cdn_url: System.get_env("CDN_URL", "https://cdn.caramelkitchen.app"),
+    app_url: "https://#{host}",
     allowed_origins: [
       "https://caramelkitchen.app",
       "https://www.caramelkitchen.app",
       "https://admin.caramelkitchen.app"
     ],
-    stripe_webhook_secret:   System.fetch_env!("STRIPE_WEBHOOK_SECRET"),
+    stripe_webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET"),
     stripe_premium_price_id: System.fetch_env!("STRIPE_PREMIUM_PRICE_ID"),
     stripe_creator_price_id: System.fetch_env!("STRIPE_CREATOR_PRICE_ID")
 
@@ -59,9 +59,9 @@ if config_env() == :prod do
     webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET")
 
   config :ex_aws,
-    access_key_id:     System.fetch_env!("AWS_ACCESS_KEY_ID"),
+    access_key_id: System.fetch_env!("AWS_ACCESS_KEY_ID"),
     secret_access_key: System.fetch_env!("AWS_SECRET_ACCESS_KEY"),
-    region:            System.get_env("AWS_REGION", "eu-west-1")
+    region: System.get_env("AWS_REGION", "eu-west-1")
 
   config :sentry,
     dsn: System.get_env("SENTRY_DSN"),

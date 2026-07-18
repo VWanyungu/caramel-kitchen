@@ -11,6 +11,7 @@ defmodule CaramelKitchenWeb.MetricsPlug do
   def call(%{path_info: ["metrics"]} = conn, _opts) do
     if metrics_allowed?(conn) do
       metrics = PromEx.get_metrics(CaramelKitchen.PromEx)
+
       conn
       |> put_resp_content_type("text/plain")
       |> send_resp(200, metrics)

@@ -11,8 +11,8 @@ defmodule CaramelKitchen.Emails do
   import Swoosh.Email
 
   @from_email "hello@caramelkitchen.app"
-  @from_name  "Caramel Kitchen"
-  @app_url    Application.compile_env(:caramel_kitchen, :app_url, "https://caramelkitchen.app")
+  @from_name "Caramel Kitchen"
+  @app_url Application.compile_env(:caramel_kitchen, :app_url, "https://caramelkitchen.app")
 
   # ── Email Verification ────────────────────────────────────────
 
@@ -124,7 +124,9 @@ defmodule CaramelKitchen.Emails do
       </div>
     </div>
     """)
-    |> text_body("Your Caramel Kitchen is ready! Start your taste survey: #{@app_url}/taste/survey")
+    |> text_body(
+      "Your Caramel Kitchen is ready! Start your taste survey: #{@app_url}/taste/survey"
+    )
   end
 
   # ── Meal Plan Reminder ────────────────────────────────────────
@@ -218,6 +220,8 @@ defmodule CaramelKitchen.Emails do
       </a>
     </div>
     """)
-    |> text_body("Payment failed for #{user.name}. Update details: #{@app_url}/subscription/portal")
+    |> text_body(
+      "Payment failed for #{user.name}. Update details: #{@app_url}/subscription/portal"
+    )
   end
 end

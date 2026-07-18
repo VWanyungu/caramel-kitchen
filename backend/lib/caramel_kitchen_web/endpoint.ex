@@ -27,11 +27,14 @@ defmodule CaramelKitchenWeb.Endpoint do
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library(),
-    length: 50_000_000  # 50MB for video thumbnails
+    # 50MB for video thumbnails
+    length: 50_000_000
 
   plug Plug.MethodOverride
   plug Plug.Head
-  plug Plug.Session, store: :cookie,
+
+  plug Plug.Session,
+    store: :cookie,
     key: "_caramel_kitchen_key",
     signing_salt: System.get_env("SESSION_SALT", "caramel_salt"),
     same_site: "Lax"

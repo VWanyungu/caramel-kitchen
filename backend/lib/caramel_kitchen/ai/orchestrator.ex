@@ -10,12 +10,11 @@ defmodule CaramelKitchen.AI.Orchestrator do
   use GenServer
   require Logger
 
-
   alias CaramelKitchen.AI.{PromptBuilder, QueryLogger, VoiceProcessor}
 
-  @openai_url     "https://api.openai.com/v1/chat/completions"
-  @model          "gpt-4o"
-  @max_tokens     1_200
+  @openai_url "https://api.openai.com/v1/chat/completions"
+  @model "gpt-4o"
+  @max_tokens 1_200
   @session_ttl_ms :timer.minutes(30)
 
   defstruct sessions: %{}
@@ -64,7 +63,9 @@ defmodule CaramelKitchen.AI.Orchestrator do
 
     case call_openai_streaming(messages, session_id, opts) do
       {:ok, full_response, tokens_used} ->
-        new_history = trim_history(updated_history ++ [%{role: "assistant", content: full_response}])
+        new_history =
+          trim_history(updated_history ++ [%{role: "assistant", content: full_response}])
+
         latency = System.monotonic_time(:millisecond) - start_ms
 
         # Async log
@@ -95,14 +96,18 @@ defmodule CaramelKitchen.AI.Orchestrator do
   @impl true
   def handle_call({:complete, prompt, opts}, _from, state) do
     format = Keyword.get(opts, :format, :text)
+
     messages = [
-      %{role: "system", content: "You are a helpful cooking assistant. Always respond with valid JSON when asked."},
+      %{
+        role: "system",
+        content: "You are a helpful cooking assistant. Always respond with valid JSON when asked."
+      },
       %{role: "user", content: prompt}
     ]
 
     case call_openai_direct(messages, format) do
       {:ok, text, _tokens} -> {:reply, {:ok, text}, state}
-      {:error, _} = err    -> {:reply, err, state}
+      {:error, _} = err -> {:reply, err, state}
     end
   end
 
@@ -126,46 +131,51 @@ defmodule CaramelKitchen.AI.Orchestrator do
   defp call_openai_streaming(messages, session_id, _opts) do
     api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
 
-    body = Jason.encode!(%{
-      model: @model,
-      messages: messages,
-      max_tokens: @max_tokens,
-      stream: true,
-      temperature: 0.7
-    })
+    body =
+      Jason.encode!(%{
+        model: @model,
+        messages: messages,
+        max_tokens: @max_tokens,
+        stream: true,
+        temperature: 0.7
+      })
 
     # Stream using Req with chunked response
     case Req.post(@openai_url,
-      headers: [
-        {"Authorization", "Bearer #{api_key}"},
-        {"Content-Type", "application/json"}
-      ],
-      body: body,
-      receive_timeout: 25_000,
-      into: fn {:data, chunk}, {req, resp} ->
-        # Parse SSE chunks and broadcast each token
-        chunk
-        |> String.split("\n")
-        |> Enum.each(fn line ->
-          case parse_sse_line(line) do
-            {:token, token} ->
-              Phoenix.PubSub.broadcast(
-                CaramelKitchen.PubSub,
-                "ai:#{session_id}",
-                {:ai_token, token}
-              )
-            :done ->
-              Phoenix.PubSub.broadcast(
-                CaramelKitchen.PubSub,
-                "ai:#{session_id}",
-                :ai_done
-              )
-            :skip -> :ok
-          end
-        end)
-        {:cont, {req, resp}}
-      end
-    ) do
+           headers: [
+             {"Authorization", "Bearer #{api_key}"},
+             {"Content-Type", "application/json"}
+           ],
+           body: body,
+           receive_timeout: 25_000,
+           into: fn {:data, chunk}, {req, resp} ->
+             # Parse SSE chunks and broadcast each token
+             chunk
+             |> String.split("\n")
+             |> Enum.each(fn line ->
+               case parse_sse_line(line) do
+                 {:token, token} ->
+                   Phoenix.PubSub.broadcast(
+                     CaramelKitchen.PubSub,
+                     "ai:#{session_id}",
+                     {:ai_token, token}
+                   )
+
+                 :done ->
+                   Phoenix.PubSub.broadcast(
+                     CaramelKitchen.PubSub,
+                     "ai:#{session_id}",
+                     :ai_done
+                   )
+
+                 :skip ->
+                   :ok
+               end
+             end)
+
+             {:cont, {req, resp}}
+           end
+         ) do
       {:ok, resp} ->
         # Reconstruct full response from body (accumulated by Req)
         full_text = extract_full_text_from_stream(resp.body)
@@ -180,15 +190,15 @@ defmodule CaramelKitchen.AI.Orchestrator do
     api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
 
     case Req.post(@openai_url,
-      headers: [{"Authorization", "Bearer #{api_key}"}],
-      json: %{
-        model: @model,
-        messages: messages,
-        max_tokens: @max_tokens,
-        temperature: 0.3
-      },
-      receive_timeout: 30_000
-    ) do
+           headers: [{"Authorization", "Bearer #{api_key}"}],
+           json: %{
+             model: @model,
+             messages: messages,
+             max_tokens: @max_tokens,
+             temperature: 0.3
+           },
+           receive_timeout: 30_000
+         ) do
       {:ok, %{status: 200, body: body}} ->
         text = get_in(body, ["choices", Access.at(0), "message", "content"]) || ""
         tokens = get_in(body, ["usage", "total_tokens"]) || 0
@@ -206,13 +216,17 @@ defmodule CaramelKitchen.AI.Orchestrator do
   # ── SSE Parsing ───────────────────────────────────────────────
 
   defp parse_sse_line("data: [DONE]"), do: :done
+
   defp parse_sse_line("data: " <> json) do
     case Jason.decode(json) do
       {:ok, %{"choices" => [%{"delta" => %{"content" => token}} | _]}} ->
         {:token, token}
-      _ -> :skip
+
+      _ ->
+        :skip
     end
   end
+
   defp parse_sse_line(_), do: :skip
 
   defp extract_full_text_from_stream(body) when is_binary(body) do
@@ -226,6 +240,7 @@ defmodule CaramelKitchen.AI.Orchestrator do
     end)
     |> Enum.join()
   end
+
   defp extract_full_text_from_stream(_), do: ""
 
   defp estimate_tokens(text), do: div(String.length(text), 4)
@@ -233,6 +248,7 @@ defmodule CaramelKitchen.AI.Orchestrator do
   defp trim_history(history) when length(history) > 10 do
     Enum.take(history, -10)
   end
+
   defp trim_history(history), do: history
 
   defp schedule_session_cleanup(session_id) do

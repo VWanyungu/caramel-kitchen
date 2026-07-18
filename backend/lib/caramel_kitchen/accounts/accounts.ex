@@ -67,7 +67,7 @@ defmodule CaramelKitchen.Accounts do
 
   def get_user(id) do
     case Repo.get(User, id) do
-      nil  -> {:error, :not_found}
+      nil -> {:error, :not_found}
       user -> {:ok, user}
     end
   end
@@ -161,10 +161,11 @@ defmodule CaramelKitchen.Accounts do
   def reset_password(token, new_password) do
     now = DateTime.utc_now()
 
-    with {:ok, user} <- Repo.fetch(
-           from u in User,
-           where: u.password_reset_token == ^token and u.password_reset_at > ^now
-         ) do
+    with {:ok, user} <-
+           Repo.fetch(
+             from u in User,
+               where: u.password_reset_token == ^token and u.password_reset_at > ^now
+           ) do
       user
       |> User.password_reset_changeset(new_password)
       |> Repo.update()
@@ -194,24 +195,25 @@ defmodule CaramelKitchen.Accounts do
 
   defp apply_user_filters(query, opts) do
     Enum.reduce(opts, query, fn
-      {:role, role}, q      -> where(q, [u], u.role == ^role)
-      {:tier, tier}, q      -> where(q, [u], u.subscription_tier == ^tier)
-      {:active, true}, q    -> where(q, [u], is_nil(u.deactivated_at))
-      _, q                  -> q
+      {:role, role}, q -> where(q, [u], u.role == ^role)
+      {:tier, tier}, q -> where(q, [u], u.subscription_tier == ^tier)
+      {:active, true}, q -> where(q, [u], is_nil(u.deactivated_at))
+      _, q -> q
     end)
   end
 
   defp normalise_score(score) when score in 1..5 do
     Float.round((score - 1) / 4.0, 2)
   end
+
   defp normalise_score(_), do: 0.5
 
-  defp taste_delta(:cooked),  do: 0.10
-  defp taste_delta(:saved),   do: 0.07
+  defp taste_delta(:cooked), do: 0.10
+  defp taste_delta(:saved), do: 0.07
   defp taste_delta(:skipped), do: -0.05
   defp taste_delta(:rated_5), do: 0.15
   defp taste_delta(:rated_1), do: -0.10
-  defp taste_delta(_),        do: 0.0
+  defp taste_delta(_), do: 0.0
 
   defp clamp(val, min, max), do: val |> max(min) |> min(max)
 
@@ -222,6 +224,7 @@ defmodule CaramelKitchen.Accounts do
   defp send_verification_email(user) do
     token = generate_secure_token()
     Repo.update!(Ecto.Changeset.change(user, %{email_verify_token: token}))
+
     SendEmailWorker.new(%{type: "verify_email", user_id: user.id, token: token})
     |> Oban.insert()
   end
@@ -235,6 +238,7 @@ defmodule CaramelKitchen.Accounts do
     fun.(val)
     result
   end
+
   defp tap_ok(result, _fun), do: result
 
   # Called by Monetisation on Stripe events
@@ -242,4 +246,3 @@ defmodule CaramelKitchen.Accounts do
     CaramelKitchen.Accounts.TierUpdater.update_user_tier(user, tier)
   end
 end
-

@@ -7,7 +7,7 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
   # GET /api/v1/admin/recipes
   def index(conn, params) do
     creator = conn.assigns.current_user
-    status  = params["status"]
+    status = params["status"]
 
     recipes = Recipes.list_creator_recipes(creator.id, status: status, limit: 100)
     json(conn, %{data: Enum.map(recipes, &render_admin_recipe/1)})
@@ -50,7 +50,10 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
       length(recipe.taste_tags) == 0 ->
         conn
         |> put_status(422)
-        |> json(%{error: "taste_tags_required", message: "Recipe must have at least one taste tag"})
+        |> json(%{
+          error: "taste_tags_required",
+          message: "Recipe must have at least one taste tag"
+        })
 
       true ->
         with {:ok, _} <- Content.schedule_publish(recipe) do
@@ -78,37 +81,37 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
 
   defp render_admin_recipe(recipe) do
     %{
-      id:               recipe.id,
-      slug:             recipe.slug,
-      title:            recipe.title,
-      description:      recipe.description,
-      status:           recipe.status,
-      dish_category:    recipe.dish_category,
-      course:           recipe.course,
-      primary_method:   recipe.primary_method,
+      id: recipe.id,
+      slug: recipe.slug,
+      title: recipe.title,
+      description: recipe.description,
+      status: recipe.status,
+      dish_category: recipe.dish_category,
+      course: recipe.course,
+      primary_method: recipe.primary_method,
       secondary_method: recipe.secondary_method,
-      difficulty:       recipe.difficulty,
-      cuisine_origin:   recipe.cuisine_origin,
-      taste_tags:       recipe.taste_tags,
-      dietary_flags:    recipe.dietary_flags,
-      allergens:        recipe.allergens,
-      calories:         recipe.calories,
-      macros:           recipe.macros,
-      prep_time_mins:   recipe.prep_time_mins,
-      cook_time_mins:   recipe.cook_time_mins,
-      total_time_mins:  recipe.total_time_mins,
-      thumbnail_url:    recipe.thumbnail_url,
-      video_url:        recipe.video_url,
-      video_key:        recipe.video_key,
+      difficulty: recipe.difficulty,
+      cuisine_origin: recipe.cuisine_origin,
+      taste_tags: recipe.taste_tags,
+      dietary_flags: recipe.dietary_flags,
+      allergens: recipe.allergens,
+      calories: recipe.calories,
+      macros: recipe.macros,
+      prep_time_mins: recipe.prep_time_mins,
+      cook_time_mins: recipe.cook_time_mins,
+      total_time_mins: recipe.total_time_mins,
+      thumbnail_url: recipe.thumbnail_url,
+      video_url: recipe.video_url,
+      video_key: recipe.video_key,
       video_duration_secs: recipe.video_duration_secs,
-      view_count:       recipe.view_count,
-      save_count:       recipe.save_count,
-      cook_count:       recipe.cook_count,
-      avg_rating:       recipe.avg_rating,
-      published_at:     recipe.published_at,
-      scheduled_at:     recipe.scheduled_at,
-      inserted_at:      recipe.inserted_at,
-      updated_at:       recipe.updated_at
+      view_count: recipe.view_count,
+      save_count: recipe.save_count,
+      cook_count: recipe.cook_count,
+      avg_rating: recipe.avg_rating,
+      published_at: recipe.published_at,
+      scheduled_at: recipe.scheduled_at,
+      inserted_at: recipe.inserted_at,
+      updated_at: recipe.updated_at
     }
   end
 end
@@ -122,7 +125,8 @@ defmodule CaramelKitchenWeb.AdminVideoController do
   alias CaramelKitchen.Content
 
   @allowed_video_types ~w(video/mp4 video/quicktime video/webm video/mpeg)
-  @max_video_bytes 500 * 1024 * 1024  # 500 MB
+  # 500 MB
+  @max_video_bytes 500 * 1024 * 1024
 
   # POST /api/v1/admin/videos/presigned-url
   def presigned_url(conn, %{"filename" => filename, "content_type" => ct, "size_bytes" => size}) do
@@ -130,8 +134,12 @@ defmodule CaramelKitchenWeb.AdminVideoController do
 
     cond do
       ct not in @allowed_video_types ->
-        conn |> put_status(422) |> json(%{error: "invalid_content_type",
-          message: "Allowed types: #{Enum.join(@allowed_video_types, ", ")}"})
+        conn
+        |> put_status(422)
+        |> json(%{
+          error: "invalid_content_type",
+          message: "Allowed types: #{Enum.join(@allowed_video_types, ", ")}"
+        })
 
       String.to_integer(to_string(size)) > @max_video_bytes ->
         conn |> put_status(422) |> json(%{error: "file_too_large", message: "Max 500MB"})
@@ -144,8 +152,12 @@ defmodule CaramelKitchenWeb.AdminVideoController do
   end
 
   # POST /api/v1/admin/videos/processed (called by Lambda/transcoder webhook)
-  def on_processed(conn, %{"recipe_id" => rid, "video_key" => key,
-                            "duration_secs" => dur, "thumbnail_key" => thumb}) do
+  def on_processed(conn, %{
+        "recipe_id" => rid,
+        "video_key" => key,
+        "duration_secs" => dur,
+        "thumbnail_key" => thumb
+      }) do
     with {:ok, recipe} <- Content.on_video_processed(rid, key, dur, thumb) do
       json(conn, %{data: %{recipe_id: recipe.id, video_url: recipe.video_url, status: "ready"}})
     end

@@ -8,6 +8,7 @@ defmodule CaramelKitchen.AI.Supervisor do
       {Task.Supervisor, name: CaramelKitchen.AI.TaskSupervisor},
       CaramelKitchen.AI.Orchestrator
     ]
+
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

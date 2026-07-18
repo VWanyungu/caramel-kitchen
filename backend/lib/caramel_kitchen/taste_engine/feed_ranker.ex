@@ -7,8 +7,8 @@ defmodule CaramelKitchen.TasteEngine.FeedRanker do
   use GenServer
   require Logger
 
-  @table     :feed_rank_cache
-  @ttl_ms    :timer.minutes(5)
+  @table :feed_rank_cache
+  @ttl_ms :timer.minutes(5)
 
   def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
 
@@ -22,7 +22,9 @@ defmodule CaramelKitchen.TasteEngine.FeedRanker do
         else
           :miss
         end
-      [] -> :miss
+
+      [] ->
+        :miss
     end
   end
 
@@ -51,7 +53,7 @@ defmodule CaramelKitchen.TasteEngine.FeedRanker do
       :named_table,
       :public,
       :set,
-      read_concurrency:  true,
+      read_concurrency: true,
       write_concurrency: true
     ])
 
@@ -73,10 +75,14 @@ defmodule CaramelKitchen.TasteEngine.FeedRanker do
 
   @impl true
   def handle_info(:cleanup, state) do
-    now   = System.monotonic_time(:millisecond)
-    count = :ets.select_delete(@table,
-      [{{:_, :_, :"$1"}, [{:<, {:-, now, :"$1"}, @ttl_ms}], [true]}]
-    )
+    now = System.monotonic_time(:millisecond)
+
+    count =
+      :ets.select_delete(
+        @table,
+        [{{:_, :_, :"$1"}, [{:<, {:-, now, :"$1"}, @ttl_ms}], [true]}]
+      )
+
     Logger.debug("Feed rank cache cleanup: removed #{count} stale entries")
     Process.send_after(self(), :cleanup, :timer.minutes(10))
     {:noreply, state}

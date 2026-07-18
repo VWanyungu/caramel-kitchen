@@ -112,7 +112,7 @@ defmodule CaramelKitchen.MixProject do
       {:ex_machina, "~> 2.8", only: :test},
       {:faker, "~> 0.18", only: :test},
       {:mox, "~> 1.1", only: :test},
-      {:bypass, "~> 2.1", only: :test},
+      {:bypass, "~> 2.1", only: :test}
       # {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       # {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       # {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}

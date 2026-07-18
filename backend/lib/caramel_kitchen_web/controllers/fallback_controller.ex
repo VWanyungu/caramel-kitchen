@@ -47,7 +47,7 @@ defmodule CaramelKitchenWeb.HealthController do
   def ready(conn, _params) do
     checks = %{
       database: check_database(),
-      redis:    check_redis()
+      redis: check_redis()
     }
 
     all_ok = Enum.all?(checks, fn {_, v} -> v == :ok end)
@@ -61,7 +61,7 @@ defmodule CaramelKitchenWeb.HealthController do
   defp check_database do
     case CaramelKitchen.Repo.query("SELECT 1", []) do
       {:ok, _} -> :ok
-      _        -> :error
+      _ -> :error
     end
   rescue
     _ -> :error
@@ -70,7 +70,7 @@ defmodule CaramelKitchenWeb.HealthController do
   defp check_redis do
     case Redix.command(:redix, ["PING"]) do
       {:ok, "PONG"} -> :ok
-      _             -> :error
+      _ -> :error
     end
   rescue
     _ -> :error
@@ -91,8 +91,10 @@ defmodule CaramelKitchenWeb.WebhookController do
     case Monetisation.handle_webhook(payload) do
       :ok ->
         json(conn, %{received: true})
+
       {:ok, _} ->
         json(conn, %{received: true})
+
       {:error, reason} ->
         Logger.error("Stripe webhook error: #{inspect(reason)}")
         conn |> put_status(422) |> json(%{error: "webhook_processing_failed"})
@@ -109,13 +111,14 @@ defmodule CaramelKitchenWeb.ShoppingController do
   alias CaramelKitchen.Shopping
 
   def index(conn, _params) do
-    user  = conn.assigns.current_user
+    user = conn.assigns.current_user
     lists = Shopping.list_user_lists(user.id)
     json(conn, %{data: Enum.map(lists, &render_list_summary/1)})
   end
 
   def create(conn, params) do
     user = conn.assigns.current_user
+
     with {:ok, list} <- Shopping.create_list(user.id, params) do
       conn |> put_status(:created) |> json(%{data: render_list_full(list)})
     end
@@ -135,6 +138,7 @@ defmodule CaramelKitchenWeb.ShoppingController do
 
   def check_item(conn, %{"id" => id, "item_index" => idx}) do
     user = conn.assigns.current_user
+
     with {:ok, list} <- Shopping.check_item(id, String.to_integer(idx), user.id) do
       json(conn, %{data: %{checked_ids: list.checked_ids}})
     end
@@ -142,6 +146,7 @@ defmodule CaramelKitchenWeb.ShoppingController do
 
   def uncheck_item(conn, %{"id" => id, "item_index" => idx}) do
     user = conn.assigns.current_user
+
     with {:ok, list} <- Shopping.uncheck_item(id, String.to_integer(idx), user.id) do
       json(conn, %{data: %{checked_ids: list.checked_ids}})
     end
@@ -155,17 +160,22 @@ defmodule CaramelKitchenWeb.ShoppingController do
   end
 
   defp render_list_summary(list) do
-    %{id: list.id, name: list.name, item_count: length(list.items),
-      share_token: list.share_token, inserted_at: list.inserted_at}
+    %{
+      id: list.id,
+      name: list.name,
+      item_count: length(list.items),
+      share_token: list.share_token,
+      inserted_at: list.inserted_at
+    }
   end
 
   defp render_list_full(list) do
     Map.merge(render_list_summary(list), %{
-      items:               list.items,
-      checked_ids:         list.checked_ids,
+      items: list.items,
+      checked_ids: list.checked_ids,
       servings_multiplier: list.servings_multiplier,
-      meal_plan_id:        list.meal_plan_id,
-      whatsapp_url:        Shopping.whatsapp_share_url(list)
+      meal_plan_id: list.meal_plan_id,
+      whatsapp_url: Shopping.whatsapp_share_url(list)
     })
   end
 end

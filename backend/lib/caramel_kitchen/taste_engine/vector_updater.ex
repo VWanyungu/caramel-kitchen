@@ -11,7 +11,7 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdater do
   alias CaramelKitchen.Accounts.User
 
   @flush_interval_ms 2_000
-  @max_buffer_size   100
+  @max_buffer_size 100
 
   defstruct buffer: [], flush_timer: nil
 
@@ -86,13 +86,14 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdater do
         |> Enum.reduce(List.duplicate(0.0, 8), fn {_uid, recipe_id, action}, acc ->
           recipe = Recipes.get_recipe!(recipe_id)
           profile = CaramelKitchen.Recipes.Recipe.taste_profile_list(recipe)
-          delta   = taste_delta(action)
+          delta = taste_delta(action)
 
           Enum.zip_with(acc, profile, fn a, p -> a + delta * p end)
         end)
 
       # Apply single aggregated update
       current = User.taste_vector_list(user)
+
       updated =
         Enum.zip_with(current, aggregated_deltas, fn c, d ->
           Float.round(clamp(c + d, 0.0, 1.0), 4)
@@ -107,12 +108,12 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdater do
     end
   end
 
-  defp taste_delta(:cooked),  do: 0.10
-  defp taste_delta(:saved),   do: 0.07
+  defp taste_delta(:cooked), do: 0.10
+  defp taste_delta(:saved), do: 0.07
   defp taste_delta(:skipped), do: -0.05
   defp taste_delta(:rated_5), do: 0.15
   defp taste_delta(:rated_1), do: -0.10
-  defp taste_delta(_),        do: 0.0
+  defp taste_delta(_), do: 0.0
 
   defp clamp(val, min, max), do: val |> max(min) |> min(max)
   defp schedule_flush, do: Process.send_after(self(), :flush, @flush_interval_ms)

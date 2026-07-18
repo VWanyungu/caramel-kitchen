@@ -36,12 +36,18 @@ defmodule CaramelKitchenWeb.ErrorJSON do
 
   # 500
   def render("500.json", _assigns) do
-    %{error: "internal_server_error", message: "Something went wrong on our end. We've been notified."}
+    %{
+      error: "internal_server_error",
+      message: "Something went wrong on our end. We've been notified."
+    }
   end
 
   # 503
   def render("503.json", _assigns) do
-    %{error: "service_unavailable", message: "Service temporarily unavailable. Please try again shortly."}
+    %{
+      error: "service_unavailable",
+      message: "Service temporarily unavailable. Please try again shortly."
+    }
   end
 
   # Catch-all
