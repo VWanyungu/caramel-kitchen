@@ -269,9 +269,14 @@ defmodule CaramelKitchen.Recipes do
       {:category, cat}, q when is_binary(cat) ->
         where(q, [r], r.dish_category == ^cat)
 
-      {:serving_context, _ctx}, q ->
-        # serving_context is a UI filter; map to relevant dietary/time combos
-        q
+      {:serving_context, ctx}, q when is_binary(ctx) ->
+        case ctx do
+          "quick" -> where(q, [r], r.total_time_mins <= 30)
+          "family" -> where(q, [r], r.serving_size >= 4)
+          "meal_prep" -> where(q, [r], r.serving_size >= 4 and r.total_time_mins <= 60)
+          "healthy" -> where(q, [r], r.calories <= 500)
+          _ -> q
+        end
 
       {:exclude_allergens, allergens}, q when is_list(allergens) ->
         where(q, [r], not fragment("? && ?", r.allergens, ^allergens))

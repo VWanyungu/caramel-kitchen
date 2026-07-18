@@ -284,6 +284,7 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:course, params["course"])
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
+    |> maybe_add(:serving_context, params["context"])
   end
 
   defp maybe_add(map, _key, nil), do: map

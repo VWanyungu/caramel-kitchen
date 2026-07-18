@@ -41,15 +41,29 @@ interface ErrorResponse {
 
 ---
 
-## 2. Recipe Endpoints
+## 2. Recipe Discovery & Filtering
 
 ### `GET /api/v1/recipes`
-List recipes. If the request is authenticated via Bearer token, it returns a personalised feed based on the user's calculated taste vectors.
+List recipes. If the request is authenticated via Bearer token, it returns a personalised feed based on the user's calculated taste vectors and engagement scores.
 
-**Query Parameters:**
-- `limit` (integer, default: 20): Maximum number of items to return.
+**Query Parameters (Multi-Dimension Filters):**
+- `limit` (integer, default: 20, max: 50): Maximum number of items to return.
 - `after_id` (string): Pagination cursor.
-- `category` (string): Filter by dish category.
+- `category` (string): Filter by dish category (e.g., `rice_dishes`, `baked_goods`).
+- `course` (string): Filter by dish type/course (e.g., `main`, `starter`, `dessert`).
+- `cooking_method` (string): Filter by primary or secondary cooking method (e.g., `baking`, `frying`).
+- `dietary` (string): Comma-separated list of dietary flags (e.g., `vegan,gluten_free`). Returns recipes matching ALL provided flags.
+- `taste` (string): Comma-separated list of taste tags (e.g., `savory,spicy`). Returns recipes matching ALL provided tags.
+- `max_time` (integer): Maximum total time in minutes.
+- `min_time` (integer): Minimum total time in minutes.
+- `difficulty` (string): Filter by difficulty level (`beginner`, `intermediate`, `advanced`).
+- `cuisine` (string): Comma-separated list of cuisine origins.
+- `max_calories` (integer): Filter for recipes with calories <= X.
+- `context` (string): Special UI context filters. Maps to multiple parameters under the hood:
+  - `quick`: Total time <= 30 mins
+  - `family`: Serving size >= 4
+  - `meal_prep`: Serving size >= 4 AND total time <= 60 mins
+  - `healthy`: Calories <= 500
 
 **Response (200 OK):**
 ```json
@@ -60,6 +74,31 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
   "meta": {
     "count": 20,
     "after_id": "uuid-string"
+  }
+}
+```
+
+---
+
+### `GET /api/v1/recipes/search`
+Search for recipes by query string and specific filters.
+
+**Query Parameters:**
+- `q` (string, required): The search term.
+- `limit` (integer, default: 20): Maximum number of items.
+- `offset` (integer, default: 0): Pagination offset.
+- *(Supports all the multi-dimensional filters listed in `GET /recipes` above)*
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    { /* Recipe Object */ }
+  ],
+  "meta": {
+    "query": "search term",
+    "limit": 20,
+    "offset": 0
   }
 }
 ```
@@ -83,34 +122,6 @@ Get trending recipes based on engagement scores.
 
 ---
 
-### `GET /api/v1/recipes/search`
-Search for recipes by query string and specific filters.
-
-**Query Parameters:**
-- `q` (string, required): The search term.
-- `limit` (integer, default: 20): Maximum number of items.
-- `offset` (integer, default: 0): Pagination offset.
-- `dietary` (string): Comma-separated list of dietary flags.
-- `taste` (string): Comma-separated list of taste tags.
-- `difficulty` (string): e.g., "beginner".
-- `max_time` (integer): Maximum total time in minutes.
-
-**Response (200 OK):**
-```json
-{
-  "data": [
-    { /* Recipe Object */ }
-  ],
-  "meta": {
-    "query": "search term",
-    "limit": 20,
-    "offset": 0
-  }
-}
-```
-
----
-
 ### `GET /api/v1/recipes/:id`
 Get full details for a single recipe by its UUID.
 
@@ -121,12 +132,6 @@ Get full details for a single recipe by its UUID.
 ```json
 {
   "data": { /* Full Recipe Object with ingredients, steps, macros, etc. */ }
-}
-```
-**Response (404 Not Found):**
-```json
-{
-  "error": "Not Found"
 }
 ```
 
@@ -147,8 +152,10 @@ Get full details for a single recipe using its URL slug.
 
 ---
 
+## 3. Categories & Dish Types
+
 ### `GET /api/v1/categories`
-Returns an aggregation of all active recipe categories and their respective counts.
+Returns an aggregation of all active recipe categories and their respective live counts.
 
 **Response (200 OK):**
 ```json
@@ -161,9 +168,23 @@ Returns an aggregation of all active recipe categories and their respective coun
 }
 ```
 
+### `GET /api/v1/dish-types`
+Returns an aggregation of recipe dish types (`course`) and their live counts.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "main": 34,
+    "starter": 10,
+    "dessert": 8
+  }
+}
+```
+
 ---
 
-## 3. Authentication & Headers
+## 4. Authentication & Headers
 
 Protected routes (like personalized feeds, saving recipes, or submitting taste surveys) require a standard JWT Bearer token:
 
