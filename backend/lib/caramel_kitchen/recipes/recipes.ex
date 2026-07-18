@@ -19,7 +19,7 @@ defmodule CaramelKitchen.Recipes do
   taste_vector: list of 8 floats from user profile.
   """
   def personalised_feed(user, opts \\ []) do
-    limit   = Keyword.get(opts, :limit, 20)
+    limit = Keyword.get(opts, :limit, 20)
     after_id = Keyword.get(opts, :after_id)
     filters = Keyword.get(opts, :filters, %{})
 
@@ -40,15 +40,16 @@ defmodule CaramelKitchen.Recipes do
       |> select([r], %{
         recipe: r,
         taste_score: fragment("1 - (taste_profile <=> ?::vector)", ^taste_vec),
-        combined_score: fragment(
-          "0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score",
-          ^taste_vec
-        )
+        combined_score:
+          fragment(
+            "0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score",
+            ^taste_vec
+          )
       })
-      |> order_by([r, ...], [
+      |> order_by([r, ...],
         desc: fragment("combined_score"),
         desc: r.published_at
-      ])
+      )
       |> limit(^limit)
       |> Repo.all()
     end)
@@ -59,8 +60,8 @@ defmodule CaramelKitchen.Recipes do
   """
   def search(query_string, opts \\ []) do
     filters = Keyword.get(opts, :filters, %{})
-    limit   = Keyword.get(opts, :limit, 20)
-    offset  = Keyword.get(opts, :offset, 0)
+    limit = Keyword.get(opts, :limit, 20)
+    offset = Keyword.get(opts, :offset, 0)
 
     sanitised = sanitise_search_query(query_string)
 
@@ -76,11 +77,12 @@ defmodule CaramelKitchen.Recipes do
     )
     |> select([r], %{
       recipe: r,
-      rank: fragment(
-        "ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)",
-        ^sanitised,
-        ^sanitised
-      )
+      rank:
+        fragment(
+          "ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)",
+          ^sanitised,
+          ^sanitised
+        )
     })
     |> order_by([r, ...], desc: fragment("rank"))
     |> limit(^limit)
@@ -97,8 +99,8 @@ defmodule CaramelKitchen.Recipes do
 
   @doc "Trending recipes — last 7 days by engagement."
   def trending(opts \\ []) do
-    limit  = Keyword.get(opts, :limit, 10)
-    since  = DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
+    limit = Keyword.get(opts, :limit, 10)
+    since = DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
 
     Cache.get_or_store("trending:global", :timer.hours(1), fn ->
       from(r in Recipe,
@@ -111,7 +113,7 @@ defmodule CaramelKitchen.Recipes do
   end
 
   def list_by_category(category, opts \\ []) do
-    limit  = Keyword.get(opts, :limit, 20)
+    limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
 
     from(r in Recipe,
@@ -127,7 +129,7 @@ defmodule CaramelKitchen.Recipes do
 
   def get_recipe(id) do
     case Repo.get(Recipe, id) do
-      nil    -> {:error, :not_found}
+      nil -> {:error, :not_found}
       recipe -> {:ok, recipe}
     end
   end
@@ -160,8 +162,10 @@ defmodule CaramelKitchen.Recipes do
       if recipe.status == "scheduled" and recipe.scheduled_at do
         PublishRecipeWorker.new(%{recipe_id: recipe.id},
           scheduled_at: recipe.scheduled_at
-        ) |> Oban.insert()
+        )
+        |> Oban.insert()
       end
+
       Cache.invalidate_category_counts()
     end)
   end
@@ -196,7 +200,7 @@ defmodule CaramelKitchen.Recipes do
 
   def list_creator_recipes(creator_id, opts \\ []) do
     status = Keyword.get(opts, :status)
-    limit  = Keyword.get(opts, :limit, 50)
+    limit = Keyword.get(opts, :limit, 50)
 
     q = from r in Recipe, where: r.creator_id == ^creator_id
 
@@ -250,9 +254,14 @@ defmodule CaramelKitchen.Recipes do
       {:category, cat}, q when is_binary(cat) ->
         where(q, [r], r.dish_category == ^cat)
 
-      {:serving_context, _ctx}, q ->
-        # serving_context is a UI filter; map to relevant dietary/time combos
-        q
+      {:serving_context, ctx}, q when is_binary(ctx) ->
+        case ctx do
+          "quick" -> where(q, [r], r.total_time_mins <= 30)
+          "family" -> where(q, [r], r.serving_size >= 4)
+          "meal_prep" -> where(q, [r], r.serving_size >= 4 and r.total_time_mins <= 60)
+          "healthy" -> where(q, [r], r.calories <= 500)
+          _ -> q
+        end
 
       {:exclude_allergens, allergens}, q when is_list(allergens) ->
         where(q, [r], not fragment("? && ?", r.allergens, ^allergens))
@@ -260,18 +269,22 @@ defmodule CaramelKitchen.Recipes do
       {:max_calories, cal}, q when is_integer(cal) ->
         where(q, [r], r.calories <= ^cal)
 
-      _, q -> q
+      _, q ->
+        q
     end)
   end
+
   defp apply_filters(query, _), do: query
 
   defp apply_dietary_filter(query, []), do: query
+
   defp apply_dietary_filter(query, flags) do
     # Exclude recipes that conflict with user's dietary preferences
     where(query, [r], fragment("? && ?", r.dietary_flags, ^flags))
   end
 
   defp apply_after_cursor(query, nil), do: query
+
   defp apply_after_cursor(query, after_id) do
     where(query, [r], r.id < ^after_id)
   end
@@ -279,9 +292,18 @@ defmodule CaramelKitchen.Recipes do
   defp format_vector(list), do: "[#{Enum.join(list, ",")}]"
 
   defp sanitise_search_query(q) do
-    q |> String.trim() |> String.replace(Regex.compile!("[^\\\\w\\\\s-]"), "") |> String.slice(0, 200)
+    q
+    |> String.trim()
+    |> String.replace(Regex.compile!("[^\\\\w\\\\s-]"), "")
+    |> String.slice(0, 200)
   end
 
-  defp tap_ok({:ok, val} = result, fun), do: (fun.(val); result)
+  defp tap_ok({:ok, val} = result, fun),
+    do:
+      (
+        fun.(val)
+        result
+      )
+
   defp tap_ok(result, _fun), do: result
 end
