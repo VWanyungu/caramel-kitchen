@@ -1,8 +1,33 @@
 defmodule CaramelKitchenWeb.RecipeController do
   use CaramelKitchenWeb, :controller
+  use OpenApiSpex.ControllerSpecs
   action_fallback CaramelKitchenWeb.FallbackController
 
   alias CaramelKitchen.Recipes
+
+  tags(["Recipes"])
+
+  operation(:index,
+    summary: "List recipes",
+    description:
+      "Returns a list of recipes. If authenticated, returns a personalised feed based on taste vectors.",
+    parameters: [
+      limit: [in: :query, type: :integer, description: "Max number of items", example: 20],
+      after_id: [in: :query, type: :string, description: "Pagination cursor", required: false],
+      category: [in: :query, type: :string, description: "Filter by category", required: false]
+    ],
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe},
+             meta: %OpenApiSpex.Schema{type: :object}
+           }
+         }}
+    }
+  )
 
   # GET /api/v1/recipes
   def index(conn, params) do
@@ -34,6 +59,24 @@ defmodule CaramelKitchenWeb.RecipeController do
   end
 
   # GET /api/v1/recipes/trending
+  operation(:trending,
+    summary: "Get trending recipes",
+    description: "Returns a list of trending recipes.",
+    parameters: [
+      limit: [in: :query, type: :integer, description: "Max number of items", example: 10]
+    ],
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe}
+           }
+         }}
+    }
+  )
+
   def trending(conn, params) do
     limit = parse_int(params["limit"], 10) |> min(30)
     recipes = Recipes.trending(limit: limit)
@@ -41,6 +84,27 @@ defmodule CaramelKitchenWeb.RecipeController do
   end
 
   # GET /api/v1/recipes/search?q=...
+  operation(:search,
+    summary: "Search recipes",
+    description: "Search for recipes by query and filters.",
+    parameters: [
+      q: [in: :query, type: :string, description: "Search query", required: true],
+      limit: [in: :query, type: :integer, description: "Max number of items", example: 20],
+      offset: [in: :query, type: :integer, description: "Pagination offset", example: 0]
+    ],
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{
+             data: %OpenApiSpex.Schema{type: :array, items: CaramelKitchenWeb.Schemas.Recipe},
+             meta: %OpenApiSpex.Schema{type: :object}
+           }
+         }}
+    }
+  )
+
   def search(conn, %{"q" => q} = params) do
     filters = parse_filters(params)
     limit = parse_int(params["limit"], 20)
@@ -59,6 +123,23 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   def search(conn, _), do: json(conn, %{data: [], meta: %{query: ""}})
 
+  operation(:show,
+    summary: "Get a recipe",
+    description: "Returns full details for a single recipe.",
+    parameters: [
+      id: [in: :path, type: :string, description: "Recipe UUID", required: true]
+    ],
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{data: CaramelKitchenWeb.Schemas.Recipe}
+         }},
+      404 => "NotFound"
+    }
+  )
+
   # GET /api/v1/recipes/:id
   def show(conn, %{"id" => id}) do
     with {:ok, recipe} <- Recipes.get_recipe(id) do
@@ -68,6 +149,23 @@ defmodule CaramelKitchenWeb.RecipeController do
     end
   end
 
+  operation(:show_by_slug,
+    summary: "Get a recipe by slug",
+    description: "Returns full details for a single recipe using its URL slug.",
+    parameters: [
+      slug: [in: :path, type: :string, description: "Recipe Slug", required: true]
+    ],
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{data: CaramelKitchenWeb.Schemas.Recipe}
+         }},
+      404 => "NotFound"
+    }
+  )
+
   # GET /api/v1/recipes/slug/:slug
   def show_by_slug(conn, %{"slug" => slug}) do
     with {:ok, recipe} <- Recipes.get_recipe_by_slug(slug) do
@@ -76,9 +174,45 @@ defmodule CaramelKitchenWeb.RecipeController do
     end
   end
 
+  operation(:categories,
+    summary: "Get recipe categories",
+    description: "Returns an aggregation of recipe categories and their counts.",
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{
+             data: %OpenApiSpex.Schema{type: :object}
+           }
+         }}
+    }
+  )
+
   # GET /api/v1/categories
   def categories(conn, _params) do
     counts = Recipes.category_counts()
+    json(conn, %{data: counts})
+  end
+
+  operation(:dish_types,
+    summary: "Get recipe dish types",
+    description: "Returns an aggregation of recipe dish types (courses) and their counts.",
+    responses: %{
+      200 =>
+        {"Success", "application/json",
+         %OpenApiSpex.Schema{
+           type: :object,
+           properties: %{
+             data: %OpenApiSpex.Schema{type: :object}
+           }
+         }}
+    }
+  )
+
+  # GET /api/v1/dish-types
+  def dish_types(conn, _params) do
+    counts = Recipes.dish_type_counts()
     json(conn, %{data: counts})
   end
 
@@ -236,7 +370,12 @@ defmodule CaramelKitchenWeb.TasteController do
   def submit_survey(conn, %{"responses" => responses}) do
     user = conn.assigns.current_user
 
-    with {:ok, updated_user} <- Accounts.submit_taste_survey(user, responses) do
+    atomized_responses =
+      Enum.map(responses, fn %{"taste" => t, "score" => s} ->
+        %{taste: t, score: s}
+      end)
+
+    with {:ok, updated_user} <- Accounts.submit_taste_survey(user, atomized_responses) do
       json(conn, %{
         data: %{
           taste_vector: User.taste_vector_list(updated_user),

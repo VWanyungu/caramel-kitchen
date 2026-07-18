@@ -54,6 +54,24 @@ defmodule CaramelKitchenWeb.Router do
     plug VerifyStripeSignature
   end
 
+  pipeline :browser do
+    plug :accepts, ["html"]
+  end
+
+  pipeline :openapi do
+    plug OpenApiSpex.Plug.PutApiSpec, module: CaramelKitchenWeb.ApiSpec
+  end
+
+  scope "/api" do
+    pipe_through [:api, :openapi]
+    get "/openapi", OpenApiSpex.Plug.RenderSpec, []
+  end
+
+  scope "/api" do
+    pipe_through :browser
+    get "/swagger", OpenApiSpex.Plug.SwaggerUI, path: "/api/openapi"
+  end
+
   # ── Health check ──────────────────────────────────────────────
   scope "/", CaramelKitchenWeb do
     pipe_through :api
@@ -84,6 +102,7 @@ defmodule CaramelKitchenWeb.Router do
     get "/recipes/:id", RecipeController, :show
     get "/recipes/slug/:slug", RecipeController, :show_by_slug
     get "/categories", RecipeController, :categories
+    get "/dish-types", RecipeController, :dish_types
     get "/shopping/shared/:token", ShoppingController, :show_shared
   end
 

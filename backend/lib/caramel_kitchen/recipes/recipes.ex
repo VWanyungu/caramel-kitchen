@@ -152,6 +152,18 @@ defmodule CaramelKitchen.Recipes do
     end)
   end
 
+  def dish_type_counts do
+    Cache.get_or_store("dish_type_counts", :timer.minutes(10), fn ->
+      from(r in Recipe,
+        where: r.status == "live" and not is_nil(r.course),
+        group_by: r.course,
+        select: {r.course, count(r.id)}
+      )
+      |> Repo.all()
+      |> Map.new()
+    end)
+  end
+
   # ── CMS / Admin ───────────────────────────────────────────────
 
   def create_recipe(creator, attrs) do
@@ -167,6 +179,7 @@ defmodule CaramelKitchen.Recipes do
       end
 
       Cache.invalidate_category_counts()
+      Cache.invalidate_dish_type_counts()
     end)
   end
 
@@ -177,6 +190,7 @@ defmodule CaramelKitchen.Recipes do
     |> tap_ok(fn r ->
       Cache.invalidate_recipe(r.id)
       Cache.invalidate_category_counts()
+      Cache.invalidate_dish_type_counts()
     end)
   end
 
@@ -187,6 +201,7 @@ defmodule CaramelKitchen.Recipes do
     |> tap_ok(fn r ->
       Cache.invalidate_recipe(r.id)
       Cache.invalidate_category_counts()
+      Cache.invalidate_dish_type_counts()
       Phoenix.PubSub.broadcast(CaramelKitchen.PubSub, "feed:updates", {:new_recipe, r})
     end)
   end

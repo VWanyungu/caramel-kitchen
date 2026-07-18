@@ -66,6 +66,7 @@ defmodule CaramelKitchen.Cache do
 
   def invalidate_recipe(recipe_id), do: invalidate("recipe:#{recipe_id}")
   def invalidate_category_counts, do: invalidate("category_counts")
+  def invalidate_dish_type_counts, do: invalidate("dish_type_counts")
   def invalidate_trending, do: invalidate("trending:global")
 
   # ── L1: ConCache (ETS) ────────────────────────────────────────
