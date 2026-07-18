@@ -81,7 +81,7 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 ---
 
 ### `GET /api/v1/recipes/search`
-Search for recipes by query string and specific filters.
+Search for recipes across titles, descriptions, ingredients, and various tags (taste, dietary flags, dish category, course, and cuisine origin).
 
 **Query Parameters:**
 - `q` (string, required): The search term.
