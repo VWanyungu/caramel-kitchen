@@ -316,3 +316,42 @@ Creates a Stripe Billing Portal Session for managing an existing active Stripe s
   }
 }
 ```
+
+---
+
+## 6. Notifications
+
+### Server-Sent Events (SSE) Stream
+Establish a persistent connection to receive real-time push notifications.
+The backend will send JSON payloads prefixed with `data: ` and periodic heartbeat `: ping` events to keep the connection alive.
+
+**GET** `/api/v1/notifications/stream`
+Requires `Authorization: Bearer <token>`
+
+#### Client Example (JavaScript)
+```javascript
+const eventSource = new EventSource('/api/v1/notifications/stream', {
+  headers: {
+    Authorization: 'Bearer <your_token>' // Note: EventSource browser API doesn't support headers easily, 
+                                         // you may need to use a library like @microsoft/fetch-event-source 
+                                         // or pass the token via a query param if adapted.
+  }
+});
+
+eventSource.onmessage = function(event) {
+  const notification = JSON.parse(event.data);
+  console.log("New Notification:", notification.title, notification.body);
+};
+```
+
+#### Event Payload Schema
+```typescript
+{
+  title: string;
+  body: string;
+  data: {
+    type: string;
+    [key: string]: any;
+  }
+}
+```

@@ -13,6 +13,11 @@ defmodule CaramelKitchen.Notifications do
 
   @doc "Send a push notification to a single user (all their devices)."
   def notify_user(user_id, title, body, data \\ %{}) do
+    # Broadcast to active SSE/WebSocket clients
+    payload = %{title: title, body: body, data: data}
+    Phoenix.PubSub.broadcast(CaramelKitchen.PubSub, "user_notifications:#{user_id}", {:notification, payload})
+
+    # Dispatch to mobile tokens (FCM/APNs)
     tokens = get_tokens(user_id)
     Enum.each(tokens, fn token -> send_push(token, title, body, data) end)
   end
