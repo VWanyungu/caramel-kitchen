@@ -9,6 +9,10 @@ defmodule CaramelKitchen.Monetisation.Subscription do
 
     field :stripe_customer_id, :string
     field :stripe_sub_id, :string
+    field :payment_method, :string, default: "stripe"
+    field :mpesa_receipt_number, :string
+    field :mpesa_phone_number, :string
+    
     field :plan, :string, default: "free"
     field :status, :string, default: "active"
     field :trial_ends_at, :utc_datetime

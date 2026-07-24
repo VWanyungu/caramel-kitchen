@@ -54,6 +54,15 @@ config :stripity_stripe,
   public_key: System.get_env("STRIPE_PUBLIC_KEY", "pk_test_placeholder"),
   webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET", "whsec_placeholder")
 
+# Daraja (M-Pesa)
+config :daraja,
+  environment: :sandbox,
+  consumer_key: System.get_env("DARAJA_CONSUMER_KEY", "test_consumer_key"),
+  consumer_secret: System.get_env("DARAJA_CONSUMER_SECRET", "test_consumer_secret"),
+  business_short_code: System.get_env("DARAJA_SHORTCODE", "174379"),
+  passkey: System.get_env("DARAJA_PASSKEY", "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"),
+  callback_url: System.get_env("DARAJA_CALLBACK_URL", "https://localhost:4000/webhooks/daraja/stk-callback")
+
 # FunWithFlags (feature flags backed by Redis)
 config :fun_with_flags, :cache,
   enabled: true,

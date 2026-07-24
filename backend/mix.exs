@@ -91,8 +91,9 @@ defmodule CaramelKitchen.MixProject do
       # Validation
       {:tarams, "~> 1.7"},
 
-      # Stripe
+      # Stripe & M-Pesa
       {:stripity_stripe, "~> 3.1"},
+      {:daraja, "~> 0.1.1"},
 
       # Pagination
       {:paginator, "~> 1.2"},

@@ -144,6 +144,7 @@ defmodule CaramelKitchenWeb.Router do
     # Subscription
     get "/subscription", SubscriptionController, :show
     post "/subscription/checkout", SubscriptionController, :create_checkout
+    post "/subscription/mpesa-checkout", SubscriptionController, :mpesa_checkout
     get "/subscription/portal", SubscriptionController, :billing_portal
   end
 
@@ -207,6 +208,12 @@ defmodule CaramelKitchenWeb.Router do
   scope "/webhooks", CaramelKitchenWeb do
     pipe_through [:api, :stripe_webhook]
     post "/stripe", WebhookController, :stripe
+  end
+
+  # ── Daraja Webhooks ───────────────────────────────────────────
+  scope "/webhooks/daraja", CaramelKitchenWeb do
+    pipe_through [:api]
+    post "/stk-callback", DarajaWebhookController, :stk_callback
   end
 
   # ── LiveDashboard (dev only) ──────────────────────────────────
