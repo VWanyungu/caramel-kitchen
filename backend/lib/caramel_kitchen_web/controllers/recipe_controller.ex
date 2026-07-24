@@ -269,7 +269,27 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp compute_allergy_alerts(recipe, user) do
     user_allergens = user.allergy_flags || []
-    Enum.filter(recipe.allergens, &(&1 in user_allergens))
+    
+    # 1. Exact match against explicitly defined recipe allergens
+    explicit_alerts = Enum.filter(recipe.allergens, &(&1 in user_allergens))
+    
+    # 2. Case-insensitive substring match against actual ingredients
+    ingredient_alerts =
+      Enum.reduce(user_allergens, [], fn allergy, acc ->
+        allergy_down = String.downcase(allergy)
+        
+        found? =
+          Enum.any?(recipe.ingredients, fn
+            %{"name" => name} when is_binary(name) ->
+              String.contains?(String.downcase(name), allergy_down)
+            _ ->
+              false
+          end)
+          
+        if found?, do: [allergy | acc], else: acc
+      end)
+
+    Enum.uniq(explicit_alerts ++ ingredient_alerts)
   end
 
   defp parse_filters(params) do
