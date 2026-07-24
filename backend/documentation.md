@@ -26,10 +26,11 @@ This phase focuses on exposing the data securely and implementing the complex 6-
 
 - [x] **Server Configuration**: Replaced missing Bandit adapter with standard `plug_cowboy` and stabilized endpoint boot sequence.
 - [x] **Guardian JWT**: Implemented access and refresh token generation. Added explicit `typ: "access"` checks in the authentication plugs.
-- [x] **6-Dimensional Filtering**: Built Ecto query builders to filter recipes by dietary flags, taste profiles, max prep/cook time, difficulty, dish category, and primary cooking method.
+- [x] **6-Dimensional Filtering**: Built Ecto query builders to filter recipes by dietary flags, taste profiles, max prep/cook time, difficulty, dish category, primary cooking method, and UI serving contexts.
+- [x] **Aggregations**: Added endpoints for live recipe counts grouped by category and dish-types.
 - [x] **Rate Limiting Setup**: Configured the `Hammer` backend to protect auth, API, and AI routes.
 - [ ] **Security Testing**: Validate Guardian refresh token rotation logic and write unit tests for Hammer rate limiting to ensure legitimate traffic isn't blocked.
-- [x] **API Documentation**: Generate Swagger/OpenAPI specifications for the mobile team.
+- [x] **API Documentation**: Generated Swagger/OpenAPI specifications for the mobile team and created a central `API_Documentation.md` static reference file.
 
 ---
 
@@ -55,14 +56,15 @@ Integrating GPT-4o and Whisper to create a conversational cooking assistant.
 
 ---
 
-## ⚪ Phase 4: Goal-Driven Meal Plans & Monetisation (Upcoming)
+## 🟢 Phase 4: Goal-Driven Meal Plans & Monetisation (Completed)
 
 Implementing the premium tier features.
 
-- [ ] **Strict JSON Generation**: Prompt engineer GPT-4o to return strictly typed 7-day meal plans based on calorie goals and dietary flags.
-- [ ] **Automated Shopping Lists**: Map generated meal plans to shopping lists. Write aggregation logic to sum identical ingredients and group them by supermarket aisle (Produce, Protein, Dairy, etc.).
-- [ ] **Stripe Checkout**: Configure Stripe Checkout Sessions for premium subscription upgrades.
-- [ ] **Webhook Security**: Implement a custom Phoenix plug to read raw request bodies and verify Stripe HMAC webhook signatures before updating a user's `subscription_tier`.
+- [x] **Strict JSON Generation**: Prompt engineer GPT-4o to return strictly typed 7-day meal plans based on calorie goals and dietary flags.
+- [x] **Automated Shopping Lists**: Map generated meal plans to shopping lists. Write aggregation logic to sum identical ingredients and group them by supermarket aisle (Produce, Protein, Dairy, etc.).
+- [x] **Stripe Checkout**: Configure Stripe Checkout Sessions for premium subscription upgrades.
+- [x] **Stripe Webhook Security**: Implement a custom Phoenix plug to read raw request bodies and verify Stripe HMAC webhook signatures before updating a user's `subscription_tier`.
+- [x] **M-Pesa Integration**: Implement Safaricom Daraja STK Push for premium subscriptions in Kenya, along with a secure webhook receiver.
 
 ---
 

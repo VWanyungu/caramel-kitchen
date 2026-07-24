@@ -51,6 +51,11 @@ defmodule CaramelKitchen.Application do
       # 12. Content pipeline
       {CaramelKitchen.Content.Supervisor, []},
 
+      # 13. Daraja (M-Pesa)
+      {Finch, name: Daraja.Finch},
+      {Daraja.Supervisor, []},
+      {Daraja.Callback.Guard, []},
+
       # 14. HTTP Endpoint (always last)
       CaramelKitchenWeb.Endpoint
     ]

@@ -26,6 +26,7 @@ defmodule CaramelKitchenWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
+    body_reader: {CaramelKitchenWeb.CacheBodyReader, :read_body, []},
     json_decoder: Phoenix.json_library(),
     # 50MB for video thumbnails
     length: 50_000_000

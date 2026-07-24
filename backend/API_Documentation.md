@@ -246,3 +246,73 @@ Protected routes (like personalized feeds, saving recipes, or submitting taste s
 ```http
 Authorization: Bearer <your-jwt-token>
 ```
+
+---
+
+## 5. Subscriptions & Monetisation
+
+### `GET /api/v1/subscription`
+Gets the authenticated user's current subscription status.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "plan": "free",
+    "status": "active",
+    "current_period_end": null,
+    "stripe_customer_id": null
+  }
+}
+```
+
+### `POST /api/v1/subscription/checkout`
+Creates a Stripe Checkout Session for a given plan (default: `premium`) and returns the session URL.
+
+**Request Body:**
+```json
+{
+  "plan": "premium"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_...",
+    "session_id": "cs_test_..."
+  }
+}
+```
+
+### `POST /api/v1/subscription/mpesa-checkout`
+Initiates a Safaricom M-Pesa Express (STK Push) prompt on the user's phone for the requested plan.
+
+**Request Body:**
+```json
+{
+  "phone_number": "254712345678",
+  "plan": "premium"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "STK Push initiated",
+  "merchant_request_id": "12345-67890-1"
+}
+```
+
+### `GET /api/v1/subscription/portal`
+Creates a Stripe Billing Portal Session for managing an existing active Stripe subscription.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "portal_url": "https://billing.stripe.com/p/session/..."
+  }
+}
+```

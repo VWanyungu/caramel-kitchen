@@ -114,59 +114,6 @@ defmodule CaramelKitchenWeb.ProfileController do
   end
 end
 
-# ── Subscription Controller ────────────────────────────────────
-
-defmodule CaramelKitchenWeb.SubscriptionController do
-  use CaramelKitchenWeb, :controller
-  action_fallback CaramelKitchenWeb.FallbackController
-
-  alias CaramelKitchen.Monetisation
-
-  # GET /api/v1/subscription
-  def show(conn, _params) do
-    user = conn.assigns.current_user
-
-    case Monetisation.get_subscription(user.id) do
-      {:ok, sub} ->
-        json(conn, %{
-          data: %{
-            plan: sub.plan,
-            status: sub.status,
-            current_period_end: sub.current_period_end,
-            stripe_customer_id: sub.stripe_customer_id
-          }
-        })
-
-      {:error, :not_found} ->
-        json(conn, %{data: %{plan: "free", status: "active"}})
-    end
-  end
-
-  # POST /api/v1/subscription/checkout
-  def create_checkout(conn, params) do
-    user = conn.assigns.current_user
-    plan = params["plan"] || "premium"
-
-    with {:ok, session} <- Monetisation.create_checkout_session(user, plan) do
-      json(conn, %{
-        data: %{
-          checkout_url: session.url,
-          session_id: session.id
-        }
-      })
-    end
-  end
-
-  # GET /api/v1/subscription/portal
-  def billing_portal(conn, _params) do
-    user = conn.assigns.current_user
-
-    with {:ok, portal} <- Monetisation.create_billing_portal(user) do
-      json(conn, %{data: %{portal_url: portal.url}})
-    end
-  end
-end
-
 # ── Course Controller ──────────────────────────────────────────
 
 defmodule CaramelKitchenWeb.CourseController do
