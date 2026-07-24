@@ -146,6 +146,9 @@ defmodule CaramelKitchenWeb.Router do
     post "/subscription/checkout", SubscriptionController, :create_checkout
     post "/subscription/mpesa-checkout", SubscriptionController, :mpesa_checkout
     get "/subscription/portal", SubscriptionController, :billing_portal
+
+    # Notifications (SSE)
+    get "/notifications/stream", NotificationController, :stream
   end
 
   # ── Premium features ──────────────────────────────────────────
