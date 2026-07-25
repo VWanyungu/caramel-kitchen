@@ -112,6 +112,11 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
           message: "Too many requests. Please try again later."
         })
         |> halt()
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("Rate limiter failure: #{inspect(reason)}. Failing open for identifier: #{identifier}")
+        conn
     end
   end
 

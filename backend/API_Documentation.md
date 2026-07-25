@@ -7,6 +7,18 @@ This document provides a static reference for the core backend API endpoints and
 ## Base URL
 All API requests should be prefixed with `/api/v1`
 
+## Rate Limiting & Security
+To ensure system stability, the API enforces rate limits on a per-user (or per-IP for unauthenticated) basis using a sliding window.
+- **Auth Endpoints:** 10 requests per minute
+- **Core API Endpoints:** 100 requests per minute
+- **AI Endpoints:** 20 requests per minute
+
+When limits are exceeded, the API returns an HTTP `429 Too Many Requests` response with a standard error object and the following headers:
+- `x-ratelimit-limit`: The maximum requests allowed in the current window.
+- `retry-after`: Seconds to wait before retrying (usually `60`).
+
+*Note: The rate limiter features a fail-open fallback. In the event of a caching infrastructure failure, requests will bypass the rate limit to ensure core services remain online.*
+
 ---
 
 ## 1. Core Schemas
