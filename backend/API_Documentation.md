@@ -19,6 +19,14 @@ When limits are exceeded, the API returns an HTTP `429 Too Many Requests` respon
 
 *Note: The rate limiter features a fail-open fallback. In the event of a caching infrastructure failure, requests will bypass the rate limit to ensure core services remain online.*
 
+### Security Headers & Payload Limits
+All API responses are strictly hardened with native Phoenix security headers, including:
+- **Strict-Transport-Security (HSTS)**
+- **X-Frame-Options: SAMEORIGIN** (prevents clickjacking)
+- **X-Content-Type-Options: nosniff** (prevents MIME-sniffing)
+
+To protect against Denial of Service (DoS) and Out-Of-Memory (OOM) attacks, JSON and URL-Encoded request payloads are strictly limited to **2MB**. Larger payloads (up to 50MB) are only permitted on specific `multipart/form-data` endpoints designed for file/video uploads.
+
 ---
 
 ## 1. Core Schemas

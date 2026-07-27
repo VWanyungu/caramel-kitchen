@@ -15,6 +15,7 @@ defmodule CaramelKitchenWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :put_secure_browser_headers
     plug TrackRequest
     plug Plug.RequestId
   end
@@ -56,6 +57,7 @@ defmodule CaramelKitchenWeb.Router do
 
   pipeline :browser do
     plug :accepts, ["html"]
+    plug :put_secure_browser_headers
   end
 
   pipeline :openapi do
