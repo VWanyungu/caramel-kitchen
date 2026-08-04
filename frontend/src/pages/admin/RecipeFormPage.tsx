@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import ChipToggleGroup from '../../components/ui/ChipToggleGroup'
+import SingleChipGroup from '../../components/ui/SingleChipGroup'
 import IngredientsEditor from '../../components/admin/IngredientsEditor'
 import StepsEditor from '../../components/admin/StepsEditor'
+import TasteTagPicker from '../../components/admin/TasteTagPicker'
 import VideoUploader from '../../components/admin/VideoUploader'
 import Button from '../../components/ui/Button'
 import Select from '../../components/ui/Select'
@@ -26,7 +28,6 @@ import {
   DIFFICULTIES,
   DISH_CATEGORIES,
   TASTE_TAGS,
-  humanize,
 } from '../../lib/recipeTaxonomy'
 import './recipe-form.css'
 
@@ -57,6 +58,11 @@ export default function RecipeFormPage({ mode }: RecipeFormPageProps) {
   const tasteTags = useWatch({ control, name: 'taste_tags' })
   const dietaryFlags = useWatch({ control, name: 'dietary_flags' })
   const cuisineOrigin = useWatch({ control, name: 'cuisine_origin' })
+  const dishCategory = useWatch({ control, name: 'dish_category' })
+  const course = useWatch({ control, name: 'course' })
+  const primaryMethod = useWatch({ control, name: 'primary_method' })
+  const secondaryMethod = useWatch({ control, name: 'secondary_method' })
+  const difficulty = useWatch({ control, name: 'difficulty' })
 
   useEffect(() => {
     if (mode !== 'edit' || !id) return
@@ -160,55 +166,45 @@ export default function RecipeFormPage({ mode }: RecipeFormPageProps) {
           <TextField label="Title" error={errors.title?.message} {...register('title')} />
           <Textarea label="Description" error={errors.description?.message} {...register('description')} />
 
-          <div className="recipe-form-grid">
-            <Select label="Dish category" {...register('dish_category')}>
-              <option value="">Select a category</option>
-              {DISH_CATEGORIES.map((option) => (
-                <option key={option} value={option}>
-                  {humanize(option)}
-                </option>
-              ))}
-            </Select>
-            <Select label="Course" {...register('course')}>
-              <option value="">Select a course</option>
-              {COURSES.map((option) => (
-                <option key={option} value={option}>
-                  {humanize(option)}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="recipe-form-grid">
-            <Select
-              label="Primary cooking method"
-              error={errors.primary_method?.message}
-              {...register('primary_method')}
-            >
-              <option value="">Select a method</option>
-              {COOKING_METHODS.map((option) => (
-                <option key={option} value={option}>
-                  {humanize(option)}
-                </option>
-              ))}
-            </Select>
-            <Select label="Secondary cooking method" {...register('secondary_method')}>
-              <option value="">None</option>
-              {COOKING_METHODS.map((option) => (
-                <option key={option} value={option}>
-                  {humanize(option)}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <Select label="Difficulty" {...register('difficulty')}>
-            {DIFFICULTIES.map((option) => (
-              <option key={option} value={option}>
-                {humanize(option)}
-              </option>
-            ))}
-          </Select>
+          <SingleChipGroup
+            label="Dish category"
+            hint="What kind of dish is this"
+            options={DISH_CATEGORIES}
+            value={dishCategory ?? ''}
+            allowClear
+            onChange={(next) => setValue('dish_category', next, { shouldValidate: true })}
+          />
+          <SingleChipGroup
+            label="Course"
+            hint="Where it sits in the meal sequence"
+            options={COURSES}
+            value={course ?? ''}
+            allowClear
+            onChange={(next) => setValue('course', next, { shouldValidate: true })}
+          />
+          <SingleChipGroup
+            label="Primary cooking method"
+            hint="How it's prepared"
+            options={COOKING_METHODS}
+            value={primaryMethod}
+            error={errors.primary_method?.message}
+            onChange={(next) => setValue('primary_method', next, { shouldValidate: true })}
+          />
+          <SingleChipGroup
+            label="Secondary cooking method"
+            hint="How it's prepared"
+            options={COOKING_METHODS}
+            value={secondaryMethod ?? ''}
+            allowClear
+            onChange={(next) => setValue('secondary_method', next, { shouldValidate: true })}
+          />
+          <SingleChipGroup
+            label="Difficulty"
+            hint="How much time and skill it takes"
+            options={DIFFICULTIES}
+            value={difficulty}
+            onChange={(next) => setValue('difficulty', next as RecipeFormValues['difficulty'], { shouldValidate: true })}
+          />
         </section>
 
         <section className="recipe-form-section">
@@ -223,9 +219,9 @@ export default function RecipeFormPage({ mode }: RecipeFormPageProps) {
 
         <section className="recipe-form-section">
           <h2 className="recipe-form-section-title">Tagging</h2>
-          <ChipToggleGroup
+          <TasteTagPicker
             label="Taste tags"
-            hint="pick 1–4"
+            hint="pick 1–4 — how the dish tastes"
             options={TASTE_TAGS}
             value={tasteTags}
             max={4}
@@ -234,12 +230,14 @@ export default function RecipeFormPage({ mode }: RecipeFormPageProps) {
           />
           <ChipToggleGroup
             label="Dietary flags"
+            hint="Lifestyle & health restrictions"
             options={DIETARY_FLAGS}
             value={dietaryFlags}
             onChange={(next) => setValue('dietary_flags', next, { shouldValidate: true })}
           />
           <ChipToggleGroup
             label="Cuisine origin"
+            hint="Regional food culture"
             options={CUISINE_ORIGINS}
             value={cuisineOrigin}
             onChange={(next) => setValue('cuisine_origin', next, { shouldValidate: true })}

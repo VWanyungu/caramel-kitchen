@@ -4,6 +4,17 @@
 
 export const TASTE_TAGS = ['sour', 'sweet', 'tangy', 'spicy', 'savory', 'bitter', 'umami', 'mild'] as const
 
+export const TASTE_TAG_DESCRIPTIONS: Record<(typeof TASTE_TAGS)[number], string> = {
+  sour: 'Citrus, vinegar-based, fermented',
+  sweet: 'Honey, sugar, caramel, fruit',
+  tangy: 'Sour + sweet, tamarind, yoghurt',
+  spicy: 'Chilli, pepper, heat-forward',
+  savory: 'Salty, herb-forward, meaty',
+  bitter: 'Dark greens, coffee, cocoa',
+  umami: 'Deep, rich, broth-like',
+  mild: 'Gentle, soft, easy palate',
+}
+
 export const DIETARY_FLAGS = [
   'vegetarian',
   'vegan',
