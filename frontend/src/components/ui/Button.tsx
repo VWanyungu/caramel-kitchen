@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import './ui.css'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -6,16 +6,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
 }
 
-export default function Button({
-  variant = 'primary',
-  loading = false,
-  disabled,
-  children,
-  className,
-  ...rest
-}: ButtonProps) {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = 'primary', loading = false, disabled, children, className, ...rest },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       className={['btn', `btn-${variant}`, className].filter(Boolean).join(' ')}
       disabled={disabled || loading}
       aria-busy={loading}
@@ -24,4 +21,6 @@ export default function Button({
       {loading ? 'Please wait…' : children}
     </button>
   )
-}
+})
+
+export default Button

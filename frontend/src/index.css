@@ -56,3 +56,22 @@ p {
 button {
   font-family: inherit;
 }
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--caramel-deep);
+}
+
+.form-banner-error {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f7d9cf;
+  border: 1px solid #c8722e;
+  color: #7a2f10;
+  font-size: 14px;
+}

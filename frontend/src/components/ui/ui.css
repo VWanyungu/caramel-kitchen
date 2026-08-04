@@ -140,3 +140,50 @@
   border-color: #7c9a5b;
   color: #40521f;
 }
+
+.field-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.chip-hint {
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: normal;
+  color: var(--ink-soft);
+}
+
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: #fff;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--caramel);
+  color: var(--caramel-deep);
+}
+
+.chip.is-active {
+  background: var(--caramel);
+  border-color: var(--caramel);
+  color: var(--cream-text);
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

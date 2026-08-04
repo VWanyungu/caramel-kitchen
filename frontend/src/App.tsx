@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import UserHomePage from './pages/UserHomePage'
-import AdminDashboardPage from './pages/AdminDashboardPage'
+import RecipeTablePage from './pages/admin/RecipeTablePage'
+import RecipeFormPage from './pages/admin/RecipeFormPage'
+import AdminLayout from './components/admin/AdminLayout'
 import NotFoundPage from './pages/NotFoundPage'
 import RequireAuth from './routes/RequireAuth'
 import RequireAdmin from './routes/RequireAdmin'
@@ -33,7 +35,12 @@ function App() {
       <Route element={<RequireAuth />}>
         <Route path="/home" element={<UserHomePage />} />
         <Route element={<RequireAdmin />}>
-          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="recipes" replace />} />
+            <Route path="recipes" element={<RecipeTablePage />} />
+            <Route path="recipes/new" element={<RecipeFormPage mode="create" />} />
+            <Route path="recipes/:id/edit" element={<RecipeFormPage mode="edit" />} />
+          </Route>
         </Route>
       </Route>
 

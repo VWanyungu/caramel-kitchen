@@ -57,7 +57,7 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         {error && (
-          <p className="auth-form-error" role="alert">
+          <p className="form-banner-error" role="alert">
             {error}
           </p>
         )}

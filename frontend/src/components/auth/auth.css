@@ -105,15 +105,6 @@
   max-width: 400px;
 }
 
-.eyebrow {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--caramel-deep);
-}
-
 .auth-title {
   font-family: var(--display);
   font-size: 34px;
@@ -127,16 +118,6 @@
   margin: 0 0 32px;
   color: var(--ink-soft);
   line-height: 1.5;
-}
-
-.auth-form-error {
-  margin: 0 0 20px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #f7d9cf;
-  border: 1px solid #c8722e;
-  color: #7a2f10;
-  font-size: 14px;
 }
 
 .strength-row {
