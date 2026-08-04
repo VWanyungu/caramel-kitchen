@@ -9,6 +9,7 @@ interface SingleChipGroupProps {
   onChange: (next: string) => void
   allowClear?: boolean
   error?: string
+  counts?: Record<string, number>
 }
 
 export default function SingleChipGroup({
@@ -19,6 +20,7 @@ export default function SingleChipGroup({
   onChange,
   allowClear = false,
   error,
+  counts,
 }: SingleChipGroupProps) {
   function select(option: string) {
     if (allowClear && value === option) {
@@ -47,6 +49,7 @@ export default function SingleChipGroup({
               onClick={() => select(option)}
             >
               {humanize(option)}
+              {counts?.[option] !== undefined && <span className="chip-count"> ({counts[option]})</span>}
             </button>
           )
         })}

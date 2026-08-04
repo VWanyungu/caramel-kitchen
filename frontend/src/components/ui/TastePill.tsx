@@ -1,9 +1,11 @@
 import './ui.css'
 
+export type TasteTone = 'sour' | 'sweet' | 'tangy' | 'spicy' | 'savory' | 'bitter' | 'umami' | 'mild'
+
 interface TastePillProps {
   label: string
   active?: boolean
-  tone?: 'sweet' | 'spicy' | 'savory'
+  tone?: TasteTone
 }
 
 export default function TastePill({ label, active = false, tone = 'savory' }: TastePillProps) {

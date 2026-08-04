@@ -141,6 +141,36 @@
   color: #40521f;
 }
 
+.taste-pill.is-active.taste-sour {
+  background: #eef0c4;
+  border-color: #a8ad4a;
+  color: #55591c;
+}
+
+.taste-pill.is-active.taste-tangy {
+  background: #f8e2b0;
+  border-color: #d9a441;
+  color: #7a5411;
+}
+
+.taste-pill.is-active.taste-bitter {
+  background: #ded9d0;
+  border-color: #6b5744;
+  color: #3a2f22;
+}
+
+.taste-pill.is-active.taste-umami {
+  background: #ecdde0;
+  border-color: #8a5468;
+  color: #5c2f3c;
+}
+
+.taste-pill.is-active.taste-mild {
+  background: #f3ede2;
+  border-color: #cbbfa8;
+  color: #6b5744;
+}
+
 .field-textarea {
   resize: vertical;
   font-family: inherit;
@@ -186,4 +216,9 @@
 .chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.chip-count {
+  opacity: 0.7;
+  font-weight: 500;
 }

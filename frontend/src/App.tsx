@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import UserHomePage from './pages/UserHomePage'
+import AdvancedFiltersPage from './pages/AdvancedFiltersPage'
 import RecipeTablePage from './pages/admin/RecipeTablePage'
 import RecipeFormPage from './pages/admin/RecipeFormPage'
 import AdminLayout from './components/admin/AdminLayout'
@@ -34,6 +35,7 @@ function App() {
 
       <Route element={<RequireAuth />}>
         <Route path="/home" element={<UserHomePage />} />
+        <Route path="/filters" element={<AdvancedFiltersPage />} />
         <Route element={<RequireAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="recipes" replace />} />

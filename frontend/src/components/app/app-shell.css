@@ -43,24 +43,13 @@
 
 .shell-main {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
+  padding: 32px;
 }
 
-.shell-card {
-  max-width: 480px;
-}
-
-.shell-eyebrow {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--caramel-deep);
-  margin: 0 0 10px;
+@media (max-width: 720px) {
+  .shell-main {
+    padding: 20px;
+  }
 }
 
 .shell-title {
@@ -68,10 +57,4 @@
   font-size: 32px;
   margin: 0 0 12px;
   color: var(--ink);
-}
-
-.shell-subtitle {
-  color: var(--ink-soft);
-  line-height: 1.6;
-  margin: 0;
 }
