@@ -1,0 +1,142 @@
+.field {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.field-input {
+  font: inherit;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field-input:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.field-input[aria-invalid='true'] {
+  border-color: #b3401f;
+}
+
+.field-password {
+  position: relative;
+  display: flex;
+}
+
+.field-password .field-input {
+  flex: 1;
+  padding-right: 64px;
+}
+
+.field-reveal {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--caramel-deep);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.field-reveal:hover {
+  color: var(--caramel);
+}
+
+.field-error {
+  margin: 0;
+  font-size: 13px;
+  color: #b3401f;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 13px 20px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.btn-primary {
+  background: var(--caramel);
+  color: var(--cream-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--caramel-deep);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--caramel);
+  color: var(--caramel-deep);
+}
+
+.taste-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--hairline);
+  color: var(--ink-soft);
+  background: #fff;
+  transition: all 0.15s ease;
+}
+
+.taste-pill.is-active.taste-sweet {
+  background: #fbe3c7;
+  border-color: #e3a857;
+  color: #7a4a12;
+}
+
+.taste-pill.is-active.taste-spicy {
+  background: #f7d9cf;
+  border-color: #c8722e;
+  color: #8a3416;
+}
+
+.taste-pill.is-active.taste-savory {
+  background: #e3ead6;
+  border-color: #7c9a5b;
+  color: #40521f;
+}

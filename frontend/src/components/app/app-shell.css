@@ -1,0 +1,77 @@
+.shell {
+  min-height: 100svh;
+  background: var(--bg-cream);
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.shell-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shell-greeting {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.shell-logout {
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.shell-logout:hover {
+  border-color: var(--caramel);
+  color: var(--caramel-deep);
+}
+
+.shell-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.shell-card {
+  max-width: 480px;
+}
+
+.shell-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--caramel-deep);
+  margin: 0 0 10px;
+}
+
+.shell-title {
+  font-family: var(--display);
+  font-size: 32px;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.shell-subtitle {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0;
+}
