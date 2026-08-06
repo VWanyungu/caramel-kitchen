@@ -1,28 +1,29 @@
-import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import UserHomePage from './pages/UserHomePage'
-import AdvancedFiltersPage from './pages/AdvancedFiltersPage'
-import RecipeTablePage from './pages/admin/RecipeTablePage'
-import RecipeFormPage from './pages/admin/RecipeFormPage'
-import AdminLayout from './components/admin/AdminLayout'
-import NotFoundPage from './pages/NotFoundPage'
-import RequireAuth from './routes/RequireAuth'
-import RequireAdmin from './routes/RequireAdmin'
-import RedirectIfAuthed from './routes/RedirectIfAuthed'
-import RoleRedirect from './routes/RoleRedirect'
-import { loggedOut } from './store/authSlice'
-import { useAppDispatch } from './store/hooks'
+import { useEffect } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import UserHomePage from "./pages/UserHomePage";
+import AdvancedFiltersPage from "./pages/AdvancedFiltersPage";
+import RecipeTablePage from "./pages/admin/RecipeTablePage";
+import RecipeFormPage from "./pages/admin/RecipeFormPage";
+import AdminLayout from "./components/admin/AdminLayout";
+import NotFoundPage from "./pages/NotFoundPage";
+import RequireAuth from "./routes/RequireAuth";
+import RequireAdmin from "./routes/RequireAdmin";
+import RedirectIfAuthed from "./routes/RedirectIfAuthed";
+import RoleRedirect from "./routes/RoleRedirect";
+import { loggedOut } from "./store/authSlice";
+import { useAppDispatch } from "./store/hooks";
 
 function App() {
-  const dispatch = useAppDispatch()
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const onSessionExpired = () => dispatch(loggedOut())
-    window.addEventListener('caramel:session-expired', onSessionExpired)
-    return () => window.removeEventListener('caramel:session-expired', onSessionExpired)
-  }, [dispatch])
+    const onSessionExpired = () => dispatch(loggedOut());
+    window.addEventListener("caramel:session-expired", onSessionExpired);
+    return () =>
+      window.removeEventListener("caramel:session-expired", onSessionExpired);
+  }, [dispatch]);
 
   return (
     <Routes>
@@ -37,18 +38,24 @@ function App() {
         <Route path="/home" element={<UserHomePage />} />
         <Route path="/filters" element={<AdvancedFiltersPage />} />
         <Route element={<RequireAdmin />}>
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/creator" element={<AdminLayout />}>
             <Route index element={<Navigate to="recipes" replace />} />
             <Route path="recipes" element={<RecipeTablePage />} />
-            <Route path="recipes/new" element={<RecipeFormPage mode="create" />} />
-            <Route path="recipes/:id/edit" element={<RecipeFormPage mode="edit" />} />
+            <Route
+              path="recipes/new"
+              element={<RecipeFormPage mode="create" />}
+            />
+            <Route
+              path="recipes/:id/edit"
+              element={<RecipeFormPage mode="edit" />}
+            />
           </Route>
         </Route>
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

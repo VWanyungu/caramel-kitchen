@@ -4,7 +4,10 @@ import type { AuthTokens } from '../types/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1'
 
-export const api = axios.create({ baseURL })
+export const api = axios.create({
+  baseURL,
+  withCredentials: true,
+})
 
 api.interceptors.request.use((config) => {
   const token = getAccessToken()

@@ -1,34 +1,39 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { loggedOut } from '../../store/authSlice'
-import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import './admin-layout.css'
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
+import { loggedOut } from "../../store/authSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import "./admin-layout.css";
 
 const NAV_LINKS = [
-  { to: '/admin/recipes', label: 'Recipes' },
-  { to: '/admin/recipes/new', label: 'New Recipe' },
-]
+  { to: "/creator/recipes", label: "Recipes" },
+  { to: "/creator/recipes/new", label: "New Recipe" },
+];
 
 export default function AdminLayout() {
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const user = useAppSelector((state) => state.auth.user)
-  const dispatch = useAppDispatch()
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
 
   return (
     <div className="admin-shell">
       <header className="admin-navbar">
         <div className="admin-navbar-row">
-          <NavLink to="/admin/recipes" className="wordmark wordmark-on-dark">
+          <NavLink to="/creator/recipes" className="wordmark wordmark-on-dark">
             Caramel <em>Kitchen</em>
           </NavLink>
 
-          <nav className="admin-nav-links admin-nav-links-desktop" aria-label="Admin">
+          <nav
+            className="admin-nav-links admin-nav-links-desktop"
+            aria-label="Admin"
+          >
             {NAV_LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end
-                className={({ isActive }) => ['admin-nav-link', isActive ? 'is-active' : ''].join(' ')}
+                className={({ isActive }) =>
+                  ["admin-nav-link", isActive ? "is-active" : ""].join(" ")
+                }
               >
                 {link.label}
               </NavLink>
@@ -37,7 +42,11 @@ export default function AdminLayout() {
 
           <div className="admin-navbar-right admin-navbar-right-desktop">
             {user && <span className="admin-user">{user.name}</span>}
-            <button type="button" className="admin-logout" onClick={() => dispatch(loggedOut())}>
+            <button
+              type="button"
+              className="admin-logout"
+              onClick={() => dispatch(loggedOut())}
+            >
               Log out
             </button>
           </div>
@@ -47,7 +56,7 @@ export default function AdminLayout() {
             className="admin-menu-toggle"
             aria-expanded={drawerOpen}
             aria-controls="admin-drawer"
-            aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
+            aria-label={drawerOpen ? "Close menu" : "Open menu"}
             onClick={() => setDrawerOpen((open) => !open)}
           >
             <span className="admin-menu-bar" />
@@ -65,7 +74,9 @@ export default function AdminLayout() {
                   to={link.to}
                   end
                   onClick={() => setDrawerOpen(false)}
-                  className={({ isActive }) => ['admin-nav-link', isActive ? 'is-active' : ''].join(' ')}
+                  className={({ isActive }) =>
+                    ["admin-nav-link", isActive ? "is-active" : ""].join(" ")
+                  }
                 >
                   {link.label}
                 </NavLink>
@@ -77,8 +88,8 @@ export default function AdminLayout() {
                 type="button"
                 className="admin-logout"
                 onClick={() => {
-                  setDrawerOpen(false)
-                  dispatch(loggedOut())
+                  setDrawerOpen(false);
+                  dispatch(loggedOut());
                 }}
               >
                 Log out
@@ -92,5 +103,5 @@ export default function AdminLayout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }
