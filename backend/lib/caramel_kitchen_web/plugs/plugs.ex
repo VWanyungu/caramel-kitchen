@@ -128,40 +128,6 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
   end
 end
 
-defmodule CaramelKitchenWeb.Plugs.VerifyStripeSignature do
-  @moduledoc "Verifies Stripe-Signature webhook header using HMAC."
-  import Plug.Conn
-  import Phoenix.Controller, only: [json: 2]
-
-  def init(opts), do: opts
-
-  def call(conn, _opts) do
-    secret = Application.fetch_env!(:caramel_kitchen, :stripe_webhook_secret)
-    signature = get_req_header(conn, "stripe-signature") |> List.first()
-
-    with {:ok, body, conn} <- read_body(conn),
-         :ok <- verify_signature(body, signature, secret) do
-      conn
-      |> assign(:raw_body, body)
-      |> assign(:stripe_payload, Jason.decode!(body))
-    else
-      _ ->
-        conn
-        |> put_status(:bad_request)
-        |> json(%{error: "invalid_signature"})
-        |> halt()
-    end
-  end
-
-  defp verify_signature(body, signature, secret) when is_binary(signature) do
-    case Stripe.Webhook.construct_event(body, signature, secret) do
-      {:ok, _} -> :ok
-      _ -> :error
-    end
-  end
-
-  defp verify_signature(_, nil, _), do: :error
-end
 
 defmodule CaramelKitchenWeb.Plugs.TrackRequest do
   @moduledoc "Injects request metadata for telemetry."

@@ -77,30 +77,6 @@ defmodule CaramelKitchenWeb.HealthController do
   end
 end
 
-# ── Webhook Controller ─────────────────────────────────────────
-
-defmodule CaramelKitchenWeb.WebhookController do
-  use CaramelKitchenWeb, :controller
-  require Logger
-
-  alias CaramelKitchen.Monetisation
-
-  def stripe(conn, _params) do
-    payload = conn.assigns.stripe_payload
-
-    case Monetisation.handle_webhook(payload) do
-      :ok ->
-        json(conn, %{received: true})
-
-      {:ok, _} ->
-        json(conn, %{received: true})
-
-      {:error, reason} ->
-        Logger.error("Stripe webhook error: #{inspect(reason)}")
-        conn |> put_status(422) |> json(%{error: "webhook_processing_failed"})
-    end
-  end
-end
 
 # ── Shopping Controller ────────────────────────────────────────
 

@@ -35,6 +35,18 @@ if config_env() == :prod do
     secret_key_base: secret_key_base,
     server: true
 
+  prod_allowed_origins =
+    case System.get_env("ALLOWED_ORIGINS") do
+      nil -> [
+        "https://caramelkitchen.app",
+        "https://www.caramelkitchen.app",
+        "https://admin.caramelkitchen.app"
+      ]
+
+      origins ->
+        String.split(origins, ",") |> Enum.map(&String.trim/1)
+    end
+
   config :caramel_kitchen,
     redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
     redis_host: System.get_env("REDIS_HOST", "localhost"),
@@ -42,11 +54,7 @@ if config_env() == :prod do
     s3_bucket: System.get_env("S3_BUCKET", "caramel-kitchen-videos"),
     cdn_url: System.get_env("CDN_URL", "https://cdn.caramelkitchen.app"),
     app_url: "https://#{host}",
-    allowed_origins: [
-      "https://caramelkitchen.app",
-      "https://www.caramelkitchen.app",
-      "https://admin.caramelkitchen.app"
-    ],
+    allowed_origins: prod_allowed_origins,
     stripe_webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET"),
     stripe_premium_price_id: System.fetch_env!("STRIPE_PREMIUM_PRICE_ID"),
     stripe_creator_price_id: System.fetch_env!("STRIPE_CREATOR_PRICE_ID")
@@ -86,13 +94,19 @@ if config_env() == :dev do
     secret_key_base: "dev_secret_key_base_caramel_kitchen_at_least_64_chars_long_ok",
     watchers: []
 
+  dev_allowed_origins =
+    case System.get_env("ALLOWED_ORIGINS") do
+      nil -> ["http://localhost:3000", "http://localhost:4000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:4000", "http://127.0.0.1:5173"]
+      origins -> String.split(origins, ",") |> Enum.map(&String.trim/1)
+    end
+
   config :caramel_kitchen,
     redis_url: "redis://localhost:6379",
     openai_api_key: System.get_env("OPENAI_API_KEY", "sk-dev-placeholder"),
     s3_bucket: "caramel-kitchen-dev",
     cdn_url: "http://localhost:9000",
     app_url: "http://localhost:4000",
-    allowed_origins: ["http://localhost:3000", "http://localhost:4000"],
+    allowed_origins: dev_allowed_origins,
     dev_routes: true
 
   config :logger, level: :debug

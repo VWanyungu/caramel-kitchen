@@ -46,7 +46,7 @@ defmodule CaramelKitchenWeb.Endpoint do
   plug CORSPlug,
     origin: &CaramelKitchenWeb.Endpoint.allowed_origins/0,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    headers: ["Authorization", "Content-Type", "X-Request-ID", "X-Stripe-Signature"],
+    headers: ["*"],
     max_age: 86_400
 
   plug CaramelKitchenWeb.Router
