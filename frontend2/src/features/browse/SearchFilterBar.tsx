@@ -1,4 +1,10 @@
-import { ChefHat, CookingPot, Scroll, Search, SlidersHorizontal } from "lucide-react";
+import {
+  ChefHat,
+  CookingPot,
+  Scroll,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button, Dropdown } from "../../components/ui";
 
@@ -38,7 +44,7 @@ export function SearchFilterBar({
           variant="outline"
           size="md"
           icon={<CookingPot size={16} />}
-          className="!bg-gray-100 !border-transparent hover:!bg-gray-200"
+          className="bg-gray-100! border-transparent! hover:bg-gray-200!"
         >
           Recipes
         </Button>
@@ -79,7 +85,7 @@ export function SearchFilterBar({
           type="submit"
           variant="primary"
           size="sm"
-          className="!p-3 !rounded-full"
+          className="p-3! 1rounded-full!"
           aria-label="Search"
         >
           <Search size={18} />

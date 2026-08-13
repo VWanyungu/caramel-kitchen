@@ -1,22 +1,22 @@
-import { Outlet, Route, Routes } from 'react-router-dom'
-// import { Navbar } from './components/Navbar'
-import { ProtectedRoute } from './auth/ProtectedRoute'
-import { RoleRoute } from './auth/RoleRoute'
-import { BrowsePage } from './features/browse/BrowsePage'
-import { LoginPage } from './pages/LoginPage'
-import { SignupPage } from './pages/SignupPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { CreatorDashboardPage } from './pages/CreatorDashboardPage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { Navbar } from './features/browse/Navbar'
+import { Outlet, Route, Routes } from "react-router-dom";
+import { RoleRoute } from "./auth/RoleRoute";
+import { Navbar } from "./features/browse/Navbar";
+import { BrowsePage } from "./features/browse/BrowsePage";
+import { CreatorDashboardPage } from "./pages/CreatorDashboardPage";
+import { LoginPage } from "./pages/LoginPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { RecipeDetailPage } from "./pages/RecipeDetailPage";
+import { SignupPage } from "./pages/SignupPage";
+import { Footer } from "./components/Footer";
 
 function AppShell() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <Outlet />
+      <Footer />
     </div>
-  )
+  );
 }
 
 function App() {
@@ -27,14 +27,8 @@ function App() {
       <Route path="/signup" element={<SignupPage />} />
 
       <Route element={<AppShell />}>
-        {/* <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        /> */}
+        <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+        <Route path="/recipe" element={<RecipeDetailPage />} />
         <Route
           path="/creator"
           element={
@@ -47,7 +41,7 @@ function App() {
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

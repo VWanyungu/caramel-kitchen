@@ -1,34 +1,40 @@
-import { Plus, User } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../auth/useAuth'
-import { Button } from '../../components/ui'
+import { Plus, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../auth/useAuth";
+import { Button } from "../../components/ui";
 
 export function Navbar() {
-  const { status, user, isCreator, logout } = useAuth()
-  const navigate = useNavigate()
+  const { status, user, isCreator, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+    logout();
+    navigate("/");
+  };
 
-  const isAuthenticated = status === 'authenticated'
+  const isAuthenticated = status === "authenticated";
 
   return (
-    <header className="border-b border-taupe/20 bg-white">
+    <header className="border-b border-taupe/20 bg-white sticky top-0 z-1000">
       <nav className="mx-auto flex items-center justify-between px-8 lg:px-16 py-4">
-        <div className="flex items-end gap-8">
+        <div className="flex items-center gap-8">
           <Link to="/" className="font-display text-2xl italic text-ink">
             Caramel Kitchen
           </Link>
 
           {isAuthenticated && (
             <div className="flex items-center gap-6 font-sans text-sm font-semibold">
-              <Link to="/dashboard" className="text-gray-600 hover:text-ink transition-colors">
-                Dashboard
+              <Link
+                to="/"
+                className="text-gray-600 hover:text-ink transition-colors"
+              >
+                Home
               </Link>
               {isCreator && (
-                <Link to="/creator" className="text-gray-600 hover:text-ink transition-colors">
+                <Link
+                  to="/creator"
+                  className="text-gray-600 hover:text-ink transition-colors"
+                >
                   Creator Tools
                 </Link>
               )}
@@ -51,7 +57,10 @@ export function Navbar() {
                 Log out
               </Button>
 
-              <div className="relative flex items-center justify-center mx-1" title={`${user?.name} (Online)`}>
+              <div
+                className="relative flex items-center justify-center mx-1"
+                title={`${user?.name} (Online)`}
+              >
                 <div className="rounded-full ring-2 ring-emerald-500 ring-offset-2 ring-offset-white p-[1px] flex items-center justify-center">
                   {user?.avatar_url ? (
                     <img
@@ -86,5 +95,5 @@ export function Navbar() {
         </div>
       </nav>
     </header>
-  )
+  );
 }
