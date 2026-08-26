@@ -27,6 +27,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
     # Classification
     field :dish_category, :string
+    field :dish_categories, {:array, :string}, default: []
     field :course, :string
     field :primary_method, :string
     field :secondary_method, :string
@@ -65,7 +66,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :featured_until, :utc_datetime
 
     # tsvector, read-only
-    field :search_vector, :string
+    field :search_vector, :string, load_in_query: false
 
     timestamps(type: :utc_datetime)
   end
@@ -73,6 +74,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
   # ── Changesets ────────────────────────────────────────────────
 
   def creation_changeset(recipe, attrs) do
+    attrs = normalize_category_attrs(attrs)
+
     recipe
     |> cast(attrs, [
       :title,
@@ -81,6 +84,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :steps,
       :serving_size,
       :dish_category,
+      :dish_categories,
       :course,
       :primary_method,
       :secondary_method,
@@ -110,12 +114,15 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_ingredients()
     |> validate_steps()
     |> put_slug()
+    |> put_total_time()
     |> compute_taste_profile()
     |> foreign_key_constraint(:creator_id)
     |> unique_constraint(:slug)
   end
 
   def update_changeset(recipe, attrs) do
+    attrs = normalize_category_attrs(attrs)
+
     recipe
     |> cast(attrs, [
       :title,
@@ -124,6 +131,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :steps,
       :serving_size,
       :dish_category,
+      :dish_categories,
       :course,
       :primary_method,
       :secondary_method,
@@ -150,6 +158,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_inclusion(:status, @valid_statuses)
     |> validate_ingredients()
     |> validate_steps()
+    |> put_total_time()
     |> compute_taste_profile()
     |> unique_constraint(:slug)
   end
@@ -204,6 +213,12 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
   defp put_slug(cs), do: cs
 
+  defp put_total_time(cs) do
+    prep = get_field(cs, :prep_time_mins) || 0
+    cook = get_field(cs, :cook_time_mins) || 0
+    put_change(cs, :total_time_mins, prep + cook)
+  end
+
   # Map taste tags to a float vector for similarity search
   defp compute_taste_profile(%Ecto.Changeset{valid?: true} = cs) do
     tags = get_field(cs, :taste_tags) || []
@@ -253,4 +268,60 @@ defmodule CaramelKitchen.Recipes.Recipe do
     do: true
 
   defp valid_step?(_), do: false
+
+  defp normalize_category_attrs(attrs) when is_map(attrs) do
+    string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
+
+    dish_categories =
+      cond do
+        Map.has_key?(attrs, "dish_categories") -> Map.get(attrs, "dish_categories")
+        Map.has_key?(attrs, :dish_categories) -> Map.get(attrs, :dish_categories)
+        Map.has_key?(attrs, "categories") -> Map.get(attrs, "categories")
+        Map.has_key?(attrs, :categories) -> Map.get(attrs, :categories)
+        Map.has_key?(attrs, "dish_category") -> wrap_in_list(Map.get(attrs, "dish_category"))
+        Map.has_key?(attrs, :dish_category) -> wrap_in_list(Map.get(attrs, :dish_category))
+        Map.has_key?(attrs, "category") -> wrap_in_list(Map.get(attrs, "category"))
+        Map.has_key?(attrs, :category) -> wrap_in_list(Map.get(attrs, :category))
+        true -> nil
+      end
+
+    case dish_categories do
+      nil ->
+        attrs
+
+      cats when is_list(cats) ->
+        first_cat = List.first(cats)
+
+        if string_keys? do
+          attrs
+          |> Map.put("dish_categories", cats)
+          |> Map.put("dish_category", first_cat)
+        else
+          attrs
+          |> Map.put(:dish_categories, cats)
+          |> Map.put(:dish_category, first_cat)
+        end
+
+      cat when is_binary(cat) ->
+        if string_keys? do
+          attrs
+          |> Map.put("dish_categories", [cat])
+          |> Map.put("dish_category", cat)
+        else
+          attrs
+          |> Map.put(:dish_categories, [cat])
+          |> Map.put(:dish_category, cat)
+        end
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp normalize_category_attrs(attrs), do: attrs
+
+  defp wrap_in_list(nil), do: []
+  defp wrap_in_list(val) when is_list(val), do: val
+  defp wrap_in_list(val) when is_binary(val), do: [val]
+  defp wrap_in_list(_), do: []
 end

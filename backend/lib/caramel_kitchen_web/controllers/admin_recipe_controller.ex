@@ -80,13 +80,17 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
   end
 
   defp render_admin_recipe(recipe) do
+    categories = recipe.dish_categories || []
+
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       description: recipe.description,
       status: recipe.status,
-      dish_category: recipe.dish_category,
+      dish_category: recipe.dish_category || List.first(categories),
+      dish_categories: categories,
+      categories: categories,
       course: recipe.course,
       primary_method: recipe.primary_method,
       secondary_method: recipe.secondary_method,

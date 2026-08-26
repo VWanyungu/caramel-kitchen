@@ -1,5 +1,5 @@
 defmodule CaramelKitchenWeb.Plugs.RateLimitTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   alias CaramelKitchenWeb.Plugs.RateLimit
 

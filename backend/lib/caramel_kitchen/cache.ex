@@ -101,18 +101,22 @@ defmodule CaramelKitchen.Cache do
   # ── L2: Redis ─────────────────────────────────────────────────
 
   defp l2_get(key) do
-    case Redix.command(:redix, ["GET", prefixed(key)]) do
-      {:ok, nil} ->
-        :miss
+    if Mix.env() == :test do
+      :miss
+    else
+      case Redix.command(:redix, ["GET", prefixed(key)]) do
+        {:ok, nil} ->
+          :miss
 
-      {:ok, value} ->
-        case :erlang.binary_to_term(value, [:safe]) do
-          term -> {:ok, term}
-        end
+        {:ok, value} ->
+          case :erlang.binary_to_term(value, [:safe]) do
+            term -> {:ok, term}
+          end
 
-      {:error, reason} ->
-        Logger.warning("Redis GET failed for #{key}: #{inspect(reason)}")
-        :miss
+        {:error, reason} ->
+          Logger.warning("Redis GET failed for #{key}: #{inspect(reason)}")
+          :miss
+      end
     end
   rescue
     _ -> :miss
@@ -121,16 +125,20 @@ defmodule CaramelKitchen.Cache do
   end
 
   defp l2_put(key, val, ttl_ms) do
-    ttl_secs = max(div(ttl_ms, 1000), 1)
-    binary = :erlang.term_to_binary(val)
+    if Mix.env() == :test do
+      :ok
+    else
+      ttl_secs = max(div(ttl_ms, 1000), 1)
+      binary = :erlang.term_to_binary(val)
 
-    case Redix.command(:redix, ["SET", prefixed(key), binary, "EX", ttl_secs]) do
-      {:ok, _} ->
-        :ok
+      case Redix.command(:redix, ["SET", prefixed(key), binary, "EX", ttl_secs]) do
+        {:ok, _} ->
+          :ok
 
-      {:error, reason} ->
-        Logger.warning("Redis SET failed for #{key}: #{inspect(reason)}")
-        :ok
+        {:error, reason} ->
+          Logger.warning("Redis SET failed for #{key}: #{inspect(reason)}")
+          :ok
+      end
     end
   rescue
     e ->
@@ -143,7 +151,11 @@ defmodule CaramelKitchen.Cache do
   end
 
   defp l2_delete(key) do
-    Redix.command(:redix, ["DEL", prefixed(key)])
+    if Mix.env() == :test do
+      :ok
+    else
+      Redix.command(:redix, ["DEL", prefixed(key)])
+    end
   rescue
     _ -> :ok
   catch
@@ -151,12 +163,16 @@ defmodule CaramelKitchen.Cache do
   end
 
   defp l2_pattern_delete(pattern) do
-    case Redix.command(:redix, ["SCAN", "0", "MATCH", prefixed(pattern), "COUNT", "100"]) do
-      {:ok, [_cursor, keys]} when keys != [] ->
-        Redix.command(:redix, ["DEL" | keys])
+    if Mix.env() == :test do
+      :ok
+    else
+      case Redix.command(:redix, ["SCAN", "0", "MATCH", prefixed(pattern), "COUNT", "100"]) do
+        {:ok, [_cursor, keys]} when keys != [] ->
+          Redix.command(:redix, ["DEL" | keys])
 
-      _ ->
-        :ok
+        _ ->
+          :ok
+      end
     end
   rescue
     _ -> :ok

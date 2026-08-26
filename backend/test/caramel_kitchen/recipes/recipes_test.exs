@@ -1,5 +1,5 @@
 defmodule CaramelKitchen.RecipesTest do
-  use CaramelKitchen.DataCase, async: true
+  use CaramelKitchen.DataCase, async: false
 
   alias CaramelKitchen.Recipes
   alias CaramelKitchen.Recipes.Recipe
@@ -109,15 +109,25 @@ defmodule CaramelKitchen.RecipesTest do
   end
 
   describe "category_counts/0" do
-    test "returns counts per dish category" do
-      insert(:recipe, dish_category: "meat_dishes")
-      insert(:recipe, dish_category: "meat_dishes")
-      insert(:recipe, dish_category: "rice_dishes")
+    test "returns counts per dish category including multi-category recipes" do
+      insert(:recipe, dish_categories: ["meat_dishes", "rice_dishes"])
+      insert(:recipe, dish_categories: ["meat_dishes"])
+      insert(:recipe, dish_categories: ["rice_dishes"])
 
       counts = Recipes.category_counts()
       assert is_map(counts)
       assert Map.get(counts, "meat_dishes") >= 2
-      assert Map.get(counts, "rice_dishes") >= 1
+      assert Map.get(counts, "rice_dishes") >= 2
+    end
+  end
+
+  describe "list_by_category/2" do
+    test "returns recipes matching a category in multi-category list" do
+      insert(:recipe, status: "live", dish_categories: ["breakfast", "egg_dishes"])
+      insert(:recipe, status: "live", dish_categories: ["dinner", "meat_dishes"])
+
+      results = Recipes.list_by_category("breakfast")
+      assert Enum.all?(results, fn r -> "breakfast" in r.dish_categories end)
     end
   end
 
