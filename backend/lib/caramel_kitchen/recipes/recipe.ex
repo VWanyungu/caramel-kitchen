@@ -10,6 +10,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
                           high_protein low_sodium diabetic_friendly nut_free halal kosher
                           paleo whole30)
   @valid_statuses ~w(draft scheduled live archived)
+  @valid_meals ~w(breakfast lunch dinner snack brunch dessert beverage)
 
   schema "recipes" do
     belongs_to :creator, CaramelKitchen.Accounts.User
@@ -29,6 +30,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :dish_category, :string
     field :dish_categories, {:array, :string}, default: []
     field :course, :string
+    field :meal, :string
     field :primary_method, :string
     field :secondary_method, :string
     field :difficulty, :string, default: "beginner"
@@ -86,6 +88,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :dish_category,
       :dish_categories,
       :course,
+      :meal,
       :primary_method,
       :secondary_method,
       :difficulty,
@@ -111,6 +114,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_length(:taste_tags, min: 1, max: 4, message: "must have 1-4 taste tags")
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
+    |> validate_inclusion(:meal, @valid_meals)
     |> validate_ingredients()
     |> validate_steps()
     |> put_slug()
@@ -133,6 +137,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :dish_category,
       :dish_categories,
       :course,
+      :meal,
       :primary_method,
       :secondary_method,
       :difficulty,
@@ -156,6 +161,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_subset(:taste_tags, @valid_taste_tags)
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
+    |> validate_inclusion(:meal, @valid_meals)
     |> validate_ingredients()
     |> validate_steps()
     |> put_total_time()

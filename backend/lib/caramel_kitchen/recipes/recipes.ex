@@ -296,6 +296,9 @@ defmodule CaramelKitchen.Recipes do
       {:course, course}, q when is_binary(course) ->
         where(q, [r], r.course == ^course)
 
+      {:meal, meal}, q when is_binary(meal) ->
+        where(q, [r], r.meal == ^meal)
+
       {:category, cat}, q when is_binary(cat) ->
         if cat == "all" do
           q
