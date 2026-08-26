@@ -105,7 +105,8 @@ defmodule CaramelKitchenWeb.RecipeController do
     }
   )
 
-  def search(conn, %{"q" => q} = params) do
+  def search(conn, params) do
+    q = params["q"] || ""
     filters = parse_filters(params)
     limit = parse_int(params["limit"], 20)
     offset = parse_int(params["offset"], 0)
@@ -120,8 +121,6 @@ defmodule CaramelKitchenWeb.RecipeController do
       meta: %{query: q, limit: limit, offset: offset}
     })
   end
-
-  def search(conn, _), do: json(conn, %{data: [], meta: %{query: ""}})
 
   operation(:show,
     summary: "Get a recipe",
@@ -230,6 +229,7 @@ defmodule CaramelKitchenWeb.RecipeController do
       dish_categories: categories,
       categories: categories,
       course: recipe.course,
+      meal: recipe.meal,
       primary_method: recipe.primary_method,
       difficulty: recipe.difficulty,
       total_time_mins: recipe.total_time_mins,
@@ -306,6 +306,7 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:difficulty, params["difficulty"])
     |> maybe_add(:cuisine, parse_list(params["cuisine"]))
     |> maybe_add(:course, params["course"])
+    |> maybe_add(:meal, params["meal"])
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])

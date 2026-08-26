@@ -180,6 +180,18 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       assert length(body["data"]) == 1
       assert hd(body["data"])["title"] == "Spicy Vegan Taco"
     end
+
+    test "filters recipes by meal", %{conn: conn} do
+      insert(:recipe, title: "Pancakes", meal: "breakfast", status: "live")
+      insert(:recipe, title: "Steak", meal: "dinner", status: "live")
+
+      conn = get(conn, "/api/v1/recipes/search?meal=breakfast")
+      body = json_response(conn, 200)
+
+      assert length(body["data"]) == 1
+      assert hd(body["data"])["title"] == "Pancakes"
+      assert hd(body["data"])["meal"] == "breakfast"
+    end
   end
 
   describe "GET /api/v1/recipes/:id" do
