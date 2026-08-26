@@ -1,5 +1,5 @@
 defmodule CaramelKitchenWeb.AuthControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "POST /api/v1/auth/register" do
     test "registers user and returns tokens", %{conn: conn} do
@@ -98,7 +98,7 @@ defmodule CaramelKitchenWeb.AuthControllerTest do
 end
 
 defmodule CaramelKitchenWeb.TasteControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "POST /api/v1/taste/survey (authenticated)" do
     setup %{conn: conn} do
@@ -135,7 +135,7 @@ defmodule CaramelKitchenWeb.TasteControllerTest do
 end
 
 defmodule CaramelKitchenWeb.MealPlanControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "POST /api/v1/meal-plans/generate (premium)" do
     setup %{conn: conn} do

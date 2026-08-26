@@ -219,12 +219,16 @@ defmodule CaramelKitchenWeb.RecipeController do
   # ── Rendering ─────────────────────────────────────────────────
 
   defp render_recipe_card(recipe, meta) do
+    categories = recipe.dish_categories || []
+
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       thumbnail_url: recipe.thumbnail_url,
-      dish_category: recipe.dish_category,
+      dish_category: recipe.dish_category || List.first(categories),
+      dish_categories: categories,
+      categories: categories,
       course: recipe.course,
       primary_method: recipe.primary_method,
       difficulty: recipe.difficulty,
@@ -305,6 +309,7 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])
+    |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
   end
 
   defp maybe_add(map, _key, nil), do: map

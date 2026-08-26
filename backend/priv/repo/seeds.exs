@@ -80,7 +80,7 @@ defmodule CaramelKitchen.Seeds do
           },
           %{order: 8, instruction: "Remove foil, fluff rice gently and serve hot."}
         ],
-        dish_category: "rice_dishes",
+        dish_categories: ["rice_dishes", "main"],
         course: "main",
         primary_method: "boiling",
         difficulty: "intermediate",
@@ -136,7 +136,7 @@ defmodule CaramelKitchen.Seeds do
               "Crumble feta over the top. Garnish with fresh coriander. Serve immediately."
           }
         ],
-        dish_category: "egg_dishes",
+        dish_categories: ["egg_dishes", "breakfast"],
         course: "main",
         primary_method: "sauteing",
         difficulty: "beginner",
@@ -167,8 +167,8 @@ defmodule CaramelKitchen.Seeds do
             %{order: 2, instruction: "Cook them using the primary method."},
             %{order: 3, instruction: "Serve hot and enjoy."}
           ],
-          dish_category:
-            Enum.random([
+          dish_categories:
+            Enum.take_random([
               "rice_dishes",
               "egg_dishes",
               "soups_stews",
@@ -180,7 +180,7 @@ defmodule CaramelKitchen.Seeds do
               "breakfast",
               "snacks",
               "vegetarian"
-            ]),
+            ], Enum.random(1..3)),
           course:
             Enum.random([
               "main",
