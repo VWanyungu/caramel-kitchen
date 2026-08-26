@@ -11,6 +11,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
                           paleo whole30)
   @valid_statuses ~w(draft scheduled live archived)
   @valid_meals ~w(breakfast lunch dinner snack brunch dessert beverage)
+  @valid_courses ~w(breakfast lunch dinner main side snack dessert desert beverage brunch appetizer)
+  @valid_cooking_methods ~w(roasting boiling frying baking grilling steaming sauteing braising slow_cooking pressure_cooking smoking air_frying raw no_cook) ++ ["slow cooking", "pressure cooking", "air frying"]
 
   schema "recipes" do
     belongs_to :creator, CaramelKitchen.Accounts.User
@@ -115,6 +117,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
     |> validate_inclusion(:meal, @valid_meals)
+    |> validate_inclusion(:course, @valid_courses)
+    |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
     |> put_slug()
@@ -162,6 +166,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
     |> validate_inclusion(:meal, @valid_meals)
+    |> validate_inclusion(:course, @valid_courses)
+    |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
     |> put_total_time()

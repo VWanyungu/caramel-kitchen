@@ -42,6 +42,25 @@ defmodule CaramelKitchen.RecipesTest do
       assert not is_nil(recipe.taste_profile)
     end
 
+    test "creates recipe with updated course, cooking_method, and taste_tags (issue #52)", %{creator: creator} do
+      attrs = %{
+        "title" => "Air Fried Wings",
+        "description" => "Crispy air fried chicken wings",
+        "ingredients" => [%{"name" => "chicken wings", "quantity" => 500, "unit" => "g"}],
+        "steps" => [%{"order" => 1, "instruction" => "Air fry at 200C"}],
+        "course" => "appetizer",
+        "primary_method" => "air_frying",
+        "taste_tags" => ["savory", "tangy", "umami"],
+        "meal" => "snack"
+      }
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert recipe.course == "appetizer"
+      assert recipe.primary_method == "air_frying"
+      assert recipe.taste_tags == ["savory", "tangy", "umami"]
+      assert recipe.meal == "snack"
+    end
+
     test "rejects recipe without ingredients", %{creator: creator} do
       attrs = %{
         "title" => "Empty Recipe",
