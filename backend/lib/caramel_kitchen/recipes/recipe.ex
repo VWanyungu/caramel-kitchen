@@ -281,6 +281,13 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
   defp valid_step?(_), do: false
 
+  @valid_legacy_categories ~w(egg_dishes rice_dishes soups_stews meat_dishes fish_seafood salads pasta_noodles breakfast baked_goods drinks_juices snacks vegetarian)
+
+  defp map_legacy_category(cat) when cat in @valid_legacy_categories, do: cat
+  defp map_legacy_category(cat) when cat in ~w(chicken_dishes beef_dishes), do: "meat_dishes"
+  defp map_legacy_category(cat) when cat in ~w(vegetable_dishes legume_dishes), do: "vegetarian"
+  defp map_legacy_category(_), do: nil
+
   defp normalize_category_attrs(attrs) when is_map(attrs) do
     string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
 
@@ -303,26 +310,29 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
       cats when is_list(cats) ->
         first_cat = List.first(cats)
+        legacy_cat = map_legacy_category(first_cat)
 
         if string_keys? do
           attrs
           |> Map.put("dish_categories", cats)
-          |> Map.put("dish_category", first_cat)
+          |> Map.put("dish_category", legacy_cat)
         else
           attrs
           |> Map.put(:dish_categories, cats)
-          |> Map.put(:dish_category, first_cat)
+          |> Map.put(:dish_category, legacy_cat)
         end
 
       cat when is_binary(cat) ->
+        legacy_cat = map_legacy_category(cat)
+
         if string_keys? do
           attrs
           |> Map.put("dish_categories", [cat])
-          |> Map.put("dish_category", cat)
+          |> Map.put("dish_category", legacy_cat)
         else
           attrs
           |> Map.put(:dish_categories, [cat])
-          |> Map.put(:dish_category, cat)
+          |> Map.put(:dish_category, legacy_cat)
         end
 
       _ ->
