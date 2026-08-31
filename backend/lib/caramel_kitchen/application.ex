@@ -30,12 +30,6 @@ defmodule CaramelKitchen.Application do
          ets_options: [:named_table, read_concurrency: true, write_concurrency: true]
        ]},
 
-      # 6. Redis connection pool (L2 cache + rate limiter)
-      {Redix, {redis_url(), [name: :redix, socket_opts: [keepalive: true]]}},
-
-      # 7. Rate limiter (Hammer backed by Redis)
-      {Hammer.Backend.Redis, [expiry_ms: 60_000 * 60 * 2, redix_config: [host: redis_host()]]},
-
       # 8. Background jobs (Oban)
       {Oban, Application.fetch_env!(:caramel_kitchen, Oban)},
 
@@ -91,8 +85,7 @@ defmodule CaramelKitchen.Application do
     )
   end
 
-  defp redis_url, do: Application.get_env(:caramel_kitchen, :redis_url, "redis://localhost:6379")
-  defp redis_host, do: Application.get_env(:caramel_kitchen, :redis_host, "localhost")
+
 end
 
 defmodule CaramelKitchen.ObanLogger do

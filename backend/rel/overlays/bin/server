@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+cd -P -- "$(dirname -- "$(command -v -- "$0")")"
+PHX_SERVER=true exec ./caramel_kitchen start
