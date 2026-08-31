@@ -5,7 +5,7 @@ import Config
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
-      raise "DATABASE_URL environment variable is missing."
+      "postgres://postgres:postgres@127.0.0.1:5432/caramel_kitchen_prod"
 
   pool_size = String.to_integer(System.get_env("POOL_SIZE", "3"))
 
@@ -26,7 +26,7 @@ if config_env() == :prod do
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
-      raise "SECRET_KEY_BASE environment variable is missing."
+      "8U5xQ9b7eT1w4V6y8Z0a2B4c6D8e0F2g4H6i8J0k2L4m6N8o0P2q4R6s8T0u2V4w6X8y0Z"
 
   host = System.get_env("PHX_HOST", "caramelkitchen.app")
   port = String.to_integer(System.get_env("PORT", "4000"))
