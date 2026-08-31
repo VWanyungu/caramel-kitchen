@@ -46,6 +46,6 @@ erl_crash.dump
 /log/
 
 # ── Release ───────────────────────────────────────────────────
-/rel/
+/_build/rel/
 
 .env.example

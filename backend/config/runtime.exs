@@ -9,12 +9,14 @@ if config_env() == :prod do
 
   pool_size = String.to_integer(System.get_env("POOL_SIZE", "10"))
 
+  socket_options = if System.get_env("ECTO_IPV6") == "true", do: [:inet6], else: []
+
   config :caramel_kitchen, CaramelKitchen.Repo,
     url: database_url,
     pool_size: pool_size,
     ssl: true,
     ssl_opts: [verify: :verify_none],
-    socket_options: [:inet6],
+    socket_options: socket_options,
     queue_target: 5_000,
     queue_interval: 1_000,
     migration_timestamps: [type: :utc_datetime],
@@ -67,8 +69,8 @@ if config_env() == :prod do
     webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET")
 
   config :ex_aws,
-    access_key_id: System.fetch_env!("AWS_ACCESS_KEY_ID"),
-    secret_access_key: System.fetch_env!("AWS_SECRET_ACCESS_KEY"),
+    access_key_id: System.get_env("AWS_ACCESS_KEY_ID", "dummy_key"),
+    secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY", "dummy_secret"),
     region: System.get_env("AWS_REGION", "eu-west-1")
 
   config :sentry,
