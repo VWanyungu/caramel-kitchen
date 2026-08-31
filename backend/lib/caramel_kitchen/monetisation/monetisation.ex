@@ -192,10 +192,10 @@ defmodule CaramelKitchen.Monetisation do
   end
 
   defp get_price_id("premium"),
-    do: Application.fetch_env!(:caramel_kitchen, :stripe_premium_price_id)
+    do: Application.get_env(:caramel_kitchen, :stripe_premium_price_id, "price_placeholder")
 
   defp get_price_id("creator_pro"),
-    do: Application.fetch_env!(:caramel_kitchen, :stripe_creator_price_id)
+    do: Application.get_env(:caramel_kitchen, :stripe_creator_price_id, "price_placeholder")
 
   defp unix_to_datetime(unix) when is_integer(unix) do
     unix |> DateTime.from_unix!() |> DateTime.truncate(:second)
