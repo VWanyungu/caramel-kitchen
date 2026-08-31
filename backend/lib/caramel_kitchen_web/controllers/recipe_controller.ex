@@ -246,6 +246,7 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp render_recipe_detail(recipe, user) do
     base = render_recipe_card(recipe, %{})
+    yt = CaramelKitchen.Recipes.Recipe.parse_youtube_video(recipe.video_url || "")
 
     Map.merge(base, %{
       description: recipe.description,
@@ -254,7 +255,10 @@ defmodule CaramelKitchenWeb.RecipeController do
       serving_size: recipe.serving_size,
       prep_time_mins: recipe.prep_time_mins,
       cook_time_mins: recipe.cook_time_mins,
-      video_url: recipe.video_url,
+      video_url: recipe.video_url || yt.video_url,
+      video_embed_url: yt.video_embed_url,
+      video_iframe_html: yt.iframe_html,
+      youtube_video_id: yt.youtube_id,
       video_duration_secs: recipe.video_duration_secs,
       secondary_method: recipe.secondary_method,
       allergens: recipe.allergens,

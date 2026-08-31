@@ -375,3 +375,143 @@ eventSource.onmessage = function(event) {
   }
 }
 ```
+---
+
+## 7. Admin & SuperAdmin Portal
+
+All administrative endpoints require a Bearer token belonging to a user with `role: "admin"` (SuperAdmin). Requests from standard users (`role: "user"`) will return an HTTP `403 Forbidden` error.
+
+### 7.1 Recipe Management & CMS (`/api/v1/admin/recipes`)
+
+#### List Creator / Admin Recipes
+**GET** `/api/v1/admin/recipes`  
+Query Parameters:
+- `status` *(optional)*: `"draft"` | `"scheduled"` | `"live"` | `"archived"`
+
+#### Create Recipe
+**POST** `/api/v1/admin/recipes`  
+Request Body: Full recipe payload including title, description, `dish_categories`, course, meal, primary_method, difficulty, prep_time_mins, cook_time_mins, serving_size, taste_tags, dietary_flags, allergens, ingredients, and steps.
+
+#### Get Admin Recipe Detail
+**GET** `/api/v1/admin/recipes/:id`
+
+#### Update Recipe
+**PUT** `/api/v1/admin/recipes/:id`  
+Request Body: JSON map of recipe fields to update.
+
+#### Publish Recipe
+**POST** `/api/v1/admin/recipes/:id/publish`  
+Enforces pre-flight checks: recipe must have a `video_url` attached and at least one entry in `taste_tags`.
+
+#### Archive Recipe
+**POST** `/api/v1/admin/recipes/:id/archive`  
+Changes recipe status to `"archived"` and triggers media storage cleanup for `video_key`.
+
+#### Delete Recipe
+**DELETE** `/api/v1/admin/recipes/:id`
+
+---
+
+### 7.2 Video Integration & Processing Pipeline (`/api/v1/admin/videos`)
+
+#### YouTube Video & Embed Support
+Recipes support both direct YouTube URLs (watch links, `youtu.be` links, `embed` URLs) and full HTML `<iframe>` snippets.
+When creating or updating a recipe (`video_url`), you can pass a YouTube `<iframe>` embed string:
+```html
+<iframe width="1337" height="752" src="https://www.youtube.com/embed/t4NSPbreDgE" title="Recipe Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+```
+The backend automatically normalizes the input and provides the following structured fields in recipe responses:
+- `video_url`: `"https://www.youtube.com/watch?v=t4NSPbreDgE"` (Direct watch link to open YouTube app/browser)
+- `video_embed_url`: `"https://www.youtube.com/embed/t4NSPbreDgE"` (URL for in-app webview player)
+- `video_iframe_html`: HTML `<iframe>` snippet ready for in-app webview embedding
+- `youtube_video_id`: `"t4NSPbreDgE"`
+
+#### Presigned Upload URL (Direct S3 Storage)
+**POST** `/api/v1/admin/videos/presigned-url`  
+Request Body:
+```json
+{
+  "filename": "recipe_video.mp4",
+  "content_type": "video/mp4",
+  "size_bytes": 104857600
+}
+```
+*Note: Maximum allowed file size is 500MB. Allowed content types: `video/mp4`, `video/quicktime`, `video/webm`, `video/mpeg`.*
+
+#### Video Processed Webhook
+**POST** `/api/v1/admin/videos/processed`  
+Called by media transcoding worker upon completion.  
+Request Body:
+```json
+{
+  "recipe_id": "uuid",
+  "video_key": "s3-key",
+  "duration_secs": 120,
+  "thumbnail_key": "s3-thumb-key"
+}
+```
+
+---
+
+### 7.3 Creator & Platform Analytics (`/api/v1/admin/analytics`)
+
+#### Overview Analytics Dashboard
+**GET** `/api/v1/admin/analytics`  
+Query Parameters:
+- `period` *(optional)*: `"last_7_days"` | `"last_30_days"` (default: `"last_30_days"`)
+
+#### Recipe Performance
+**GET** `/api/v1/admin/analytics/recipes`  
+Query Parameters:
+- `limit` *(optional)*: integer (default: `10`)
+- `period` *(optional)*: `"last_7_days"` | `"last_30_days"` (default: `"last_30_days"`)
+
+#### Taste Distribution Graph Data
+**GET** `/api/v1/admin/analytics/taste`
+
+#### AI Query Statistics
+**GET** `/api/v1/admin/analytics/ai`  
+Query Parameters:
+- `period` *(optional)*: `"last_7_days"` | `"last_30_days"` (default: `"last_7_days"`)
+
+---
+
+### 7.4 SuperAdmin User Administration (`/api/v1/superadmin/users`)
+
+#### List Users
+**GET** `/api/v1/superadmin/users`  
+Query Parameters:
+- `role` *(optional)*: `"user"` | `"admin"`
+- `tier` *(optional)*: `"free"` | `"premium"` | `"creator_pro"`
+- `active` *(optional)*: `"true"` | `"false"`
+
+#### Update User Role
+**PUT** `/api/v1/superadmin/users/:id/role`  
+Request Body:
+```json
+{
+  "role": "admin"
+}
+```
+
+#### Deactivate User Account
+**DELETE** `/api/v1/superadmin/users/:id`  
+Request Body:
+```json
+{
+  "reason": "Violation of terms"
+}
+```
+
+---
+
+### 7.5 System Health & Telemetry (`/api/v1/superadmin/system/stats`)
+
+#### System Telemetry Stats
+**GET** `/api/v1/superadmin/system/stats`  
+Returns live server telemetry including:
+- `users`: User growth statistics
+- `taste_dist`: Global taste distribution vector
+- `oban_queues`: Status of background queues (`default`, `content`, `email`, `analytics`, `maintenance`, `ai`)
+- `cache_stats`: Redis hit/miss rates, connected clients, used memory
+- `node_info`: Erlang node name, Elixir/Erlang runtime version, server uptime, process count, memory usage in MB

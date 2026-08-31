@@ -25,7 +25,7 @@ defmodule CaramelKitchen.Seeds do
 
     Repo.update!(
       Ecto.Changeset.change(creator, %{
-        role: "creator",
+        role: "admin",
         subscription_tier: "creator_pro",
         email_verified: true
       })

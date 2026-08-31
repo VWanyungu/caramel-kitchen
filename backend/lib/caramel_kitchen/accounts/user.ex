@@ -135,7 +135,7 @@ defmodule CaramelKitchen.Accounts.User do
   def active?(_), do: false
 
   def premium?(%__MODULE__{subscription_tier: tier}), do: tier in ~w(premium creator_pro)
-  def creator?(%__MODULE__{role: role}), do: role in ~w(creator admin)
+  def creator?(user), do: admin?(user)
   def admin?(%__MODULE__{role: "admin"}), do: true
   def admin?(_), do: false
 
