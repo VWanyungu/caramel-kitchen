@@ -12,12 +12,14 @@ defmodule CaramelKitchen.Emails do
 
   @from_email "hello@caramelkitchen.app"
   @from_name "Caramel Kitchen"
-  @app_url Application.compile_env(:caramel_kitchen, :app_url, "https://caramelkitchen.app")
+  defp app_url do
+    Application.get_env(:caramel_kitchen, :app_url, "https://caramelkitchen.app")
+  end
 
   # ── Email Verification ────────────────────────────────────────
 
   def verify_email(user, token) do
-    link = "#{@app_url}/auth/verify-email/#{token}"
+    link = "#{app_url()}/auth/verify-email/#{token}"
 
     new()
     |> to({user.name, user.email})
@@ -60,7 +62,7 @@ defmodule CaramelKitchen.Emails do
   # ── Password Reset ────────────────────────────────────────────
 
   def password_reset(user, token) do
-    link = "#{@app_url}/auth/reset-password/#{token}"
+    link = "#{app_url()}/auth/reset-password/#{token}"
 
     new()
     |> to({user.name, user.email})
@@ -107,7 +109,7 @@ defmodule CaramelKitchen.Emails do
         a fully personalised recipe feed just for you.
       </p>
 
-      <a href="#{@app_url}/taste/survey"
+      <a href="#{app_url()}/taste/survey"
          style="display:inline-block;background:#C97B2F;color:#fff;padding:14px 28px;
                 border-radius:8px;text-decoration:none;font-weight:bold;margin:24px 0">
         Take My Taste Survey →
@@ -125,7 +127,7 @@ defmodule CaramelKitchen.Emails do
     </div>
     """)
     |> text_body(
-      "Your Caramel Kitchen is ready! Start your taste survey: #{@app_url}/taste/survey"
+      "Your Caramel Kitchen is ready! Start your taste survey: #{app_url()}/taste/survey"
     )
   end
 
@@ -146,14 +148,14 @@ defmodule CaramelKitchen.Emails do
         Target: <strong>#{plan.calorie_target} kcal/day</strong>.
       </p>
 
-      <a href="#{@app_url}/planner"
+      <a href="#{app_url()}/planner"
          style="display:inline-block;background:#C97B2F;color:#fff;padding:14px 28px;
                 border-radius:8px;text-decoration:none;font-weight:bold;margin:24px 0">
         View My Plan →
       </a>
     </div>
     """)
-    |> text_body("Your #{plan.name} starts today! View it: #{@app_url}/planner")
+    |> text_body("Your #{plan.name} starts today! View it: #{app_url()}/planner")
   end
 
   # ── Subscription Confirmation ─────────────────────────────────
@@ -185,14 +187,14 @@ defmodule CaramelKitchen.Emails do
         </ul>
       </div>
 
-      <a href="#{@app_url}/planner/generate"
+      <a href="#{app_url()}/planner/generate"
          style="display:inline-block;background:#C97B2F;color:#fff;padding:14px 28px;
                 border-radius:8px;text-decoration:none;font-weight:bold">
         Generate My First Meal Plan →
       </a>
     </div>
     """)
-    |> text_body("Welcome to #{plan_name}, #{user.name}! Your features are active: #{@app_url}")
+    |> text_body("Welcome to #{plan_name}, #{user.name}! Your features are active: #{app_url()}")
   end
 
   # ── Payment Failed ────────────────────────────────────────────
@@ -213,7 +215,7 @@ defmodule CaramelKitchen.Emails do
         before your Premium access is paused.
       </p>
 
-      <a href="#{@app_url}/subscription/portal"
+      <a href="#{app_url()}/subscription/portal"
          style="display:inline-block;background:#C62828;color:#fff;padding:14px 28px;
                 border-radius:8px;text-decoration:none;font-weight:bold;margin:24px 0">
         Update Payment Details →
@@ -221,7 +223,7 @@ defmodule CaramelKitchen.Emails do
     </div>
     """)
     |> text_body(
-      "Payment failed for #{user.name}. Update details: #{@app_url}/subscription/portal"
+      "Payment failed for #{user.name}. Update details: #{app_url()}/subscription/portal"
     )
   end
 end
