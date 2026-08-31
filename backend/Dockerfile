@@ -48,6 +48,7 @@ RUN apt-get update -y && apt-get install -y \
   libncurses5 \
   locales \
   ca-certificates \
+  curl \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen

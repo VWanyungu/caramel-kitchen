@@ -52,21 +52,21 @@ if config_env() == :prod do
   config :caramel_kitchen,
     redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
     redis_host: System.get_env("REDIS_HOST", "localhost"),
-    openai_api_key: System.fetch_env!("OPENAI_API_KEY"),
+    openai_api_key: System.get_env("OPENAI_API_KEY", "sk-placeholder"),
     s3_bucket: System.get_env("S3_BUCKET", "caramel-kitchen-videos"),
     cdn_url: System.get_env("CDN_URL", "https://cdn.caramelkitchen.app"),
     app_url: "https://#{host}",
     allowed_origins: prod_allowed_origins,
-    stripe_webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET"),
-    stripe_premium_price_id: System.fetch_env!("STRIPE_PREMIUM_PRICE_ID"),
-    stripe_creator_price_id: System.fetch_env!("STRIPE_CREATOR_PRICE_ID")
+    stripe_webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET", "whsec_placeholder"),
+    stripe_premium_price_id: System.get_env("STRIPE_PREMIUM_PRICE_ID", "price_placeholder"),
+    stripe_creator_price_id: System.get_env("STRIPE_CREATOR_PRICE_ID", "price_placeholder")
 
   config :caramel_kitchen, CaramelKitchen.Auth.Guardian,
-    secret_key: System.fetch_env!("GUARDIAN_SECRET_KEY")
+    secret_key: System.get_env("GUARDIAN_SECRET_KEY") || secret_key_base
 
   config :stripity_stripe,
-    api_key: System.fetch_env!("STRIPE_SECRET_KEY"),
-    webhook_secret: System.fetch_env!("STRIPE_WEBHOOK_SECRET")
+    api_key: System.get_env("STRIPE_SECRET_KEY", "sk_test_placeholder"),
+    webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET", "whsec_placeholder")
 
   config :ex_aws,
     access_key_id: System.get_env("AWS_ACCESS_KEY_ID", "dummy_key"),
