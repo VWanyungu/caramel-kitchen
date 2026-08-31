@@ -59,11 +59,11 @@ ENV LC_ALL en_US.UTF-8
 
 WORKDIR /app
 
-RUN chown nobody /app
-
 ENV MIX_ENV="prod"
+ENV RELEASE_DISTRIBUTION="none"
 
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/caramel_kitchen ./
+COPY --from=builder /app/_build/${MIX_ENV}/rel/caramel_kitchen ./
+RUN chown -R nobody:nobody /app
 
 USER nobody
 
