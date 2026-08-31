@@ -63,7 +63,7 @@ ENV MIX_ENV="prod"
 ENV RELEASE_DISTRIBUTION="none"
 
 COPY --from=builder /app/_build/${MIX_ENV}/rel/caramel_kitchen ./
-RUN chown -R nobody:nobody /app
+RUN chown -R nobody:nogroup /app
 
 USER nobody
 
