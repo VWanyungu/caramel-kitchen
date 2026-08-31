@@ -99,6 +99,21 @@ defmodule CaramelKitchen.RecipesTest do
       assert recipe1.slug != recipe2.slug
       assert String.starts_with?(recipe1.slug, "pepper-soup")
     end
+
+    test "parses YouTube iframe snippet and normalizes video_url", %{creator: creator} do
+      iframe_input =
+        ~s(<iframe width="1337" height="752" src="https://www.youtube.com/embed/t4NSPbreDgE" title="Top Generals" frameborder="0" allowfullscreen></iframe>)
+
+      attrs = Map.merge(base_recipe_attrs(), %{"video_url" => iframe_input})
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert recipe.video_url == "https://www.youtube.com/watch?v=t4NSPbreDgE"
+
+      parsed = Recipe.parse_youtube_video(recipe.video_url)
+      assert parsed.youtube_id == "t4NSPbreDgE"
+      assert parsed.video_embed_url == "https://www.youtube.com/embed/t4NSPbreDgE"
+      assert String.contains?(parsed.iframe_html, "https://www.youtube.com/embed/t4NSPbreDgE")
+    end
   end
 
   describe "update_recipe/2" do

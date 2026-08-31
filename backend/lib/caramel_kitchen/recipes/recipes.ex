@@ -350,7 +350,7 @@ defmodule CaramelKitchen.Recipes do
   defp sanitise_search_query(q) do
     q
     |> String.trim()
-    |> String.replace(~r/[^\w\s-]/, "")
+    |> String.replace(Regex.compile!("[^\\w\\s-]"), "")
     |> String.slice(0, 200)
   end
 

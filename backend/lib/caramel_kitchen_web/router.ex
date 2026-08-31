@@ -175,9 +175,9 @@ defmodule CaramelKitchenWeb.Router do
     delete "/meal-plans/:id", MealPlanController, :delete
   end
 
-  # ── Creator / Admin ───────────────────────────────────────────
+  # ── Admin (SuperAdmin Access Only) ────────────────────────────
   scope "/api/v1/admin", CaramelKitchenWeb do
-    pipe_through [:api, :creator]
+    pipe_through [:api, :admin]
 
     # Recipe management
     get "/recipes", AdminRecipeController, :index

@@ -102,6 +102,10 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :allergens,
       :calories,
       :macros,
+      :thumbnail_url,
+      :video_url,
+      :video_key,
+      :video_duration_secs,
       :status,
       :scheduled_at,
       :creator_id
@@ -121,6 +125,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
+    |> normalize_youtube_video()
     |> put_slug()
     |> put_total_time()
     |> compute_taste_profile()
@@ -170,6 +175,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
+    |> normalize_youtube_video()
     |> put_total_time()
     |> compute_taste_profile()
     |> unique_constraint(:slug)
@@ -201,7 +207,94 @@ defmodule CaramelKitchen.Recipes.Recipe do
   def taste_profile_list(%__MODULE__{taste_profile: nil}), do: List.duplicate(0.5, 8)
   def taste_profile_list(%__MODULE__{taste_profile: vec}), do: Pgvector.to_list(vec)
 
+  @doc """
+  Parses YouTube links, watch URLs, embed links, or HTML <iframe> snippets.
+  Returns structured map with youtube_id, watch video_url, video_embed_url, and iframe_html.
+  """
+  def parse_youtube_video(nil),
+    do: %{youtube_id: nil, video_url: nil, video_embed_url: nil, iframe_html: nil}
+
+  def parse_youtube_video(input) when is_binary(input) do
+    trimmed = String.trim(input)
+
+    video_id =
+      cond do
+        String.contains?(trimmed, "<iframe") ->
+          case Regex.run(Regex.compile!("youtube\\.com/(?:embed/|watch\\?v=)([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtube.com/embed/") ->
+          case Regex.run(Regex.compile!("youtube\\.com/embed/([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtube.com/watch") ->
+          case Regex.run(Regex.compile!("v=([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtu.be/") ->
+          case Regex.run(Regex.compile!("youtu\\.be/([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        Regex.match?(Regex.compile!("^[a-zA-Z0-9_-]{11}$"), trimmed) ->
+          trimmed
+
+        true ->
+          nil
+      end
+
+    case video_id do
+      nil ->
+        %{
+          youtube_id: nil,
+          video_url: trimmed,
+          video_embed_url: trimmed,
+          iframe_html: nil
+        }
+
+      id ->
+        embed_url = "https://www.youtube.com/embed/#{id}"
+        watch_url = "https://www.youtube.com/watch?v=#{id}"
+
+        iframe =
+          ~s(<iframe width="100%" height="100%" src="#{embed_url}" title="Recipe Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>)
+
+        %{
+          youtube_id: id,
+          video_url: watch_url,
+          video_embed_url: embed_url,
+          iframe_html: iframe
+        }
+    end
+  end
+
+  def parse_youtube_video(_),
+    do: %{youtube_id: nil, video_url: nil, video_embed_url: nil, iframe_html: nil}
+
   # ── Private ───────────────────────────────────────────────────
+
+  defp normalize_youtube_video(cs) do
+    case get_change(cs, :video_url) do
+      nil ->
+        cs
+
+      url_or_iframe when is_binary(url_or_iframe) ->
+        parsed = parse_youtube_video(url_or_iframe)
+
+        if parsed.youtube_id do
+          put_change(cs, :video_url, parsed.video_url)
+        else
+          cs
+        end
+    end
+  end
 
   defp put_slug(%Ecto.Changeset{valid?: true} = cs) do
     case get_field(cs, :title) do
@@ -281,6 +374,13 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
   defp valid_step?(_), do: false
 
+  @valid_legacy_categories ~w(egg_dishes rice_dishes soups_stews meat_dishes fish_seafood salads pasta_noodles breakfast baked_goods drinks_juices snacks vegetarian)
+
+  defp map_legacy_category(cat) when cat in @valid_legacy_categories, do: cat
+  defp map_legacy_category(cat) when cat in ~w(chicken_dishes beef_dishes), do: "meat_dishes"
+  defp map_legacy_category(cat) when cat in ~w(vegetable_dishes legume_dishes), do: "vegetarian"
+  defp map_legacy_category(_), do: nil
+
   defp normalize_category_attrs(attrs) when is_map(attrs) do
     string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
 
@@ -303,26 +403,29 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
       cats when is_list(cats) ->
         first_cat = List.first(cats)
+        legacy_cat = map_legacy_category(first_cat)
 
         if string_keys? do
           attrs
           |> Map.put("dish_categories", cats)
-          |> Map.put("dish_category", first_cat)
+          |> Map.put("dish_category", legacy_cat)
         else
           attrs
           |> Map.put(:dish_categories, cats)
-          |> Map.put(:dish_category, first_cat)
+          |> Map.put(:dish_category, legacy_cat)
         end
 
       cat when is_binary(cat) ->
+        legacy_cat = map_legacy_category(cat)
+
         if string_keys? do
           attrs
           |> Map.put("dish_categories", [cat])
-          |> Map.put("dish_category", cat)
+          |> Map.put("dish_category", legacy_cat)
         else
           attrs
           |> Map.put(:dish_categories, [cat])
-          |> Map.put(:dish_category, cat)
+          |> Map.put(:dish_category, legacy_cat)
         end
 
       _ ->
