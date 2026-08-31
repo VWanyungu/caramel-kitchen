@@ -14,6 +14,7 @@ if config_env() == :prod do
   config :caramel_kitchen, CaramelKitchen.Repo,
     url: database_url,
     pool_size: pool_size,
+    prepare: :unnamed,
     ssl: true,
     ssl_opts: [verify: :verify_none],
     socket_options: socket_options,
