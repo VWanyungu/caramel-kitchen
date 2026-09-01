@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-parchment: var(--parchment);
+  --color-ink: var(--ink);
+  --color-caramel: var(--caramel);
+  --color-mahogany: var(--mahogany);
+  --color-taupe: var(--taupe);
+  --color-butter: var(--butter);
+
+  --font-serif: "Mona Sans", sans-serif;
+  --font-display: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+:root {
+  --parchment: #faf4e9;
+  --ink: #2e1b12;
+  --caramel: #c8862b;
+  --mahogany: #6b2e1f;
+  --taupe: #8a7a68;
+  --butter: #e8b94a;
+}
+
+:root.dark {
+  --parchment: #120905; /* Deep, rich dark brown/black */
+  --ink: #f5ebe0; /* Light cream/parchment for text */
+  --caramel: #e29b3e; /* Brighter caramel for high contrast */
+  --mahogany: #b3563f;
+  --taupe: #a89988;
+  --butter: #f2ce79;
+}
+
+body {
+  background-color: var(--parchment);
+  color: var(--ink);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
