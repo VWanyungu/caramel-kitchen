@@ -1,8 +1,6 @@
 import {
-  ChefHat,
   ClockPlus,
   CookingPot,
-  FireExtinguisher,
   Flame,
   Scroll,
   Search,
@@ -21,7 +19,9 @@ interface SearchFilterBarProps {
   filters: RecipeFilters;
   onFiltersChange: (next: RecipeFilters) => void;
   activeTab: "recipes" | "categories" | "trending" | "new" | "for_you";
-  onActiveTabChange: (tab: "recipes" | "categories" | "trending" | "new" | "for_you") => void;
+  onActiveTabChange: (
+    tab: "recipes" | "categories" | "trending" | "new" | "for_you",
+  ) => void;
 }
 
 export function SearchFilterBar({
@@ -105,7 +105,7 @@ export function SearchFilterBar({
     });
   }
 
-  const activeFilterCount = activeChips.length;
+  // const activeFilterCount = activeChips.length;
 
   return (
     <div id="browse-filter-bar" className="mt-6 mb-6 px-8 lg:px-24 font-sans">
@@ -114,7 +114,11 @@ export function SearchFilterBar({
           variant={activeTab === "recipes" ? "outline" : "ghost"}
           size="md"
           icon={<CookingPot size={16} />}
-          className={activeTab === "recipes" ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!" : "text-gray-400 hover:text-ink dark:hover:text-parchment"}
+          className={
+            activeTab === "recipes"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
           onClick={() => onActiveTabChange("recipes")}
         >
           Recipes
@@ -124,7 +128,11 @@ export function SearchFilterBar({
           variant={activeTab === "categories" ? "outline" : "ghost"}
           size="md"
           icon={<Scroll size={16} />}
-          className={activeTab === "categories" ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!" : "text-gray-400 hover:text-ink dark:hover:text-parchment"}
+          className={
+            activeTab === "categories"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
           onClick={() => onActiveTabChange("categories")}
         >
           Categories
@@ -134,7 +142,11 @@ export function SearchFilterBar({
           variant={activeTab === "trending" ? "outline" : "ghost"}
           size="md"
           icon={<Flame size={16} />}
-          className={activeTab === "trending" ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!" : "text-gray-400 hover:text-ink dark:hover:text-parchment"}
+          className={
+            activeTab === "trending"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
           onClick={() => onActiveTabChange("trending")}
         >
           Trending
@@ -144,7 +156,11 @@ export function SearchFilterBar({
           variant={activeTab === "new" ? "outline" : "ghost"}
           size="md"
           icon={<ClockPlus size={16} />}
-          className={activeTab === "new" ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!" : "text-gray-400 hover:text-ink dark:hover:text-parchment"}
+          className={
+            activeTab === "new"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
           onClick={() => onActiveTabChange("new")}
         >
           New
@@ -154,7 +170,11 @@ export function SearchFilterBar({
           variant={activeTab === "for_you" ? "outline" : "ghost"}
           size="md"
           icon={<UserStar size={16} />}
-          className={activeTab === "for_you" ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!" : "text-gray-400 hover:text-ink dark:hover:text-parchment"}
+          className={
+            activeTab === "for_you"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
           onClick={() => onActiveTabChange("for_you")}
         >
           For you
@@ -237,7 +257,9 @@ export function SearchFilterBar({
               </button>
             </>
           ) : (
-            <span className="text-sm text-gray-400 font-sans">No active filters</span>
+            <span className="text-sm text-gray-400 font-sans">
+              No active filters
+            </span>
           )}
         </div>
 

@@ -2,11 +2,9 @@ import {
   AtSign,
   ChevronDown,
   ChevronUp,
-  CornerDownRight,
   Image as ImageIcon,
   Link2,
   MoreHorizontal,
-  Paperclip,
   Smile,
   ThumbsDown,
   ThumbsUp,
@@ -42,7 +40,8 @@ const INITIAL_COMMENTS: CommentItem[] = [
   {
     id: "c1",
     author: "Ziyech",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80",
     timestamp: "1 hour ago",
     text: "This recipe brings back nostalgic family dinners! I tweaked the simmering time slightly and the sauce reduced to pure perfection. The aroma of cardamom is incredible.",
     upvotes: 23,
@@ -51,7 +50,8 @@ const INITIAL_COMMENTS: CommentItem[] = [
       {
         id: "r1",
         author: "Shakira",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80",
+        avatar:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80",
         timestamp: "23 minutes ago",
         text: "Totally agree about simmering a bit longer. Adding fresh crushed coriander right at the end also elevated the whole dish!",
         upvotes: 15,
@@ -60,7 +60,8 @@ const INITIAL_COMMENTS: CommentItem[] = [
       {
         id: "r2",
         author: "Ryan Timber",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80",
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80",
         timestamp: "15 minutes ago",
         text: "Did you use regular coconut milk or coconut cream? I found coconut cream gave it a silkier texture.",
         upvotes: 3,
@@ -71,7 +72,8 @@ const INITIAL_COMMENTS: CommentItem[] = [
   {
     id: "c2",
     author: "McTominay",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80",
     timestamp: "3 hours ago",
     text: "Cooked this for Sunday dinner and the whole family loved it. Super simple instructions to follow, even for beginner home cooks.",
     upvotes: 23,
@@ -87,13 +89,15 @@ export function RecipeComments() {
   const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({
+  const [expandedReplies, setExpandedReplies] = useState<
+    Record<string, boolean>
+  >({
     c1: true,
   });
 
   const totalCommentCount = comments.reduce(
     (acc, c) => acc + 1 + c.replies.length,
-    0
+    0,
   );
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -141,7 +145,7 @@ export function RecipeComments() {
           };
         }
         return c;
-      })
+      }),
     );
 
     setExpandedReplies((prev) => ({ ...prev, [commentId]: true }));
@@ -169,14 +173,14 @@ export function RecipeComments() {
           if (type === "down") down++;
           return { ...c, upvotes: up, downvotes: down, userVote: type };
         }
-      })
+      }),
     );
   };
 
   const handleVoteReply = (
     commentId: string,
     replyId: string,
-    type: "up" | "down"
+    type: "up" | "down",
   ) => {
     setComments((prev) =>
       prev.map((c) => {
@@ -192,7 +196,12 @@ export function RecipeComments() {
             if (currentVote === type) {
               if (type === "up") up--;
               if (type === "down") down--;
-              return { ...r, upvotes: up, downvotes: down, userVote: undefined };
+              return {
+                ...r,
+                upvotes: up,
+                downvotes: down,
+                userVote: undefined,
+              };
             } else {
               if (currentVote === "up") up--;
               if (currentVote === "down") down--;
@@ -202,7 +211,7 @@ export function RecipeComments() {
             }
           }),
         };
-      })
+      }),
     );
   };
 
@@ -222,7 +231,6 @@ export function RecipeComments() {
 
   return (
     <section className="mt-14 rounded-2xl bg-white dark:bg-[#1d120a] border border-taupe/15 dark:border-stone-850 p-6 sm:p-8 shadow-xs font-sans transition-colors duration-300">
-      
       {/* Top Comment Input Box */}
       <form onSubmit={handleAddComment} className="space-y-4">
         <div className="flex gap-4 items-start">
@@ -373,7 +381,12 @@ export function RecipeComments() {
                           : "hover:text-caramel"
                       }`}
                     >
-                      <ThumbsUp size={14} className={comment.userVote === "up" ? "fill-caramel" : ""} />
+                      <ThumbsUp
+                        size={14}
+                        className={
+                          comment.userVote === "up" ? "fill-caramel" : ""
+                        }
+                      />
                       <span>{comment.upvotes}</span>
                     </button>
 
@@ -385,14 +398,19 @@ export function RecipeComments() {
                           : "hover:text-red-500"
                       }`}
                     >
-                      <ThumbsDown size={14} className={comment.userVote === "down" ? "fill-red-500" : ""} />
+                      <ThumbsDown
+                        size={14}
+                        className={
+                          comment.userVote === "down" ? "fill-red-500" : ""
+                        }
+                      />
                       <span>{comment.downvotes}</span>
                     </button>
 
                     <button
                       onClick={() =>
                         setActiveReplyId(
-                          activeReplyId === comment.id ? null : comment.id
+                          activeReplyId === comment.id ? null : comment.id,
                         )
                       }
                       className="hover:text-caramel transition-colors cursor-pointer"
@@ -442,7 +460,10 @@ export function RecipeComments() {
               {hasReplies && isRepliesExpanded && (
                 <div className="ml-5 sm:ml-6 pl-6 border-l-2 border-gray-200 dark:border-stone-850 space-y-6 pt-2">
                   {comment.replies.map((reply) => (
-                    <div key={reply.id} className="relative flex items-start gap-3.5 group">
+                    <div
+                      key={reply.id}
+                      className="relative flex items-start gap-3.5 group"
+                    >
                       {/* Curved Connector Indicator */}
                       <div className="absolute -left-6 top-3 w-4 h-4 border-b-2 border-gray-200 dark:border-stone-850 rounded-bl-lg pointer-events-none" />
 
@@ -489,7 +510,9 @@ export function RecipeComments() {
                           >
                             <ThumbsUp
                               size={13}
-                              className={reply.userVote === "up" ? "fill-caramel" : ""}
+                              className={
+                                reply.userVote === "up" ? "fill-caramel" : ""
+                              }
                             />
                             <span>{reply.upvotes}</span>
                           </button>
@@ -510,7 +533,9 @@ export function RecipeComments() {
                                 reply.userVote === "down" ? "fill-red-500" : ""
                               }
                             />
-                            {reply.downvotes > 0 && <span>{reply.downvotes}</span>}
+                            {reply.downvotes > 0 && (
+                              <span>{reply.downvotes}</span>
+                            )}
                           </button>
 
                           <button

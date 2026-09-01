@@ -17,20 +17,20 @@ export function PricingPage() {
 
   const handleSelectPlan = (planName: string) => {
     // Navigate to signup/payment or trigger success toast
-    navigate("/signup");
+    navigate("/signup", { state: { plan: planName } });
   };
 
   return (
     <div className="min-h-screen text-ink py-8 px-6 sm:px-8 lg:px-24 transition-colors duration-300 font-sans">
       <div className="mx-auto max-w-7xl">
-
         {/* Header Section */}
         <div className="text-center space-y-4 max-w-3xl mx-auto mb-12">
           <h1 className="font-serif text-3xl sm:text-4xl font-extrabold tracking-tight text-ink">
             We’ve got a plan that’s perfect for you
           </h1>
           <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
-            Choose the right subscription to level up your culinary skills and organize your kitchen.
+            Choose the right subscription to level up your culinary skills and
+            organize your kitchen.
           </p>
         </div>
 
@@ -40,8 +40,8 @@ export function PricingPage() {
             <button
               onClick={() => setBilling("monthly")}
               className={`px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer ${billing === "monthly"
-                ? "bg-white dark:bg-[#120905] text-ink shadow-xs"
-                : "text-gray-500 dark:text-gray-400 hover:text-ink"
+                  ? "bg-white dark:bg-[#120905] text-ink shadow-xs"
+                  : "text-gray-500 dark:text-gray-400 hover:text-ink"
                 }`}
             >
               Monthly billing
@@ -49,8 +49,8 @@ export function PricingPage() {
             <button
               onClick={() => setBilling("annual")}
               className={`px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer ${billing === "annual"
-                ? "bg-white dark:bg-[#120905] text-ink shadow-xs"
-                : "text-gray-500 dark:text-gray-400 hover:text-ink"
+                  ? "bg-white dark:bg-[#120905] text-ink shadow-xs"
+                  : "text-gray-500 dark:text-gray-400 hover:text-ink"
                 }`}
             >
               Annual billing
@@ -60,7 +60,6 @@ export function PricingPage() {
 
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10 max-w-6xl mx-auto items-stretch">
-
           {/* Card 1: Free Plan */}
           <div className="bg-white dark:bg-[#1d120a]/40 border border-taupe/10 dark:border-stone hover:border-caramel/30 rounded-3xl p-8 flex flex-col justify-between transition-colors duration-300 shadow-2xs hover:shadow-xs">
             <div className="space-y-6">
@@ -72,7 +71,9 @@ export function PricingPage() {
                   <span className="text-5xl font-extrabold tracking-tight text-ink font-mono">
                     0
                   </span>
-                  <span className="text-sm font-semibold text-gray-400">Ksh</span>
+                  <span className="text-sm font-semibold text-gray-400">
+                    Ksh
+                  </span>
                   <span className="text-xs text-gray-400 ml-1">/ month</span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 min-h-[32px]">
@@ -105,19 +106,31 @@ export function PricingPage() {
                 </p>
                 <ul className="space-y-3 text-xs text-gray-600 dark:text-gray-300">
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Access standard recipe guides</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Create and manage active shopping list</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Save one customized list locally</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Filter recipes by category</span>
                   </li>
                 </ul>
@@ -143,11 +156,15 @@ export function PricingPage() {
                   <span className="text-5xl font-extrabold tracking-tight text-white font-mono">
                     {prices.silver}
                   </span>
-                  <span className="text-sm font-semibold text-gray-400">Ksh</span>
+                  <span className="text-sm font-semibold text-gray-400">
+                    Ksh
+                  </span>
                   <span className="text-xs text-gray-400 ml-1">/ month</span>
                 </div>
                 <p className="text-xs text-gray-400 mt-3 min-h-[32px]">
-                  Billed {billing === "annual" ? "annually (save 20%)" : "monthly"}. Unlock premium culinary creations.
+                  Billed{" "}
+                  {billing === "annual" ? "annually (save 20%)" : "monthly"}.
+                  Unlock premium culinary creations.
                 </p>
               </div>
 
@@ -174,23 +191,38 @@ export function PricingPage() {
                 </p>
                 <ul className="space-y-3 text-xs text-gray-300">
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Access all premium creator recipes</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Unlock advanced filter controls</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Save unlimited custom shopping lists</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Ad-free cooking page interface</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Priority community access</span>
                   </li>
                 </ul>
@@ -209,11 +241,15 @@ export function PricingPage() {
                   <span className="text-5xl font-extrabold tracking-tight text-ink font-mono">
                     {prices.bronze}
                   </span>
-                  <span className="text-sm font-semibold text-gray-400">Ksh</span>
+                  <span className="text-sm font-semibold text-gray-400">
+                    Ksh
+                  </span>
                   <span className="text-xs text-gray-400 ml-1">/ month</span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 min-h-[32px]">
-                  Billed {billing === "annual" ? "annually (save 20%)" : "monthly"}. Total control over planners and AI tools.
+                  Billed{" "}
+                  {billing === "annual" ? "annually (save 20%)" : "monthly"}.
+                  Total control over planners and AI tools.
                 </p>
               </div>
 
@@ -242,32 +278,45 @@ export function PricingPage() {
                 </p>
                 <ul className="space-y-3 text-xs text-gray-600 dark:text-gray-300">
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Custom meal plans & calendar planner</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Full integration with AI Kitchen Assistant</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Real-time nutritional tracking reports</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>Offline access to shopping lists</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Check
+                      size={14}
+                      className="text-emerald-500 mt-0.5 shrink-0"
+                    />
                     <span>24/7 dedicated support desk</span>
                   </li>
                 </ul>
               </div>
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );

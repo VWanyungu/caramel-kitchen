@@ -10,18 +10,17 @@ version: "3.9"
 #   docker compose logs -f db     # follow DB logs
 
 services:
-
   # ── PostgreSQL 16 + pgvector ──────────────────────────────────
   db:
     image: pgvector/pgvector:pg16
     container_name: caramel_kitchen_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER:     postgres
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB:       caramel_kitchen_dev
+      POSTGRES_DB: caramel_kitchen_dev
     ports:
-      - "5432:5432"
+      - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./priv/docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -53,8 +52,8 @@ services:
     container_name: caramel_kitchen_mail
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI → http://localhost:8025
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI → http://localhost:8025
     environment:
       MP_MAX_MESSAGES: 500
       MP_SMTP_AUTH_ACCEPT_ANY: 1
@@ -67,10 +66,10 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Console UI → http://localhost:9001
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console UI → http://localhost:9001
     environment:
-      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     volumes:
       - minio_data:/data
@@ -98,7 +97,7 @@ services:
 
 volumes:
   postgres_data:
-    name: caramel_kitchen_postgres
+    name: caramel_kitchen_postgres_fresh
   redis_data:
     name: caramel_kitchen_redis
   minio_data:

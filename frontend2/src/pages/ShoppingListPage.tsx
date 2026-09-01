@@ -12,7 +12,7 @@ import {
   ClipboardList,
   BookOpen,
   CheckSquare,
-  Square
+  Square,
 } from "lucide-react";
 import { Button } from "../components/ui";
 import { PLACEHOLDER_RECIPES } from "../features/browse/placeholderRecipes";
@@ -32,14 +32,14 @@ interface SavedList {
   items: ShoppingItem[];
 }
 
-const CATEGORIES = [
-  { key: "baked_goods", label: "Baked Goods" },
-  { key: "rice_dishes", label: "Rice Dishes" },
-  { key: "soups_stews", label: "Soups & Stews" },
-  { key: "breakfast", label: "Breakfast" },
-  { key: "fish_seafood", label: "Fish & Seafood" },
-  { key: "other", label: "Other" }
-];
+// const CATEGORIES = [
+//   { key: "baked_goods", label: "Baked Goods" },
+//   { key: "rice_dishes", label: "Rice Dishes" },
+//   { key: "soups_stews", label: "Soups & Stews" },
+//   { key: "breakfast", label: "Breakfast" },
+//   { key: "fish_seafood", label: "Fish & Seafood" },
+//   { key: "other", label: "Other" }
+// ];
 
 export function ShoppingListPage() {
   // 1. Core shopping list state (persisted to localStorage)
@@ -53,10 +53,38 @@ export function ShoppingListPage() {
       }
     }
     return [
-      { id: 1, name: "Puff pastry sheet", quantity: 1, unit: "whole", price: 150, checked: false },
-      { id: 2, name: "Granulated sugar", quantity: 1, unit: "cup", price: 50, checked: false },
-      { id: 3, name: "Heavy cream", quantity: 0.75, unit: "cup", price: 120, checked: false },
-      { id: 4, name: "Unsalted butter", quantity: 6, unit: "tbsp", price: 180, checked: false },
+      {
+        id: 1,
+        name: "Puff pastry sheet",
+        quantity: 1,
+        unit: "whole",
+        price: 150,
+        checked: false,
+      },
+      {
+        id: 2,
+        name: "Granulated sugar",
+        quantity: 1,
+        unit: "cup",
+        price: 50,
+        checked: false,
+      },
+      {
+        id: 3,
+        name: "Heavy cream",
+        quantity: 0.75,
+        unit: "cup",
+        price: 120,
+        checked: false,
+      },
+      {
+        id: 4,
+        name: "Unsalted butter",
+        quantity: 6,
+        unit: "tbsp",
+        price: 180,
+        checked: false,
+      },
     ];
   });
 
@@ -124,8 +152,8 @@ export function ShoppingListPage() {
   const toggleChecked = (id: string | number) => {
     setItems(
       items.map((item) =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
+        item.id === id ? { ...item, checked: !item.checked } : item,
+      ),
     );
   };
 
@@ -133,8 +161,8 @@ export function ShoppingListPage() {
     const sanitizedQty = Math.max(0, parseFloat(newQty.toFixed(2)) || 0);
     setItems(
       items.map((item) =>
-        item.id === id ? { ...item, quantity: sanitizedQty } : item
-      )
+        item.id === id ? { ...item, quantity: sanitizedQty } : item,
+      ),
     );
   };
 
@@ -143,8 +171,8 @@ export function ShoppingListPage() {
       items.map((item) =>
         item.id === id
           ? { ...item, quantity: parseFloat((item.quantity + 1).toFixed(2)) }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -156,7 +184,7 @@ export function ShoppingListPage() {
           return { ...item, quantity: parseFloat(nextQty.toFixed(2)) };
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -174,7 +202,7 @@ export function ShoppingListPage() {
       quantity: Math.max(0.01, customQty),
       unit: customUnit.trim() || "pcs",
       price: Math.max(0, customPrice),
-      checked: false
+      checked: false,
     };
 
     setItems([...items, newItem]);
@@ -186,10 +214,10 @@ export function ShoppingListPage() {
   };
 
   // List actions
-  const handleSaveList = () => {
-    localStorage.setItem("shopping_list_items", JSON.stringify(items));
-    triggerToast("Shopping list saved successfully!");
-  };
+  // const handleSaveList = () => {
+  //   localStorage.setItem("shopping_list_items", JSON.stringify(items));
+  //   triggerToast("Shopping list saved successfully!");
+  // };
 
   const handleClearList = () => {
     setItems([]);
@@ -206,12 +234,12 @@ export function ShoppingListPage() {
     const text = items
       .map(
         (item) =>
-          `${item.checked ? "[x]" : "[ ]"} ${item.name} (${item.quantity} ${item.unit}) - Price: ${item.price} Ksh - Total: ${Math.round(item.quantity * item.price)} Ksh`
+          `${item.checked ? "[x]" : "[ ]"} ${item.name} (${item.quantity} ${item.unit}) - Price: ${item.price} Ksh - Total: ${Math.round(item.quantity * item.price)} Ksh`,
       )
       .join("\n");
 
     const fullText = `My Shopping List\n----------------\n${text}\n----------------\nTotal Estimated Cost: ${Math.round(
-      items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     )} Ksh`;
 
     try {
@@ -231,12 +259,12 @@ export function ShoppingListPage() {
     const text = items
       .map(
         (item) =>
-          `${item.checked ? "[x]" : "[ ]"} ${item.name} (${item.quantity} ${item.unit}) - Price: ${item.price} Ksh - Total: ${Math.round(item.quantity * item.price)} Ksh`
+          `${item.checked ? "[x]" : "[ ]"} ${item.name} (${item.quantity} ${item.unit}) - Price: ${item.price} Ksh - Total: ${Math.round(item.quantity * item.price)} Ksh`,
       )
       .join("\n");
 
     const fullText = `My Shopping List\n----------------\n${text}\n----------------\nTotal Estimated Cost: ${Math.round(
-      items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     )} Ksh`;
 
     const blob = new Blob([fullText], { type: "text/plain;charset=utf-8" });
@@ -264,7 +292,7 @@ export function ShoppingListPage() {
     const newList: SavedList = {
       id: `saved-list-${Date.now()}`,
       name: listName.trim(),
-      items: [...items]
+      items: [...items],
     };
 
     setSavedLists([newList, ...savedLists]);
@@ -282,16 +310,22 @@ export function ShoppingListPage() {
     triggerToast("Saved list deleted.");
   };
 
-  const importRecipeIngredients = (recipeTitle: string, recipeIngredients: any[]) => {
+  const importRecipeIngredients = (
+    recipeTitle: string,
+    recipeIngredients: any[],
+  ) => {
     const newItems: ShoppingItem[] = [...items];
 
     recipeIngredients.forEach((ing) => {
       const match = newItems.find(
-        (item) => item.name.trim().toLowerCase() === ing.name.trim().toLowerCase()
+        (item) =>
+          item.name.trim().toLowerCase() === ing.name.trim().toLowerCase(),
       );
 
       if (match) {
-        match.quantity = parseFloat((match.quantity + (ing.quantity || 1)).toFixed(2));
+        match.quantity = parseFloat(
+          (match.quantity + (ing.quantity || 1)).toFixed(2),
+        );
       } else {
         newItems.push({
           id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -299,7 +333,7 @@ export function ShoppingListPage() {
           quantity: ing.quantity || 1,
           unit: ing.unit || "whole",
           price: getMockPrice(ing.name),
-          checked: false
+          checked: false,
         });
       }
     });
@@ -311,20 +345,23 @@ export function ShoppingListPage() {
   // Standard recipes
   const allRecipes = PLACEHOLDER_RECIPES.map((r) => ({
     ...r,
-    isCustom: false
+    isCustom: false,
   }));
 
   const filteredRecipes = allRecipes.filter((r) =>
-    r.title.toLowerCase().includes(searchQuery.toLowerCase())
+    r.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filteredRecipes.length / 5);
   const paginatedRecipes = filteredRecipes.slice(
     (recipePage - 1) * 5,
-    recipePage * 5
+    recipePage * 5,
   );
 
-  const totalCost = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalCost = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const checkedItems = items.filter((item) => item.checked).length;
 
   return (
@@ -391,7 +428,9 @@ export function ShoppingListPage() {
               {/* Clear confirmation toggle */}
               {showConfirmClear ? (
                 <div className="flex items-center gap-1.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-955 px-2 py-1 rounded-full">
-                  <span className="text-[10px] font-bold text-red-600 dark:text-red-400 pl-1.5">Are you sure?</span>
+                  <span className="text-[10px] font-bold text-red-600 dark:text-red-400 pl-1.5">
+                    Are you sure?
+                  </span>
                   <button
                     onClick={handleClearList}
                     className="text-xs text-white bg-red-600 hover:bg-red-700 px-2.5 py-0.5 rounded-full cursor-pointer font-bold"
@@ -425,16 +464,29 @@ export function ShoppingListPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Empty list screen */}
             <div className="lg:col-span-8 bg-white dark:bg-[#1d120a] rounded-3xl p-12 text-center shadow-xs border border-taupe/10">
-              <ClipboardList size={56} className="mx-auto text-gray-300 dark:text-stone-700 mb-4" />
-              <h2 className="text-xl font-bold text-ink dark:text-parchment mb-2">Your Shopping List is Empty</h2>
+              <ClipboardList
+                size={56}
+                className="mx-auto text-gray-300 dark:text-stone-700 mb-4"
+              />
+              <h2 className="text-xl font-bold text-ink dark:text-parchment mb-2">
+                Your Shopping List is Empty
+              </h2>
               <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6 text-sm">
-                Add custom ingredients using the form or import ingredients from existing recipes in the sidebar.
+                Add custom ingredients using the form or import ingredients from
+                existing recipes in the sidebar.
               </p>
-              <form onSubmit={handleAddCustomItem} className="w-full mx-auto bg-gray-50 dark:bg-stone-900/40 p-5 rounded-2xl border border-taupe/15 space-y-4 text-left">
-                <h3 className="font-serif text-sm font-semibold text-ink dark:text-parchment font-bold">Add Custom Ingredient</h3>
+              <form
+                onSubmit={handleAddCustomItem}
+                className="w-full mx-auto bg-gray-50 dark:bg-stone-900/40 p-5 rounded-2xl border border-taupe/15 space-y-4 text-left"
+              >
+                <h3 className="font-serif text-sm font-semibold text-ink dark:text-parchment font-bold">
+                  Add Custom Ingredient
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-4">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Item Name</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                      Item Name
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. Fresh milk"
@@ -444,18 +496,24 @@ export function ShoppingListPage() {
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Qty</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                      Qty
+                    </label>
                     <input
                       type="number"
                       step="any"
                       min="0.01"
                       value={customQty}
-                      onChange={(e) => setCustomQty(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setCustomQty(parseFloat(e.target.value) || 0)
+                      }
                       className="w-full text-sm bg-white dark:bg-[#120905] border border-taupe/15 rounded-full px-4 py-2 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none font-mono"
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Unit</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                      Unit
+                    </label>
                     <input
                       type="text"
                       placeholder="pcs"
@@ -465,19 +523,21 @@ export function ShoppingListPage() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Price (Ksh)</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                      Price (Ksh)
+                    </label>
                     <input
                       type="number"
                       min="0"
                       value={customPrice}
-                      onChange={(e) => setCustomPrice(parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setCustomPrice(parseInt(e.target.value) || 0)
+                      }
                       className="w-full text-sm bg-white dark:bg-[#120905] border border-taupe/15 rounded-full px-4 py-2 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none font-mono"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3"></div>
 
                 <div className="sm:col-span-6 flex items-end">
                   <button
@@ -513,7 +573,8 @@ export function ShoppingListPage() {
                             {list.name}
                           </h4>
                           <p className="text-[10px] text-gray-400 mt-0.5 font-mono">
-                            {list.items.length} {list.items.length === 1 ? "item" : "items"}
+                            {list.items.length}{" "}
+                            {list.items.length === 1 ? "item" : "items"}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -554,23 +615,31 @@ export function ShoppingListPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full text-xs pl-9 pr-4 py-2 border border-taupe/15 dark:border-stone-800 rounded-full bg-gray-50 dark:bg-stone-900 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none"
                   />
-                  <Search size={14} className="absolute left-3.5 top-2.5 text-gray-400" />
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-2.5 text-gray-400"
+                  />
                 </div>
 
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                   {filteredRecipes.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">No recipes found.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
+                      No recipes found.
+                    </p>
                   ) : (
                     paginatedRecipes.map((recipe) => {
                       const isExpanded = expandedRecipeId === recipe.id;
-                      const hasIngredients = recipe.ingredients && recipe.ingredients.length > 0;
+                      const hasIngredients =
+                        recipe.ingredients && recipe.ingredients.length > 0;
                       return (
                         <div
                           key={recipe.id}
                           className="border border-taupe/10 dark:border-stone-850/60 rounded-xl overflow-hidden bg-gray-50/40 dark:bg-stone-900/20"
                         >
                           <button
-                            onClick={() => setExpandedRecipeId(isExpanded ? null : recipe.id)}
+                            onClick={() =>
+                              setExpandedRecipeId(isExpanded ? null : recipe.id)
+                            }
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-100/50 dark:hover:bg-stone-850/30 transition-colors"
                           >
                             <div className="min-w-0 pr-2">
@@ -588,17 +657,29 @@ export function ShoppingListPage() {
                                 {recipe.dish_category.replace("_", " ")}
                               </p>
                             </div>
-                            {isExpanded ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
+                            {isExpanded ? (
+                              <ChevronUp size={12} className="text-gray-400" />
+                            ) : (
+                              <ChevronDown
+                                size={12}
+                                className="text-gray-400"
+                              />
+                            )}
                           </button>
 
                           {isExpanded && (
                             <div className="p-3 bg-white dark:bg-[#1d120a] border-t border-taupe/10 dark:border-stone-850 text-[11px]">
                               {hasIngredients ? (
                                 <>
-                                  <p className="font-bold text-[9px] uppercase tracking-wider text-gray-400 mb-2 font-mono">Ingredients:</p>
+                                  <p className="font-bold text-[9px] uppercase tracking-wider text-gray-400 mb-2 font-mono">
+                                    Ingredients:
+                                  </p>
                                   <ul className="space-y-1 mb-3 pl-1">
                                     {recipe.ingredients!.map((ing, i) => (
-                                      <li key={i} className="text-gray-600 dark:text-gray-300 flex justify-between">
+                                      <li
+                                        key={i}
+                                        className="text-gray-600 dark:text-gray-300 flex justify-between"
+                                      >
                                         <span>• {ing.name}</span>
                                         <span className="font-semibold text-gray-400 font-mono">
                                           {ing.quantity} {ing.unit}
@@ -607,14 +688,21 @@ export function ShoppingListPage() {
                                     ))}
                                   </ul>
                                   <button
-                                    onClick={() => importRecipeIngredients(recipe.title, recipe.ingredients!)}
+                                    onClick={() =>
+                                      importRecipeIngredients(
+                                        recipe.title,
+                                        recipe.ingredients!,
+                                      )
+                                    }
                                     className="w-full bg-caramel/10 hover:bg-caramel text-caramel hover:text-white text-xs font-bold py-1.5 rounded-full transition-colors cursor-pointer text-center"
                                   >
                                     Add Ingredients to List
                                   </button>
                                 </>
                               ) : (
-                                <p className="text-gray-500 italic text-[10px]">No ingredient details available.</p>
+                                <p className="text-gray-500 italic text-[10px]">
+                                  No ingredient details available.
+                                </p>
                               )}
                             </div>
                           )}
@@ -638,7 +726,9 @@ export function ShoppingListPage() {
                     </span>
                     <button
                       disabled={recipePage === totalPages}
-                      onClick={() => setRecipePage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setRecipePage((p) => Math.min(totalPages, p + 1))
+                      }
                       className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-stone-900 dark:hover:bg-stone-850 text-ink dark:text-parchment font-bold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       Next
@@ -659,10 +749,18 @@ export function ShoppingListPage() {
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-stone-850/80 pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
                         <th className="pb-3 font-semibold w-8"></th>
-                        <th className="pb-3 font-semibold pr-4">Product Details</th>
-                        <th className="pb-3 font-semibold text-center w-36">Quantity</th>
-                        <th className="pb-3 font-semibold text-right w-24">Price</th>
-                        <th className="pb-3 font-semibold text-right w-24">Amount</th>
+                        <th className="pb-3 font-semibold pr-4">
+                          Product Details
+                        </th>
+                        <th className="pb-3 font-semibold text-center w-36">
+                          Quantity
+                        </th>
+                        <th className="pb-3 font-semibold text-right w-24">
+                          Price
+                        </th>
+                        <th className="pb-3 font-semibold text-right w-24">
+                          Amount
+                        </th>
                         <th className="pb-3 font-semibold text-center w-12"></th>
                       </tr>
                     </thead>
@@ -671,8 +769,8 @@ export function ShoppingListPage() {
                         <tr
                           key={item.id}
                           className={`group transition-colors ${item.checked
-                            ? "bg-gray-50/20 dark:bg-stone-900/10 text-gray-400 dark:text-stone-500"
-                            : "text-ink dark:text-parchment"
+                              ? "bg-gray-50/20 dark:bg-stone-900/10 text-gray-400 dark:text-stone-500"
+                              : "text-ink dark:text-parchment"
                             }`}
                         >
                           {/* Checkbox */}
@@ -680,10 +778,17 @@ export function ShoppingListPage() {
                             <button
                               onClick={() => toggleChecked(item.id)}
                               className="text-gray-400 hover:text-caramel transition-colors cursor-pointer"
-                              title={item.checked ? "Mark as unchecked" : "Mark as checked"}
+                              title={
+                                item.checked
+                                  ? "Mark as unchecked"
+                                  : "Mark as checked"
+                              }
                             >
                               {item.checked ? (
-                                <CheckSquare size={20} className="text-caramel fill-caramel/10" />
+                                <CheckSquare
+                                  size={20}
+                                  className="text-caramel fill-caramel/10"
+                                />
                               ) : (
                                 <Square size={20} />
                               )}
@@ -720,7 +825,12 @@ export function ShoppingListPage() {
                                 step="any"
                                 min="0"
                                 value={item.quantity}
-                                onChange={(e) => updateQty(item.id, parseFloat(e.target.value) || 0)}
+                                onChange={(e) =>
+                                  updateQty(
+                                    item.id,
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
                                 className="w-12 text-center bg-transparent border-none text-xs font-bold font-mono text-ink dark:text-parchment focus:outline-none py-0 px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                               <button
@@ -786,7 +896,9 @@ export function ShoppingListPage() {
                         min="0.01"
                         placeholder="Qty"
                         value={customQty}
-                        onChange={(e) => setCustomQty(parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          setCustomQty(parseFloat(e.target.value) || 0)
+                        }
                         className="w-full bg-white dark:bg-[#120905] border border-taupe/15 dark:border-stone-850 rounded-full px-4 py-2 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none font-mono"
                       />
                     </div>
@@ -805,7 +917,9 @@ export function ShoppingListPage() {
                         min="0"
                         placeholder="Price"
                         value={customPrice}
-                        onChange={(e) => setCustomPrice(parseInt(e.target.value) || 0)}
+                        onChange={(e) =>
+                          setCustomPrice(parseInt(e.target.value) || 0)
+                        }
                         className="w-full bg-white dark:bg-[#120905] border border-taupe/15 dark:border-stone-850 rounded-full px-4 py-2 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none font-mono"
                       />
                     </div>
@@ -834,7 +948,9 @@ export function ShoppingListPage() {
                 <div className="space-y-3.5 text-sm">
                   <div className="flex justify-between text-gray-500 dark:text-gray-400">
                     <span>Total items</span>
-                    <span className="font-bold text-ink dark:text-parchment">{items.length}</span>
+                    <span className="font-bold text-ink dark:text-parchment">
+                      {items.length}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-500 dark:text-gray-400">
                     <span>Checked off</span>
@@ -844,13 +960,18 @@ export function ShoppingListPage() {
                   </div>
                   <div className="flex justify-between text-gray-500 dark:text-gray-400">
                     <span>Pending items</span>
-                    <span className="font-bold text-ink dark:text-parchment">{items.length - checkedItems}</span>
+                    <span className="font-bold text-ink dark:text-parchment">
+                      {items.length - checkedItems}
+                    </span>
                   </div>
                   <div className="h-px bg-gray-100 dark:bg-stone-850 my-1" />
                   <div className="flex justify-between items-baseline">
-                    <span className="font-semibold text-gray-600 dark:text-gray-400">Cost</span>
+                    <span className="font-semibold text-gray-600 dark:text-gray-400">
+                      Cost
+                    </span>
                     <span className="font-serif text-xl font-bold text-caramel font-mono">
-                      {Math.round(totalCost)} <span className="text-sm text-caramel">Ksh</span>
+                      {Math.round(totalCost)}{" "}
+                      <span className="text-sm text-caramel">Ksh</span>
                     </span>
                   </div>
                 </div>
@@ -867,9 +988,14 @@ export function ShoppingListPage() {
                 <p className="text-[11px] text-gray-400 mb-4">
                   Save your active shopping list items to local storage.
                 </p>
-                <form onSubmit={handleSaveCurrentList} className="space-y-3 text-xs">
+                <form
+                  onSubmit={handleSaveCurrentList}
+                  className="space-y-3 text-xs"
+                >
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">List Name</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+                      List Name
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. Weekly Groceries"
@@ -909,7 +1035,8 @@ export function ShoppingListPage() {
                             {list.name}
                           </h4>
                           <p className="text-[10px] text-gray-400 mt-0.5 font-mono">
-                            {list.items.length} {list.items.length === 1 ? "item" : "items"}
+                            {list.items.length}{" "}
+                            {list.items.length === 1 ? "item" : "items"}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -950,23 +1077,31 @@ export function ShoppingListPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full text-xs pl-9 pr-4 py-2 border border-taupe/15 dark:border-stone-800 rounded-full bg-gray-50 dark:bg-stone-900 text-ink dark:text-parchment focus:ring-1 focus:ring-caramel focus:outline-none"
                   />
-                  <Search size={14} className="absolute left-3.5 top-2.5 text-gray-400" />
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-2.5 text-gray-400"
+                  />
                 </div>
 
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                   {filteredRecipes.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">No recipes found.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
+                      No recipes found.
+                    </p>
                   ) : (
                     paginatedRecipes.map((recipe) => {
                       const isExpanded = expandedRecipeId === recipe.id;
-                      const hasIngredients = recipe.ingredients && recipe.ingredients.length > 0;
+                      const hasIngredients =
+                        recipe.ingredients && recipe.ingredients.length > 0;
                       return (
                         <div
                           key={recipe.id}
                           className="border border-taupe/10 dark:border-stone-850/60 rounded-xl overflow-hidden bg-gray-50/40 dark:bg-stone-900/20"
                         >
                           <button
-                            onClick={() => setExpandedRecipeId(isExpanded ? null : recipe.id)}
+                            onClick={() =>
+                              setExpandedRecipeId(isExpanded ? null : recipe.id)
+                            }
                             className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-100/50 dark:hover:bg-stone-850/30 transition-colors"
                           >
                             <div className="min-w-0 pr-2">
@@ -984,17 +1119,29 @@ export function ShoppingListPage() {
                                 {recipe.dish_category.replace("_", " ")}
                               </p>
                             </div>
-                            {isExpanded ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
+                            {isExpanded ? (
+                              <ChevronUp size={12} className="text-gray-400" />
+                            ) : (
+                              <ChevronDown
+                                size={12}
+                                className="text-gray-400"
+                              />
+                            )}
                           </button>
 
                           {isExpanded && (
                             <div className="p-3 bg-white dark:bg-[#1d120a] border-t border-taupe/10 dark:border-stone-850 text-[11px]">
                               {hasIngredients ? (
                                 <>
-                                  <p className="font-bold text-[9px] uppercase tracking-wider text-gray-400 mb-2 font-mono">Ingredients:</p>
+                                  <p className="font-bold text-[9px] uppercase tracking-wider text-gray-400 mb-2 font-mono">
+                                    Ingredients:
+                                  </p>
                                   <ul className="space-y-1 mb-3 pl-1">
                                     {recipe.ingredients!.map((ing, i) => (
-                                      <li key={i} className="text-gray-600 dark:text-gray-300 flex justify-between">
+                                      <li
+                                        key={i}
+                                        className="text-gray-600 dark:text-gray-300 flex justify-between"
+                                      >
                                         <span>• {ing.name}</span>
                                         <span className="font-semibold text-gray-400 font-mono">
                                           {ing.quantity} {ing.unit}
@@ -1003,14 +1150,21 @@ export function ShoppingListPage() {
                                     ))}
                                   </ul>
                                   <button
-                                    onClick={() => importRecipeIngredients(recipe.title, recipe.ingredients!)}
+                                    onClick={() =>
+                                      importRecipeIngredients(
+                                        recipe.title,
+                                        recipe.ingredients!,
+                                      )
+                                    }
                                     className="w-full bg-caramel/10 hover:bg-caramel text-caramel hover:text-white text-xs font-bold py-1.5 rounded-full transition-colors cursor-pointer text-center"
                                   >
                                     Add Ingredients to List
                                   </button>
                                 </>
                               ) : (
-                                <p className="text-gray-500 italic text-[10px]">No ingredient details available.</p>
+                                <p className="text-gray-500 italic text-[10px]">
+                                  No ingredient details available.
+                                </p>
                               )}
                             </div>
                           )}
@@ -1034,7 +1188,9 @@ export function ShoppingListPage() {
                     </span>
                     <button
                       disabled={recipePage === totalPages}
-                      onClick={() => setRecipePage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setRecipePage((p) => Math.min(totalPages, p + 1))
+                      }
                       className="px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-stone-900 dark:hover:bg-stone-850 text-ink dark:text-parchment font-bold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       Next
