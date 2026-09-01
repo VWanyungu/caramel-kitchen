@@ -28,7 +28,6 @@ export function RecipeRatingModule({
   ],
   onRate,
 }: RecipeRatingModuleProps) {
-  const [showCalculationInfo, setShowCalculationInfo] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [currentAvg, setCurrentAvg] = useState(avgRating);
@@ -41,7 +40,9 @@ export function RecipeRatingModule({
     setUserRating(stars);
 
     // Show notification toast
-    setToastMessage(`Thank you! You rated this recipe ${stars} star${stars > 1 ? "s" : ""}.`);
+    setToastMessage(
+      `Thank you! You rated this recipe ${stars} star${stars > 1 ? "s" : ""}.`,
+    );
     setTimeout(() => {
       setToastMessage(null);
     }, 3500);
@@ -49,7 +50,7 @@ export function RecipeRatingModule({
     // Calculate new average and count
     const newCount = currentCount + 1;
     const newAvg = Number(
-      ((currentAvg * currentCount + stars) / newCount).toFixed(1)
+      ((currentAvg * currentCount + stars) / newCount).toFixed(1),
     );
     setCurrentAvg(newAvg);
     setCurrentCount(newCount);
@@ -62,7 +63,7 @@ export function RecipeRatingModule({
           return { ...row, percentage: newPercentage };
         }
         return row;
-      })
+      }),
     );
 
     if (onRate) onRate(stars);
@@ -107,7 +108,9 @@ export function RecipeRatingModule({
           <div className="p-1.5 bg-amber-400/20 text-amber-400 dark:text-amber-600 rounded-full flex items-center justify-center">
             <Star size={16} className="fill-current" />
           </div>
-          <span className="text-xs sm:text-sm font-semibold">{toastMessage}</span>
+          <span className="text-xs sm:text-sm font-semibold">
+            {toastMessage}
+          </span>
         </div>
       )}
 
@@ -120,7 +123,9 @@ export function RecipeRatingModule({
         {/* Average rating pill badge */}
         <div className="flex flex-col items-center space-y-2">
           <div className="inline-flex items-center gap-2.5 bg-[#fbf5eb] dark:bg-[#251810] border border-caramel/10 dark:border-caramel/20 px-4 py-2 rounded-full shadow-3xs">
-            <div className="flex items-center gap-1">{renderAggregateStars()}</div>
+            <div className="flex items-center gap-1">
+              {renderAggregateStars()}
+            </div>
             <span className="text-xs sm:text-sm font-bold text-ink dark:text-white">
               {currentAvg.toFixed(1)} out of 5
             </span>
@@ -184,10 +189,11 @@ export function RecipeRatingModule({
                 >
                   <Star
                     size={22}
-                    className={`transition-colors duration-150 ${isFilled
-                      ? "text-amber-400 fill-amber-400"
-                      : "text-gray-300 dark:text-stone-700 hover:text-amber-300"
-                      }`}
+                    className={`transition-colors duration-150 ${
+                      isFilled
+                        ? "text-amber-400 fill-amber-400"
+                        : "text-gray-300 dark:text-stone-700 hover:text-amber-300"
+                    }`}
                   />
                 </button>
               );

@@ -96,17 +96,19 @@ export function ProfilePage() {
 
   // Profile Form State
   const [name, setName] = useState(user?.name || "Marc Underwood");
-  const [email, setEmail] = useState(user?.email || "brentunderwood@caramelkitchen.app");
+  const [email, setEmail] = useState(
+    user?.email || "brentunderwood@caramelkitchen.app",
+  );
   const [handle, setHandle] = useState("@brentunderwood");
   const [bio, setBio] = useState(
-    "Cerro Gordo Ghost Town. Passionate home cook bringing heritage recipes, woodfired sourdough, and seasonal flavors back to life."
+    "Cerro Gordo Ghost Town. Passionate home cook bringing heritage recipes, woodfired sourdough, and seasonal flavors back to life.",
   );
   const [avatarUrl, setAvatarUrl] = useState(
     user?.avatar_url ||
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&h=300&q=80"
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&h=300&q=80",
   );
   const [coverUrl, setCoverUrl] = useState(
-    "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80"
+    "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80",
   );
 
   // Password change state
@@ -115,7 +117,7 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Payment state
-  const [paymentMethod, setPaymentMethod] = useState({
+  const [paymentMethod] = useState({
     type: "Visa",
     last4: "4242",
     expiry: "08/28",
@@ -126,7 +128,7 @@ export function ProfilePage() {
 
   // Saved recipes state
   const [savedRecipes, setSavedRecipes] = useState(
-    PLACEHOLDER_RECIPES.slice(0, 4)
+    PLACEHOLDER_RECIPES.slice(0, 4),
   );
 
   const triggerToast = (msg: string) => {
@@ -163,7 +165,9 @@ export function ProfilePage() {
   const handleCancelSubscription = () => {
     setSubscriptionActive(false);
     setShowCancelModal(false);
-    triggerToast("Subscription cancelled. You will retain access until end of billing cycle.");
+    triggerToast(
+      "Subscription cancelled. You will retain access until end of billing cycle.",
+    );
   };
 
   return (
@@ -180,10 +184,8 @@ export function ProfilePage() {
 
       {/* Main Container */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6">
-        
         {/* Profile Card / Header Header */}
         <div className="bg-white dark:bg-[#1d120a] rounded-3xl border border-taupe/10 dark:border-stone-850 overflow-hidden shadow-xs">
-          
           {/* Panoramic Cover Image */}
           <div className="relative h-56 sm:h-72 w-full overflow-hidden bg-gray-200 dark:bg-stone-800">
             <img
@@ -208,10 +210,8 @@ export function ProfilePage() {
 
           {/* Profile Details Bar */}
           <div className="px-6 sm:px-10 pb-8 relative">
-            
             {/* Top row: Avatar & Action Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 -mt-16 sm:-mt-20 mb-6">
-              
               {/* Avatar */}
               <div className="relative group self-center sm:self-start">
                 <img
@@ -221,7 +221,10 @@ export function ProfilePage() {
                 />
                 <button
                   onClick={() => {
-                    const nextAvatar = prompt("Enter avatar image URL:", avatarUrl);
+                    const nextAvatar = prompt(
+                      "Enter avatar image URL:",
+                      avatarUrl,
+                    );
                     if (nextAvatar) setAvatarUrl(nextAvatar);
                   }}
                   title="Change avatar photo"
@@ -233,7 +236,6 @@ export function ProfilePage() {
 
               {/* Right Side Followers & Actions */}
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 self-center sm:self-end">
-                
                 {/* Followers Cluster */}
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2 overflow-hidden">
@@ -254,7 +256,10 @@ export function ProfilePage() {
                     />
                   </div>
                   <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    <span className="font-bold text-ink dark:text-white">1.4k</span> followers
+                    <span className="font-bold text-ink dark:text-white">
+                      1.4k
+                    </span>{" "}
+                    followers
                   </div>
                 </div>
 
@@ -270,13 +275,13 @@ export function ProfilePage() {
                   <Link to="/premium">
                     <button className="px-5 py-2.5 rounded-full bg-caramel hover:bg-caramel/90 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
                       <Diamond size={13} className="fill-white" />
-                      <span>{subscriptionActive ? "Silver Plan" : "Upgrade"}</span>
+                      <span>
+                        {subscriptionActive ? "Silver Plan" : "Upgrade"}
+                      </span>
                     </button>
                   </Link>
                 </div>
-
               </div>
-
             </div>
 
             {/* Profile Bio & Handle Details */}
@@ -285,7 +290,10 @@ export function ProfilePage() {
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-ink dark:text-parchment">
                   {name}
                 </h1>
-                <BadgeCheck size={20} className="text-amber-500 fill-amber-500/20" />
+                <BadgeCheck
+                  size={20}
+                  className="text-amber-500 fill-amber-500/20"
+                />
               </div>
 
               <p className="text-xs font-semibold text-gray-400">
@@ -295,19 +303,49 @@ export function ProfilePage() {
               {/* Social Channels Strip */}
               <div className="flex items-center gap-3 text-gray-400 dark:text-gray-500 pt-1">
                 {/* Custom SVG Socials */}
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-caramel transition-colors">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.871.508 9.388.508 9.388.508s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <a
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-caramel transition-colors"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.871.508 9.388.508 9.388.508s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
                 </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-caramel transition-colors">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-caramel transition-colors"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+                  </svg>
                 </a>
-                <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-caramel transition-colors">
-                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.63 4.14.99 1.11 2.37 1.77 3.86 1.95v3.91a8.775 8.775 0 0 1-5.11-1.68c-.16-.12-.3-.26-.45-.4v6.81a7.275 7.275 0 0 1-1.44 4.38 7.375 7.375 0 0 1-5.83 2.89 7.375 7.375 0 0 1-5.83-2.89 7.275 7.275 0 0 1-1.44-4.38 7.31 7.31 0 0 1 3.25-6.12 7.23 7.23 0 0 1 6.42-.56v4.06c-.84-.46-1.85-.5-2.73-.08a3.259 3.259 0 0 0-1.86 2.7c-.12.98.24 1.97.94 2.66.7.69 1.69 1.02 2.67.87 1-.15 1.83-.87 2.11-1.85.08-.29.11-.6.11-.9V.02Z"/></svg>
+                <a
+                  href="https://tiktok.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-caramel transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.63 4.14.99 1.11 2.37 1.77 3.86 1.95v3.91a8.775 8.775 0 0 1-5.11-1.68c-.16-.12-.3-.26-.45-.4v6.81a7.275 7.275 0 0 1-1.44 4.38 7.375 7.375 0 0 1-5.83 2.89 7.375 7.375 0 0 1-5.83-2.89 7.275 7.275 0 0 1-1.44-4.38 7.31 7.31 0 0 1 3.25-6.12 7.23 7.23 0 0 1 6.42-.56v4.06c-.84-.46-1.85-.5-2.73-.08a3.259 3.259 0 0 0-1.86 2.7c-.12.98.24 1.97.94 2.66.7.69 1.69 1.02 2.67.87 1-.15 1.83-.87 2.11-1.85.08-.29.11-.6.11-.9V.02Z" />
+                  </svg>
                 </a>
-                <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-caramel transition-colors">
-                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                <a
+                  href="https://x.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-caramel transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                 </a>
-                <a href="#" className="hover:text-caramel transition-colors"><Link2 size={15} /></a>
+                <a href="#" className="hover:text-caramel transition-colors">
+                  <Link2 size={15} />
+                </a>
               </div>
 
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-3xl leading-relaxed">
@@ -316,7 +354,13 @@ export function ProfilePage() {
 
               {/* Tags / Categories badges */}
               <div className="flex flex-wrap gap-2 pt-2">
-                {["Artisanal Caramel", "Sourdough", "Family Meals", "Meal Prep", "Seasonal"].map((tag) => (
+                {[
+                  "Artisanal Caramel",
+                  "Sourdough",
+                  "Family Meals",
+                  "Meal Prep",
+                  "Seasonal",
+                ].map((tag) => (
                   <span
                     key={tag}
                     className="px-3 py-1 rounded-full bg-[#fdf5eb] dark:bg-[#251910] text-caramel border border-caramel/20 text-[11px] font-semibold"
@@ -326,7 +370,6 @@ export function ProfilePage() {
                 ))}
               </div>
             </div>
-
           </div>
 
           {/* Tab Navigation Menu */}
@@ -379,7 +422,6 @@ export function ProfilePage() {
               <span>Account Settings</span>
             </button>
           </div>
-
         </div>
 
         {/* Tab 1: Saved Recipes */}
@@ -404,13 +446,21 @@ export function ProfilePage() {
 
             {savedRecipes.length === 0 ? (
               <div className="bg-white dark:bg-[#1d120a] rounded-3xl p-12 text-center border border-taupe/10 dark:border-stone-850 space-y-4">
-                <Heart size={40} className="mx-auto text-gray-300 dark:text-stone-700" />
-                <h3 className="font-serif text-lg font-bold">No saved recipes yet</h3>
+                <Heart
+                  size={40}
+                  className="mx-auto text-gray-300 dark:text-stone-700"
+                />
+                <h3 className="font-serif text-lg font-bold">
+                  No saved recipes yet
+                </h3>
                 <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  Browse our collection of curated dishes and bookmark your favorites.
+                  Browse our collection of curated dishes and bookmark your
+                  favorites.
                 </p>
                 <Link to="/browse">
-                  <Button variant="primary" size="md">Browse Recipes</Button>
+                  <Button variant="primary" size="md">
+                    Browse Recipes
+                  </Button>
                 </Link>
               </div>
             ) : (
@@ -467,28 +517,45 @@ export function ProfilePage() {
                         <h3 className="font-serif text-xl font-bold text-ink dark:text-white mt-2">
                           {plan.title}
                         </h3>
-                        <p className="text-xs text-gray-400 mt-1">Created on {plan.dateCreated}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Created on {plan.dateCreated}
+                        </p>
                       </div>
 
                       <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 shrink-0">
-                        <img src={plan.thumbnail} alt={plan.title} className="w-full h-full object-cover" />
+                        <img
+                          src={plan.thumbnail}
+                          alt={plan.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 py-2 text-xs">
                       <div className="bg-gray-50 dark:bg-[#120905] p-3 rounded-xl">
-                        <span className="text-gray-400 block text-[10px] uppercase font-bold">Daily Calories</span>
-                        <span className="font-bold text-ink dark:text-white text-sm">{plan.totalCalories} kcal</span>
+                        <span className="text-gray-400 block text-[10px] uppercase font-bold">
+                          Daily Calories
+                        </span>
+                        <span className="font-bold text-ink dark:text-white text-sm">
+                          {plan.totalCalories} kcal
+                        </span>
                       </div>
                       <div className="bg-gray-50 dark:bg-[#120905] p-3 rounded-xl">
-                        <span className="text-gray-400 block text-[10px] uppercase font-bold">Included Recipes</span>
-                        <span className="font-bold text-ink dark:text-white text-sm">{plan.recipesCount} dishes</span>
+                        <span className="text-gray-400 block text-[10px] uppercase font-bold">
+                          Included Recipes
+                        </span>
+                        <span className="font-bold text-ink dark:text-white text-sm">
+                          {plan.recipesCount} dishes
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-1.5">
                       {plan.tags.map((t) => (
-                        <span key={t} className="text-[10px] font-semibold text-gray-600 dark:text-stone-300 bg-gray-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full">
+                        <span
+                          key={t}
+                          className="text-[10px] font-semibold text-gray-600 dark:text-stone-300 bg-gray-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full"
+                        >
                           {t}
                         </span>
                       ))}
@@ -497,12 +564,22 @@ export function ProfilePage() {
 
                   <div className="flex items-center gap-3 pt-2">
                     <Link to="/meal-plans" className="flex-1">
-                      <Button variant="outline" size="sm" fullWidth icon={<Eye size={14} />}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        fullWidth
+                        icon={<Eye size={14} />}
+                      >
                         View Schedule
                       </Button>
                     </Link>
                     <Link to="/shopping-list" className="flex-1">
-                      <Button variant="primary" size="sm" fullWidth icon={<Utensils size={14} />}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        fullWidth
+                        icon={<Utensils size={14} />}
+                      >
                         Cook Meals
                       </Button>
                     </Link>
@@ -516,7 +593,6 @@ export function ProfilePage() {
         {/* Tab 3: Billing & Subscription */}
         {activeTab === "billing" && (
           <div className="mt-8 space-y-8 animate-fade-in max-w-4xl mx-auto">
-            
             {/* Header */}
             <div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink dark:text-parchment">
@@ -535,16 +611,19 @@ export function ProfilePage() {
                     <span className="font-serif text-xl font-bold text-ink dark:text-white">
                       Silver Membership
                     </span>
-                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
-                      subscriptionActive
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-gray-100 text-gray-500"
-                    }`}>
+                    <span
+                      className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
+                        subscriptionActive
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
                       {subscriptionActive ? "Active" : "Cancelled"}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Billed monthly at <strong>490 Ksh / month</strong>. Renews on <strong>September 1, 2026</strong>.
+                    Billed monthly at <strong>490 Ksh / month</strong>. Renews
+                    on <strong>September 1, 2026</strong>.
                   </p>
                 </div>
 
@@ -582,7 +661,9 @@ export function ProfilePage() {
                         <p className="text-xs sm:text-sm font-bold text-ink dark:text-white">
                           •••• •••• •••• {paymentMethod.last4}
                         </p>
-                        <p className="text-[11px] text-gray-400">Expires {paymentMethod.expiry}</p>
+                        <p className="text-[11px] text-gray-400">
+                          Expires {paymentMethod.expiry}
+                        </p>
                       </div>
                     </div>
 
@@ -600,7 +681,9 @@ export function ProfilePage() {
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-400 mb-1">Card Number</label>
+                        <label className="block text-[11px] font-bold text-gray-400 mb-1">
+                          Card Number
+                        </label>
                         <input
                           type="text"
                           placeholder="4242 •••• •••• ••••"
@@ -609,7 +692,9 @@ export function ProfilePage() {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-[11px] font-bold text-gray-400 mb-1">Expires</label>
+                          <label className="block text-[11px] font-bold text-gray-400 mb-1">
+                            Expires
+                          </label>
                           <input
                             type="text"
                             placeholder="MM/YY"
@@ -617,7 +702,9 @@ export function ProfilePage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-bold text-gray-400 mb-1">CVC</label>
+                          <label className="block text-[11px] font-bold text-gray-400 mb-1">
+                            CVC
+                          </label>
                           <input
                             type="text"
                             placeholder="123"
@@ -647,7 +734,6 @@ export function ProfilePage() {
                   </div>
                 )}
               </div>
-
             </div>
 
             {/* Past Invoices / Payment History */}
@@ -670,9 +756,16 @@ export function ProfilePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-stone-850/60 font-medium">
                     {BILLING_HISTORY.map((invoice) => (
-                      <tr key={invoice.id} className="hover:bg-gray-50/50 dark:hover:bg-[#120905]/40 transition-colors">
-                        <td className="py-3.5 text-gray-500 dark:text-gray-400">{invoice.date}</td>
-                        <td className="py-3.5 font-bold text-ink dark:text-white">{invoice.description}</td>
+                      <tr
+                        key={invoice.id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-[#120905]/40 transition-colors"
+                      >
+                        <td className="py-3.5 text-gray-500 dark:text-gray-400">
+                          {invoice.date}
+                        </td>
+                        <td className="py-3.5 font-bold text-ink dark:text-white">
+                          {invoice.description}
+                        </td>
                         <td className="py-3.5">{invoice.amount}</td>
                         <td className="py-3.5">
                           <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
@@ -681,7 +774,9 @@ export function ProfilePage() {
                         </td>
                         <td className="py-3.5 text-right">
                           <button
-                            onClick={() => triggerToast(`Downloaded invoice ${invoice.id}`)}
+                            onClick={() =>
+                              triggerToast(`Downloaded invoice ${invoice.id}`)
+                            }
                             title="Download PDF"
                             className="p-1.5 text-gray-400 hover:text-caramel rounded-lg transition-colors cursor-pointer"
                           >
@@ -694,26 +789,28 @@ export function ProfilePage() {
                 </table>
               </div>
             </div>
-
           </div>
         )}
 
         {/* Tab 4: Account Settings (Edit User Info) */}
         {activeTab === "settings" && (
           <div className="mt-8 space-y-8 animate-fade-in max-w-3xl mx-auto">
-            
             {/* Header */}
             <div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink dark:text-parchment">
                 Account Settings
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Update your personal information, profile photo, and login security.
+                Update your personal information, profile photo, and login
+                security.
               </p>
             </div>
 
             {/* Profile Info Form */}
-            <form onSubmit={handleSaveProfile} className="bg-white dark:bg-[#1d120a] rounded-3xl p-6 sm:p-8 border border-taupe/10 dark:border-stone-850 shadow-xs space-y-6">
+            <form
+              onSubmit={handleSaveProfile}
+              className="bg-white dark:bg-[#1d120a] rounded-3xl p-6 sm:p-8 border border-taupe/10 dark:border-stone-850 shadow-xs space-y-6"
+            >
               <h3 className="font-serif text-lg font-bold text-ink dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-stone-850 pb-3">
                 <User size={18} className="text-caramel" />
                 <span>Personal Information</span>
@@ -757,7 +854,10 @@ export function ProfilePage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full text-xs sm:text-sm pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#120905] border border-gray-200 dark:border-stone-800 text-ink dark:text-parchment focus:outline-hidden focus:border-caramel/40"
                     />
-                    <Mail size={16} className="absolute left-3.5 top-3.5 text-gray-400 pointer-events-none" />
+                    <Mail
+                      size={16}
+                      className="absolute left-3.5 top-3.5 text-gray-400 pointer-events-none"
+                    />
                   </div>
                 </div>
 
@@ -775,14 +875,22 @@ export function ProfilePage() {
               </div>
 
               <div className="pt-2">
-                <Button type="submit" variant="primary" size="md" icon={<Save size={15} />}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  icon={<Save size={15} />}
+                >
                   Save Profile Changes
                 </Button>
               </div>
             </form>
 
             {/* Password & Security Form */}
-            <form onSubmit={handleSavePassword} className="bg-white dark:bg-[#1d120a] rounded-3xl p-6 sm:p-8 border border-taupe/10 dark:border-stone-850 shadow-xs space-y-6">
+            <form
+              onSubmit={handleSavePassword}
+              className="bg-white dark:bg-[#1d120a] rounded-3xl p-6 sm:p-8 border border-taupe/10 dark:border-stone-850 shadow-xs space-y-6"
+            >
               <h3 className="font-serif text-lg font-bold text-ink dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-stone-850 pb-3">
                 <KeyRound size={18} className="text-caramel" />
                 <span>Change Password</span>
@@ -832,15 +940,18 @@ export function ProfilePage() {
               </div>
 
               <div className="pt-2">
-                <Button type="submit" variant="primary" size="md" icon={<Lock size={15} />}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  icon={<Lock size={15} />}
+                >
                   Update Password
                 </Button>
               </div>
             </form>
-
           </div>
         )}
-
       </div>
 
       {/* Cancel Subscription Confirmation Dialog */}
@@ -851,11 +962,16 @@ export function ProfilePage() {
               <div className="p-2.5 bg-red-100 dark:bg-red-950/40 rounded-2xl">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="font-serif text-xl font-bold">Cancel Subscription?</h3>
+              <h3 className="font-serif text-xl font-bold">
+                Cancel Subscription?
+              </h3>
             </div>
 
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-              Are you sure you want to cancel your Caramel Silver membership? You will lose access to Pro chef guides, weekly AI meal plan generation, and unlimited custom grocery lists at the end of this billing cycle.
+              Are you sure you want to cancel your Caramel Silver membership?
+              You will lose access to Pro chef guides, weekly AI meal plan
+              generation, and unlimited custom grocery lists at the end of this
+              billing cycle.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
