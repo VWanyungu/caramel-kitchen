@@ -71,22 +71,42 @@ export function RecipeDetailPage() {
 
           if (placeholder.ingredients && placeholder.steps) {
             // Already fully defined in the placeholder data store
-          } else if (placeholder.slug === 'swahili-mahamri') {
+          } else if (placeholder.slug === "swahili-mahamri") {
             enriched.ingredients = [
               { name: "all-purpose flour", quantity: 3, unit: "cups" },
               { name: "instant yeast", quantity: 1, unit: "tsp" },
               { name: "ground cardamom", quantity: 1, unit: "tsp" },
               { name: "sugar", quantity: 0.5, unit: "cup" },
               { name: "heavy coconut milk", quantity: 1, unit: "cup" },
-              { name: "vegetable oil (for deep frying)", quantity: 500, unit: "ml" },
+              {
+                name: "vegetable oil (for deep frying)",
+                quantity: 500,
+                unit: "ml",
+              },
             ];
             enriched.steps = [
-              { order: 1, instruction: "In a bowl, mix flour, yeast, sugar, and ground cardamom." },
-              { order: 2, instruction: "Gradually add coconut milk, kneading until you have a smooth, non-sticky dough." },
-              { order: 3, instruction: "Divide dough into 4 balls. Roll each ball into a circle and cut into quarters." },
-              { order: 4, instruction: "Heat oil on medium-high. Deep fry the triangles until golden brown and puffed." }
+              {
+                order: 1,
+                instruction:
+                  "In a bowl, mix flour, yeast, sugar, and ground cardamom.",
+              },
+              {
+                order: 2,
+                instruction:
+                  "Gradually add coconut milk, kneading until you have a smooth, non-sticky dough.",
+              },
+              {
+                order: 3,
+                instruction:
+                  "Divide dough into 4 balls. Roll each ball into a circle and cut into quarters.",
+              },
+              {
+                order: 4,
+                instruction:
+                  "Heat oil on medium-high. Deep fry the triangles until golden brown and puffed.",
+              },
             ];
-          } else if (placeholder.slug === 'kenyan-githeri') {
+          } else if (placeholder.slug === "kenyan-githeri") {
             enriched.ingredients = [
               { name: "boiled maize (corn)", quantity: 2, unit: "cups" },
               { name: "boiled red beans", quantity: 2, unit: "cups" },
@@ -97,12 +117,28 @@ export function RecipeDetailPage() {
               { name: "curry powder & salt", quantity: 1, unit: "tsp" },
             ];
             enriched.steps = [
-              { order: 1, instruction: "Heat oil in a pot and sauté the chopped onion and minced garlic until soft." },
-              { order: 2, instruction: "Add the tomatoes and curry powder. Cook until the tomatoes form a thick paste." },
-              { order: 3, instruction: "Toss in the pre-boiled maize and beans, mixing thoroughly." },
-              { order: 4, instruction: "Pour in 1 cup of water, cover, and let it simmer for 15 minutes to blend the flavors." }
+              {
+                order: 1,
+                instruction:
+                  "Heat oil in a pot and sauté the chopped onion and minced garlic until soft.",
+              },
+              {
+                order: 2,
+                instruction:
+                  "Add the tomatoes and curry powder. Cook until the tomatoes form a thick paste.",
+              },
+              {
+                order: 3,
+                instruction:
+                  "Toss in the pre-boiled maize and beans, mixing thoroughly.",
+              },
+              {
+                order: 4,
+                instruction:
+                  "Pour in 1 cup of water, cover, and let it simmer for 15 minutes to blend the flavors.",
+              },
             ];
-          } else if (placeholder.slug === 'millet-uji-groundnuts') {
+          } else if (placeholder.slug === "millet-uji-groundnuts") {
             enriched.ingredients = [
               { name: "millet flour", quantity: 0.5, unit: "cup" },
               { name: "water", quantity: 3, unit: "cups" },
@@ -111,49 +147,128 @@ export function RecipeDetailPage() {
               { name: "roasted groundnuts", quantity: 0.5, unit: "cup" },
             ];
             enriched.steps = [
-              { order: 1, instruction: "Mix millet flour with 1 cup of cold water until smooth." },
-              { order: 2, instruction: "Bring the remaining 2 cups of water to a boil in a pot." },
-              { order: 3, instruction: "Pour the flour paste into the boiling water while stirring continuously to avoid lumps." },
-              { order: 4, instruction: "Simmer on low heat for 10 minutes. Add lemon juice and sugar, then serve warm with groundnuts." }
+              {
+                order: 1,
+                instruction:
+                  "Mix millet flour with 1 cup of cold water until smooth.",
+              },
+              {
+                order: 2,
+                instruction:
+                  "Bring the remaining 2 cups of water to a boil in a pot.",
+              },
+              {
+                order: 3,
+                instruction:
+                  "Pour the flour paste into the boiling water while stirring continuously to avoid lumps.",
+              },
+              {
+                order: 4,
+                instruction:
+                  "Simmer on low heat for 10 minutes. Add lemon juice and sugar, then serve warm with groundnuts.",
+              },
             ];
-          } else if (placeholder.slug === 'fried-tilapia-ugali') {
+          } else if (placeholder.slug === "fried-tilapia-ugali") {
             enriched.ingredients = [
-              { name: "whole tilapia fish, cleaned and scaled", quantity: 1, unit: "whole" },
+              {
+                name: "whole tilapia fish, cleaned and scaled",
+                quantity: 1,
+                unit: "whole",
+              },
               { name: "maize flour (for ugali)", quantity: 2, unit: "cups" },
-              { name: "sukuma wiki (kale), chopped", quantity: 1, unit: "bunch" },
+              {
+                name: "sukuma wiki (kale), chopped",
+                quantity: 1,
+                unit: "bunch",
+              },
               { name: "onion, finely chopped", quantity: 1, unit: "medium" },
               { name: "tomato, chopped", quantity: 1, unit: "large" },
               { name: "vegetable oil", quantity: 250, unit: "ml" },
             ];
             enriched.steps = [
-              { order: 1, instruction: "Make shallow cuts on the fish. Season with salt and deep fry until crispy and golden." },
-              { order: 2, instruction: "In a pot, bring 3 cups of water to a boil, slowly add maize flour, and stir to form a firm Ugali." },
-              { order: 3, instruction: "Sauté the chopped onion in a pan, add tomatoes, and then cook the sukuma wiki for 5 minutes." },
-              { order: 4, instruction: "Serve the hot fried tilapia alongside the Ugali and sukuma wiki." }
+              {
+                order: 1,
+                instruction:
+                  "Make shallow cuts on the fish. Season with salt and deep fry until crispy and golden.",
+              },
+              {
+                order: 2,
+                instruction:
+                  "In a pot, bring 3 cups of water to a boil, slowly add maize flour, and stir to form a firm Ugali.",
+              },
+              {
+                order: 3,
+                instruction:
+                  "Sauté the chopped onion in a pan, add tomatoes, and then cook the sukuma wiki for 5 minutes.",
+              },
+              {
+                order: 4,
+                instruction:
+                  "Serve the hot fried tilapia alongside the Ugali and sukuma wiki.",
+              },
             ];
-          } else if (placeholder.slug === 'mursik-with-ugali') {
+          } else if (placeholder.slug === "mursik-with-ugali") {
             enriched.ingredients = [
-              { name: "sour milk (fermented in gourd)", quantity: 500, unit: "ml" },
-              { name: "millet or maize flour (for ugali)", quantity: 2, unit: "cups" },
+              {
+                name: "sour milk (fermented in gourd)",
+                quantity: 500,
+                unit: "ml",
+              },
+              {
+                name: "millet or maize flour (for ugali)",
+                quantity: 2,
+                unit: "cups",
+              },
               { name: "water", quantity: 3, unit: "cups" },
-              { name: "charcoal ash (from Senetwet tree)", quantity: 0.5, unit: "tsp" },
+              {
+                name: "charcoal ash (from Senetwet tree)",
+                quantity: 0.5,
+                unit: "tsp",
+              },
             ];
             enriched.steps = [
-              { order: 1, instruction: "Prepare the gourd by smoking it with embers of the Senetwet tree." },
-              { order: 2, instruction: "Pour milk into the gourd and let it ferment for 3 to 5 days." },
-              { order: 3, instruction: "Prepare hot firm Ugali using millet or maize flour." },
-              { order: 4, instruction: "Serve the hot Ugali alongside the cold, rich, traditional Mursik." }
+              {
+                order: 1,
+                instruction:
+                  "Prepare the gourd by smoking it with embers of the Senetwet tree.",
+              },
+              {
+                order: 2,
+                instruction:
+                  "Pour milk into the gourd and let it ferment for 3 to 5 days.",
+              },
+              {
+                order: 3,
+                instruction:
+                  "Prepare hot firm Ugali using millet or maize flour.",
+              },
+              {
+                order: 4,
+                instruction:
+                  "Serve the hot Ugali alongside the cold, rich, traditional Mursik.",
+              },
             ];
           } else {
             // Default placeholder ingredients and steps
             enriched.ingredients = [
-              { name: "Main ingredient for " + placeholder.title, quantity: 500, unit: "g" },
+              {
+                name: "Main ingredient for " + placeholder.title,
+                quantity: 500,
+                unit: "g",
+              },
               { name: "Secondary ingredient", quantity: 2, unit: "tbsp" },
               { name: "Salt and seasoning", quantity: 1, unit: "tsp" },
             ];
             enriched.steps = [
-              { order: 1, instruction: `Prepare the ingredients for ${placeholder.title}.` },
-              { order: 2, instruction: "Combine ingredients in a pan and cook on medium heat." },
+              {
+                order: 1,
+                instruction: `Prepare the ingredients for ${placeholder.title}.`,
+              },
+              {
+                order: 2,
+                instruction:
+                  "Combine ingredients in a pan and cook on medium heat.",
+              },
               { order: 3, instruction: "Season to taste and serve warm!" },
             ];
           }
@@ -166,7 +281,10 @@ export function RecipeDetailPage() {
   }, [id]);
 
   // Related recipes using existing RecipeCard component
-  const relatedRecipes = PLACEHOLDER_RECIPES.filter((r) => r.id !== id).slice(0, 4);
+  const relatedRecipes = PLACEHOLDER_RECIPES.filter((r) => r.id !== id).slice(
+    0,
+    4,
+  );
 
   if (loading) {
     return (
@@ -179,9 +297,16 @@ export function RecipeDetailPage() {
   if (!recipe) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50/50 dark:bg-[#120905] text-ink dark:text-parchment font-sans p-6 transition-colors duration-300">
-        <h2 className="text-xl font-bold text-ink dark:text-parchment">Recipe not found</h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2 text-center">The recipe you are looking for does not exist or has been removed.</p>
-        <Link to="/" className="mt-6 rounded-full bg-caramel hover:bg-caramel/90 px-6 py-2.5 text-white font-semibold shadow-md transition-colors">
+        <h2 className="text-xl font-bold text-ink dark:text-parchment">
+          Recipe not found
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 mt-2 text-center">
+          The recipe you are looking for does not exist or has been removed.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 rounded-full bg-caramel hover:bg-caramel/90 px-6 py-2.5 text-white font-semibold shadow-md transition-colors"
+        >
           Back to Browse
         </Link>
       </div>
@@ -189,8 +314,10 @@ export function RecipeDetailPage() {
   }
 
   const prepTime = recipe.prep_time_mins || 15;
-  const cookTime = recipe.cook_time_mins || (recipe.total_time_mins ? recipe.total_time_mins - prepTime : 20);
-  const totalTime = recipe.total_time_mins || (prepTime + cookTime);
+  const cookTime =
+    recipe.cook_time_mins ||
+    (recipe.total_time_mins ? recipe.total_time_mins - prepTime : 20);
+  // const totalTime = recipe.total_time_mins || (prepTime + cookTime);
 
   return (
     <div className="bg-gray-50/50 dark:bg-[#120905] pb-20 px-8 lg:px-52 text-ink dark:text-parchment transition-colors duration-300">
@@ -218,7 +345,8 @@ export function RecipeDetailPage() {
               {recipe.title}
             </h1>
             <p className="max-w-2xl text-xs sm:text-sm lg:text-base font-light text-white/90 leading-relaxed">
-              {recipe.description || "A delicious, carefully curated recipe designed to delight your senses and satisfy your culinary cravings."}
+              {recipe.description ||
+                "A delicious, carefully curated recipe designed to delight your senses and satisfy your culinary cravings."}
             </p>
           </div>
         </div>
@@ -231,7 +359,9 @@ export function RecipeDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1 mb-1">
                 <Clock size={13} /> Prep Time
               </span>
-              <span className="font-bold text-sm text-ink dark:text-white/70">{prepTime} Min</span>
+              <span className="font-bold text-sm text-ink dark:text-white/70">
+                {prepTime} Min
+              </span>
             </div>
 
             <div className="h-8 w-px bg-gray-200 dark:bg-stone-700 hidden sm:block" />
@@ -240,7 +370,9 @@ export function RecipeDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1 mb-1">
                 <Clock size={13} /> Cook Time
               </span>
-              <span className="font-bold text-sm text-ink dark:text-white/70">{cookTime} Min</span>
+              <span className="font-bold text-sm text-ink dark:text-white/70">
+                {cookTime} Min
+              </span>
             </div>
 
             <div className="h-8 w-px bg-gray-200 dark:bg-stone-700 hidden sm:block" />
@@ -249,7 +381,9 @@ export function RecipeDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1 mb-1">
                 <Users size={13} /> Servings
               </span>
-              <span className="font-bold text-sm text-ink dark:text-white/70">{recipe.serving_size || 4} Servings</span>
+              <span className="font-bold text-sm text-ink dark:text-white/70">
+                {recipe.serving_size || 4} Servings
+              </span>
             </div>
 
             <div className="h-8 w-px bg-gray-200 dark:bg-stone-700 hidden sm:block" />
@@ -258,7 +392,9 @@ export function RecipeDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1 mb-1">
                 <DollarSign size={13} /> Cost
               </span>
-              <span className="font-bold text-sm text-ink dark:text-white/70">450 Ksh</span>
+              <span className="font-bold text-sm text-ink dark:text-white/70">
+                450 Ksh
+              </span>
             </div>
           </div>
 
@@ -301,14 +437,14 @@ export function RecipeDetailPage() {
               icon={
                 <ShoppingCart
                   size={16}
-                  className={
-                    isShoppingListSaved ? "text-caramel" : "text-ink"
-                  }
+                  className={isShoppingListSaved ? "text-caramel" : "text-ink"}
                 />
               }
               onClick={() => setIsShoppingListSaved((prev) => !prev)}
             >
-              {isShoppingListSaved ? "Shopping List Saved" : "Add to shopping list"}
+              {isShoppingListSaved
+                ? "Shopping List Saved"
+                : "Add to shopping list"}
             </Button>
           </div>
         </div>
@@ -318,8 +454,17 @@ export function RecipeDetailPage() {
           <AllergenAlert
             allergens={
               recipe.dietary_flags
-                ? recipe.dietary_flags.filter((f: string) =>
-                    !["vegan", "vegetarian", "gluten_free", "dairy_free", "halal", "keto", "low_carb"].includes(f)
+                ? recipe.dietary_flags.filter(
+                    (f: string) =>
+                      ![
+                        "vegan",
+                        "vegetarian",
+                        "gluten_free",
+                        "dairy_free",
+                        "halal",
+                        "keto",
+                        "low_carb",
+                      ].includes(f),
                   )
                 : []
             }
@@ -350,7 +495,10 @@ export function RecipeDetailPage() {
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {recipe.dietary_flags.map((flag: string) => (
-                      <span key={flag} className="rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize">
+                      <span
+                        key={flag}
+                        className="rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize"
+                      >
                         {flag.replace("_", " ")}
                       </span>
                     ))}
@@ -365,7 +513,10 @@ export function RecipeDetailPage() {
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {recipe.taste_tags.map((tag: string) => (
-                      <span key={tag} className="rounded-full bg-gray-100 dark:bg-stone-900 text-gray-700 dark:text-gray-300 text-xs font-medium px-3.5 py-1.5 capitalize">
+                      <span
+                        key={tag}
+                        className="rounded-full bg-gray-100 dark:bg-stone-900 text-gray-700 dark:text-gray-300 text-xs font-medium px-3.5 py-1.5 capitalize"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -389,7 +540,9 @@ export function RecipeDetailPage() {
                 <span className="text-5xl font-extrabold tracking-tight text-caramel">
                   {recipe.calories || 320}
                 </span>
-                <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">kcal</span>
+                <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                  kcal
+                </span>
               </div>
 
               <div className="grid grid-cols-4 gap-2">
@@ -398,7 +551,9 @@ export function RecipeDetailPage() {
                     Protein
                   </span>
                   <span className="font-bold text-xs sm:text-sm text-ink dark:text-white/70 mt-1">
-                    {recipe.macros?.protein_g !== undefined ? `${recipe.macros.protein_g}g` : "18g"}
+                    {recipe.macros?.protein_g !== undefined
+                      ? `${recipe.macros.protein_g}g`
+                      : "18g"}
                   </span>
                 </div>
                 <div className="bg-gray-50 dark:bg-[#120905] p-2 rounded-xl flex flex-col justify-between min-h-[56px] transition-colors duration-300">
@@ -406,7 +561,9 @@ export function RecipeDetailPage() {
                     Fat
                   </span>
                   <span className="font-bold text-xs sm:text-sm text-ink dark:text-white/70 mt-1">
-                    {recipe.macros?.fat_g !== undefined ? `${recipe.macros.fat_g}g` : "12g"}
+                    {recipe.macros?.fat_g !== undefined
+                      ? `${recipe.macros.fat_g}g`
+                      : "12g"}
                   </span>
                 </div>
                 <div className="bg-gray-50 dark:bg-[#120905] p-2 rounded-xl flex flex-col justify-between min-h-[56px] transition-colors duration-300">
@@ -414,7 +571,9 @@ export function RecipeDetailPage() {
                     Carbs
                   </span>
                   <span className="font-bold text-xs sm:text-sm text-ink dark:text-white/70 mt-1">
-                    {recipe.macros?.carbs_g !== undefined ? `${recipe.macros.carbs_g}g` : "40g"}
+                    {recipe.macros?.carbs_g !== undefined
+                      ? `${recipe.macros.carbs_g}g`
+                      : "40g"}
                   </span>
                 </div>
                 <div className="bg-gray-50 dark:bg-[#120905] p-2 rounded-xl flex flex-col justify-between min-h-[56px] transition-colors duration-300">
@@ -422,7 +581,9 @@ export function RecipeDetailPage() {
                     Fibre
                   </span>
                   <span className="font-bold text-xs sm:text-sm text-ink dark:text-white/70 mt-1">
-                    {recipe.macros?.fibre_g !== undefined ? `${recipe.macros.fibre_g}g` : "3g"}
+                    {recipe.macros?.fibre_g !== undefined
+                      ? `${recipe.macros.fibre_g}g`
+                      : "3g"}
                   </span>
                 </div>
               </div>
@@ -437,7 +598,8 @@ export function RecipeDetailPage() {
               <ul className="space-y-3 font-sans text-xs sm:text-sm">
                 {recipe.ingredients?.map((item: any, idx: number) => {
                   const isChecked = checkedIngredients[idx] || false;
-                  const label = `${item.quantity || ""} ${item.unit || ""} ${item.name}`.trim();
+                  const label =
+                    `${item.quantity || ""} ${item.unit || ""} ${item.name}`.trim();
                   return (
                     <li
                       key={idx}
@@ -452,10 +614,11 @@ export function RecipeDetailPage() {
                       />
                       <label
                         htmlFor={`ingredient-${idx}`}
-                        className={`cursor-pointer transition-colors ${isChecked
-                          ? "line-through text-gray-400"
-                          : "text-gray-700 dark:text-gray-300 font-medium"
-                          }`}
+                        className={`cursor-pointer transition-colors ${
+                          isChecked
+                            ? "line-through text-gray-400"
+                            : "text-gray-700 dark:text-gray-300 font-medium"
+                        }`}
                       >
                         {label}
                       </label>
@@ -539,7 +702,7 @@ export function RecipeDetailPage() {
                 <div className="absolute left-5 top-4 bottom-8 w-0.5 bg-caramel/30" />
 
                 {recipe.steps?.map((step: any, idx: number) => {
-                  const stepNum = step.order || (idx + 1);
+                  const stepNum = step.order || idx + 1;
                   return (
                     <div key={idx} className="relative">
                       {/* Step Number Circle */}
@@ -567,9 +730,11 @@ export function RecipeDetailPage() {
                               </p>
                             ) : (
                               <ul className="list-disc space-y-1.5 pl-4 font-sans text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                                {step.tips.map((tip: string, tipIndex: number) => (
-                                  <li key={tipIndex}>{tip}</li>
-                                ))}
+                                {step.tips.map(
+                                  (tip: string, tipIndex: number) => (
+                                    <li key={tipIndex}>{tip}</li>
+                                  ),
+                                )}
                               </ul>
                             )}
                           </div>

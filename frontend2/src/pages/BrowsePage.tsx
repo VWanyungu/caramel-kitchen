@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiGet } from "../lib/api";
 import { FiltersModal } from "../components/FiltersModal";
-import { Hero } from "../components/Hero";
-import { Navbar } from "../components/Navbar";
 import { RecipeGrid } from "../components/RecipeGrid";
 import { SearchFilterBar } from "../components/SearchFilterBar";
 import { CategoriesGrid } from "../components/CategoriesGrid";
@@ -11,7 +9,7 @@ import { EMPTY_FILTERS, type RecipeFilters } from "../features/browse/types";
 import { useRecipes } from "../features/browse/useRecipes";
 import { PLACEHOLDER_RECIPES } from "../features/browse/placeholderRecipes";
 
-type ActiveTab = "recipes" | "categories" | "trending" | "new";
+type ActiveTab = "recipes" | "categories" | "trending" | "new" | "for_you";
 
 export function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,14 +32,17 @@ export function BrowsePage() {
   // Sync internal filter query changes back to URL search params
   useEffect(() => {
     if (filters.q !== qParam) {
-      setSearchParams((prev) => {
-        if (filters.q) {
-          prev.set("q", filters.q);
-        } else {
-          prev.delete("q");
-        }
-        return prev;
-      }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          if (filters.q) {
+            prev.set("q", filters.q);
+          } else {
+            prev.delete("q");
+          }
+          return prev;
+        },
+        { replace: true },
+      );
     }
   }, [filters.q, qParam, setSearchParams]);
 
@@ -55,7 +56,7 @@ export function BrowsePage() {
         }
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -102,7 +103,6 @@ export function BrowsePage() {
       {/* <Navbar /> */}
 
       <div className="lg:px-52">
-
         {/* <Hero /> */}
 
         <SearchFilterBar
@@ -123,13 +123,14 @@ export function BrowsePage() {
           onApply={(next) => setFilters(next)}
         />
 
-        <main className=" px-8 lg:px-24 relative overflow-hidden min-h-[500px]">
+        <main className=" px-8 lg:px-24 relative overflow-hidden min-h-125">
           {/* Recipes view */}
           <div
-            className={`transition-all duration-500 ease-in-out ${activeTab === "recipes"
-              ? "opacity-100 translate-y-0 scale-100"
-              : "opacity-0 translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
-              }`}
+            className={`transition-all duration-500 ease-in-out ${
+              activeTab === "recipes"
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
+            }`}
           >
             <RecipeGrid
               recipes={recipes}
@@ -141,10 +142,11 @@ export function BrowsePage() {
 
           {/* Categories view */}
           <div
-            className={`transition-all duration-500 ease-in-out ${activeTab === "categories"
-              ? "opacity-100 translate-y-0 scale-100"
-              : "opacity-0 -translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
-              }`}
+            className={`transition-all duration-500 ease-in-out ${
+              activeTab === "categories"
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 -translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
+            }`}
           >
             <CategoriesGrid
               onSelectCategory={handleSelectCategory}
@@ -153,7 +155,6 @@ export function BrowsePage() {
           </div>
         </main>
       </div>
-
     </div>
   );
 }

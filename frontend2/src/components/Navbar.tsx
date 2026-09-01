@@ -1,6 +1,25 @@
-import { Compass, Moon, Plus, ShoppingBag, Sparkles, ChefHat, Sun, User, ClipboardList, Search, X, Diamond, ChevronDown, Utensils } from "lucide-react";
+import {
+  Compass,
+  Moon,
+  Plus,
+  Sparkles,
+  ChefHat,
+  Sun,
+  User,
+  ClipboardList,
+  Search,
+  X,
+  Diamond,
+  ChevronDown,
+  Utensils,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { usePremiumModal } from "../context/PremiumModalContext";
 import { Button } from "./ui";
@@ -19,13 +38,19 @@ export function Navbar() {
 
   // Sync searchVal with URL search param
   useEffect(() => {
-    setSearchVal(qParam);
+    const set = () => {
+      setSearchVal(qParam);
+    };
+    set();
   }, [qParam]);
 
   // Monitor whether user has scrolled past filter bar on browse page
   useEffect(() => {
     if (pathname !== "/browse") {
-      setIsScrolledPastFilter(false);
+      const set = () => {
+        setIsScrolledPastFilter(false);
+      };
+      set();
       return;
     }
 
@@ -72,13 +97,15 @@ export function Navbar() {
   };
 
   // Theme state
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       const savedTheme = localStorage.getItem("theme");
       if (savedTheme === "dark" || savedTheme === "light") {
         return savedTheme;
       }
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
     return "light";
   });
@@ -106,7 +133,8 @@ export function Navbar() {
 
   const isHomeActive = pathname === "/";
   const isDiscoverActive = pathname === "/browse";
-  const isShoppingListActive = pathname === "/shopping-list" || pathname === "/cart";
+  const isShoppingListActive =
+    pathname === "/shopping-list" || pathname === "/cart";
   const isMealPlansActive = pathname === "/meal-plans";
   const isAiActive = pathname === "/ai";
   // const isProfileActive = pathname === "/profile";
@@ -116,7 +144,10 @@ export function Navbar() {
       <nav className="mx-auto flex items-center justify-between px-8 lg:px-16 py-4 gap-4">
         {/* Left Side Logo */}
         <div className="flex-1 flex justify-start items-center gap-4">
-          <Link to="/" className="font-display text-2xl italic text-ink dark:text-white transition-colors shrink-0">
+          <Link
+            to="/"
+            className="font-display text-2xl italic text-ink dark:text-white transition-colors shrink-0"
+          >
             Caramel Kitchen
           </Link>
 
@@ -166,10 +197,11 @@ export function Navbar() {
         <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-[#1d120a] p-1 rounded-full border border-taupe/15 dark:border-stone-800 shadow-xs transition-colors duration-300">
           <Link
             to="/"
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isHomeActive
-              ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-              : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-              }`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+              isHomeActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+            }`}
           >
             <ChefHat size={15} />
             <span className="hidden md:inline">Home</span>
@@ -177,10 +209,11 @@ export function Navbar() {
 
           <Link
             to="/browse"
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isDiscoverActive
-              ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-              : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-              }`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+              isDiscoverActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+            }`}
           >
             <Compass size={15} />
             <span className="hidden md:inline">Discover</span>
@@ -188,10 +221,11 @@ export function Navbar() {
 
           <Link
             to="/shopping-list"
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isShoppingListActive
-              ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-              : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-              }`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+              isShoppingListActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+            }`}
           >
             <ClipboardList size={15} />
             <span className="hidden md:inline">Shopping List</span>
@@ -204,18 +238,23 @@ export function Navbar() {
                 e.preventDefault();
                 openPremiumModal({
                   featureName: "Weekly Meal Planner",
-                  featureDescription: "Meal planning, macro balancing, and automated schedule generation are available exclusively on Caramel Bronze and Silver plans.",
+                  featureDescription:
+                    "Meal planning, macro balancing, and automated schedule generation are available exclusively on Caramel Bronze and Silver plans.",
                 });
               }
             }}
-            className={`relative flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isMealPlansActive
-              ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-              : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-              }`}
+            className={`relative flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+              isMealPlansActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+            }`}
           >
             <Utensils size={15} />
             <span className="hidden md:inline">Meal Plans</span>
-            <Diamond size={8} className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500" />
+            <Diamond
+              size={8}
+              className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500"
+            />
           </Link>
 
           <Link
@@ -225,18 +264,23 @@ export function Navbar() {
                 e.preventDefault();
                 openPremiumModal({
                   featureName: "Caramel AI Chef",
-                  featureDescription: "Ask questions, swap ingredients, and get customized step-by-step guidance tailored to your kitchen using Caramel AI.",
+                  featureDescription:
+                    "Ask questions, swap ingredients, and get customized step-by-step guidance tailored to your kitchen using Caramel AI.",
                 });
               }
             }}
-            className={`relative flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isAiActive
-              ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-              : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-              }`}
+            className={`relative flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${
+              isAiActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+            }`}
           >
             <Sparkles size={15} />
             <span className="hidden md:inline">AI</span>
-            <Diamond size={8} className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500" />
+            <Diamond
+              size={8}
+              className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500"
+            />
           </Link>
 
           <div className="h-4 w-px bg-gray-300 dark:bg-stone-800 mx-1" />

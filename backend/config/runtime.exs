@@ -83,7 +83,8 @@ if config_env() == :dev do
   config :caramel_kitchen, CaramelKitchen.Repo,
     username: "postgres",
     password: "postgres",
-    hostname: "localhost",
+    port: 5444,
+    hostname: "127.0.0.1",
     database: "caramel_kitchen_dev",
     stacktrace: true,
     show_sensitive_data_on_connection_error: true,
@@ -118,9 +119,9 @@ end
 if config_env() == :test do
   config :caramel_kitchen, CaramelKitchen.Repo,
     username: "postgres",
-    password: "postgres",
+    password: "king",
     hostname: "localhost",
-    database: "caramel_kitchen_test#{System.get_env("MIX_TEST_PARTITION")}",
+    database: "postgres#{System.get_env("MIX_TEST_PARTITION")}",
     pool: Ecto.Adapters.SQL.Sandbox,
     pool_size: 10
 

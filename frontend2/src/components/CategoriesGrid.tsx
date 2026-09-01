@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { apiGet } from "../lib/api";
-import { Dices } from "lucide-react";
 import React from "react";
 
 interface CategoriesGridProps {
@@ -11,11 +10,13 @@ interface CategoriesGridProps {
 const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
   egg_dishes: {
     label: "Egg Dishes",
-    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80",
   },
   rice_dishes: {
     label: "Rice Dishes",
-    image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80",
   },
   soups_stews: {
     label: "Soups & Stews",
@@ -23,7 +24,8 @@ const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
   },
   meat_dishes: {
     label: "Meat Dishes",
-    image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
   },
   fish_seafood: {
     label: "Fish & Seafood",
@@ -31,7 +33,8 @@ const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
   },
   salads: {
     label: "Salads",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80",
   },
   pasta_noodles: {
     label: "Pasta & Noodles",
@@ -43,7 +46,8 @@ const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
   },
   baked_goods: {
     label: "Baked Goods",
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80",
   },
   drinks_juices: {
     label: "Drinks & Juices",
@@ -51,19 +55,26 @@ const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
   },
   snacks: {
     label: "Snacks",
-    image: "https://images.unsplash.com/photo-1599490659213-e2b9527bb087?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1599490659213-e2b9527bb087?auto=format&fit=crop&w=600&q=80",
   },
   vegetarian: {
     label: "Vegetarian",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
   },
 };
 
-const DEFAULT_CATEGORIES = ["breakfast", "soups_stews", "drinks_juices", "fish_seafood"];
+const DEFAULT_CATEGORIES = [
+  "breakfast",
+  "soups_stews",
+  "drinks_juices",
+  "fish_seafood",
+];
 
 export function CategoriesGrid({
   onSelectCategory,
-  onSurpriseMe,
+  // onSurpriseMe,
 }: CategoriesGridProps) {
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -75,7 +86,8 @@ export function CategoriesGrid({
       .catch(() => setCategories([]));
   }, []);
 
-  const displayCategories = categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const displayCategories =
+    categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   return (
     <div className="font-sans">
@@ -83,7 +95,8 @@ export function CategoriesGrid({
         {displayCategories.map((catKey) => {
           const mapped = CATEGORY_MAP[catKey] || {
             label: catKey.replace("_", " "),
-            image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=600&q=80",
+            image:
+              "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=600&q=80",
           };
 
           return (
@@ -110,7 +123,6 @@ export function CategoriesGrid({
             </div>
           );
         })}
-
       </div>
     </div>
   );
