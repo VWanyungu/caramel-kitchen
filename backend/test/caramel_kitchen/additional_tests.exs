@@ -40,7 +40,7 @@ defmodule CaramelKitchen.TasteEngine.VectorUpdaterTest do
 end
 
 defmodule CaramelKitchen.ShoppingTest do
-  use CaramelKitchen.DataCase, async: true
+  use CaramelKitchen.DataCase, async: false
 
   alias CaramelKitchen.Shopping
 
@@ -167,7 +167,7 @@ defmodule CaramelKitchen.ShoppingTest do
 end
 
 defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "POST /api/v1/admin/recipes" do
     setup %{conn: conn} do
@@ -205,6 +205,25 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
       assert body["data"]["title"] == "Pepper Soup"
       assert body["data"]["status"] == "draft"
       assert body["data"]["taste_tags"] == ["spicy", "savory", "umami"]
+      assert body["data"]["dish_categories"] == ["soups_stews"]
+      assert body["data"]["categories"] == ["soups_stews"]
+    end
+
+    test "creates a recipe with multiple categories", %{conn: conn} do
+      params = %{
+        title: "Suya Stew",
+        ingredients: [%{name: "beef", quantity: 500, unit: "g"}],
+        steps: [%{order: 1, instruction: "Grill meat and mix into stew"}],
+        categories: ["meat_dishes", "soups_stews"],
+        primary_method: "grilling",
+        taste_tags: ["spicy", "savory"]
+      }
+
+      conn = post(conn, "/api/v1/admin/recipes", params)
+      body = json_response(conn, 201)
+
+      assert body["data"]["dish_categories"] == ["meat_dishes", "soups_stews"]
+      assert body["data"]["categories"] == ["meat_dishes", "soups_stews"]
     end
 
     test "returns 403 for non-creator user", %{conn: _} do
@@ -260,7 +279,7 @@ defmodule CaramelKitchenWeb.AdminRecipeControllerTest do
 end
 
 defmodule CaramelKitchenWeb.ShoppingControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "GET /api/v1/shopping/shared/:token" do
     test "returns shared list by token without auth", %{conn: conn} do

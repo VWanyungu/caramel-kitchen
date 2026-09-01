@@ -10,6 +10,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
                           high_protein low_sodium diabetic_friendly nut_free halal kosher
                           paleo whole30)
   @valid_statuses ~w(draft scheduled live archived)
+  @valid_meals ~w(breakfast lunch dinner snack brunch dessert beverage)
+  @valid_courses ~w(breakfast lunch dinner main side snack dessert desert beverage brunch appetizer)
+  @valid_cooking_methods ~w(roasting boiling frying baking grilling steaming sauteing braising slow_cooking pressure_cooking smoking air_frying raw no_cook) ++ ["slow cooking", "pressure cooking", "air frying"]
 
   schema "recipes" do
     belongs_to :creator, CaramelKitchen.Accounts.User
@@ -27,7 +30,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
 
     # Classification
     field :dish_category, :string
+    field :dish_categories, {:array, :string}, default: []
     field :course, :string
+    field :meal, :string
     field :primary_method, :string
     field :secondary_method, :string
     field :difficulty, :string, default: "beginner"
@@ -65,7 +70,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :featured_until, :utc_datetime
 
     # tsvector, read-only
-    field :search_vector, :string
+    field :search_vector, :string, load_in_query: false
 
     timestamps(type: :utc_datetime)
   end
@@ -73,6 +78,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
   # ── Changesets ────────────────────────────────────────────────
 
   def creation_changeset(recipe, attrs) do
+    attrs = normalize_category_attrs(attrs)
+
     recipe
     |> cast(attrs, [
       :title,
@@ -81,7 +88,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :steps,
       :serving_size,
       :dish_category,
+      :dish_categories,
       :course,
+      :meal,
       :primary_method,
       :secondary_method,
       :difficulty,
@@ -93,6 +102,10 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :allergens,
       :calories,
       :macros,
+      :thumbnail_url,
+      :video_url,
+      :video_key,
+      :video_duration_secs,
       :status,
       :scheduled_at,
       :creator_id
@@ -107,15 +120,22 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_length(:taste_tags, min: 1, max: 4, message: "must have 1-4 taste tags")
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
+    |> validate_inclusion(:meal, @valid_meals)
+    |> validate_inclusion(:course, @valid_courses)
+    |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
+    |> normalize_youtube_video()
     |> put_slug()
+    |> put_total_time()
     |> compute_taste_profile()
     |> foreign_key_constraint(:creator_id)
     |> unique_constraint(:slug)
   end
 
   def update_changeset(recipe, attrs) do
+    attrs = normalize_category_attrs(attrs)
+
     recipe
     |> cast(attrs, [
       :title,
@@ -124,7 +144,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :steps,
       :serving_size,
       :dish_category,
+      :dish_categories,
       :course,
+      :meal,
       :primary_method,
       :secondary_method,
       :difficulty,
@@ -148,8 +170,13 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_subset(:taste_tags, @valid_taste_tags)
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
+    |> validate_inclusion(:meal, @valid_meals)
+    |> validate_inclusion(:course, @valid_courses)
+    |> validate_inclusion(:primary_method, @valid_cooking_methods)
     |> validate_ingredients()
     |> validate_steps()
+    |> normalize_youtube_video()
+    |> put_total_time()
     |> compute_taste_profile()
     |> unique_constraint(:slug)
   end
@@ -180,7 +207,94 @@ defmodule CaramelKitchen.Recipes.Recipe do
   def taste_profile_list(%__MODULE__{taste_profile: nil}), do: List.duplicate(0.5, 8)
   def taste_profile_list(%__MODULE__{taste_profile: vec}), do: Pgvector.to_list(vec)
 
+  @doc """
+  Parses YouTube links, watch URLs, embed links, or HTML <iframe> snippets.
+  Returns structured map with youtube_id, watch video_url, video_embed_url, and iframe_html.
+  """
+  def parse_youtube_video(nil),
+    do: %{youtube_id: nil, video_url: nil, video_embed_url: nil, iframe_html: nil}
+
+  def parse_youtube_video(input) when is_binary(input) do
+    trimmed = String.trim(input)
+
+    video_id =
+      cond do
+        String.contains?(trimmed, "<iframe") ->
+          case Regex.run(Regex.compile!("youtube\\.com/(?:embed/|watch\\?v=)([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtube.com/embed/") ->
+          case Regex.run(Regex.compile!("youtube\\.com/embed/([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtube.com/watch") ->
+          case Regex.run(Regex.compile!("v=([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        String.contains?(trimmed, "youtu.be/") ->
+          case Regex.run(Regex.compile!("youtu\\.be/([a-zA-Z0-9_-]{11})"), trimmed) do
+            [_, id] -> id
+            _ -> nil
+          end
+
+        Regex.match?(Regex.compile!("^[a-zA-Z0-9_-]{11}$"), trimmed) ->
+          trimmed
+
+        true ->
+          nil
+      end
+
+    case video_id do
+      nil ->
+        %{
+          youtube_id: nil,
+          video_url: trimmed,
+          video_embed_url: trimmed,
+          iframe_html: nil
+        }
+
+      id ->
+        embed_url = "https://www.youtube.com/embed/#{id}"
+        watch_url = "https://www.youtube.com/watch?v=#{id}"
+
+        iframe =
+          ~s(<iframe width="100%" height="100%" src="#{embed_url}" title="Recipe Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>)
+
+        %{
+          youtube_id: id,
+          video_url: watch_url,
+          video_embed_url: embed_url,
+          iframe_html: iframe
+        }
+    end
+  end
+
+  def parse_youtube_video(_),
+    do: %{youtube_id: nil, video_url: nil, video_embed_url: nil, iframe_html: nil}
+
   # ── Private ───────────────────────────────────────────────────
+
+  defp normalize_youtube_video(cs) do
+    case get_change(cs, :video_url) do
+      nil ->
+        cs
+
+      url_or_iframe when is_binary(url_or_iframe) ->
+        parsed = parse_youtube_video(url_or_iframe)
+
+        if parsed.youtube_id do
+          put_change(cs, :video_url, parsed.video_url)
+        else
+          cs
+        end
+    end
+  end
 
   defp put_slug(%Ecto.Changeset{valid?: true} = cs) do
     case get_field(cs, :title) do
@@ -203,6 +317,12 @@ defmodule CaramelKitchen.Recipes.Recipe do
   end
 
   defp put_slug(cs), do: cs
+
+  defp put_total_time(cs) do
+    prep = get_field(cs, :prep_time_mins) || 0
+    cook = get_field(cs, :cook_time_mins) || 0
+    put_change(cs, :total_time_mins, prep + cook)
+  end
 
   # Map taste tags to a float vector for similarity search
   defp compute_taste_profile(%Ecto.Changeset{valid?: true} = cs) do
@@ -253,4 +373,70 @@ defmodule CaramelKitchen.Recipes.Recipe do
     do: true
 
   defp valid_step?(_), do: false
+
+  @valid_legacy_categories ~w(egg_dishes rice_dishes soups_stews meat_dishes fish_seafood salads pasta_noodles breakfast baked_goods drinks_juices snacks vegetarian)
+
+  defp map_legacy_category(cat) when cat in @valid_legacy_categories, do: cat
+  defp map_legacy_category(cat) when cat in ~w(chicken_dishes beef_dishes), do: "meat_dishes"
+  defp map_legacy_category(cat) when cat in ~w(vegetable_dishes legume_dishes), do: "vegetarian"
+  defp map_legacy_category(_), do: nil
+
+  defp normalize_category_attrs(attrs) when is_map(attrs) do
+    string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
+
+    dish_categories =
+      cond do
+        Map.has_key?(attrs, "dish_categories") -> Map.get(attrs, "dish_categories")
+        Map.has_key?(attrs, :dish_categories) -> Map.get(attrs, :dish_categories)
+        Map.has_key?(attrs, "categories") -> Map.get(attrs, "categories")
+        Map.has_key?(attrs, :categories) -> Map.get(attrs, :categories)
+        Map.has_key?(attrs, "dish_category") -> wrap_in_list(Map.get(attrs, "dish_category"))
+        Map.has_key?(attrs, :dish_category) -> wrap_in_list(Map.get(attrs, :dish_category))
+        Map.has_key?(attrs, "category") -> wrap_in_list(Map.get(attrs, "category"))
+        Map.has_key?(attrs, :category) -> wrap_in_list(Map.get(attrs, :category))
+        true -> nil
+      end
+
+    case dish_categories do
+      nil ->
+        attrs
+
+      cats when is_list(cats) ->
+        first_cat = List.first(cats)
+        legacy_cat = map_legacy_category(first_cat)
+
+        if string_keys? do
+          attrs
+          |> Map.put("dish_categories", cats)
+          |> Map.put("dish_category", legacy_cat)
+        else
+          attrs
+          |> Map.put(:dish_categories, cats)
+          |> Map.put(:dish_category, legacy_cat)
+        end
+
+      cat when is_binary(cat) ->
+        legacy_cat = map_legacy_category(cat)
+
+        if string_keys? do
+          attrs
+          |> Map.put("dish_categories", [cat])
+          |> Map.put("dish_category", legacy_cat)
+        else
+          attrs
+          |> Map.put(:dish_categories, [cat])
+          |> Map.put(:dish_category, legacy_cat)
+        end
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp normalize_category_attrs(attrs), do: attrs
+
+  defp wrap_in_list(nil), do: []
+  defp wrap_in_list(val) when is_list(val), do: val
+  defp wrap_in_list(val) when is_binary(val), do: [val]
+  defp wrap_in_list(_), do: []
 end

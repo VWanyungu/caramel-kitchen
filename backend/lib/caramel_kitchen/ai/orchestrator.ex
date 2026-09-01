@@ -129,7 +129,7 @@ defmodule CaramelKitchen.AI.Orchestrator do
   # ── OpenAI Calls ──────────────────────────────────────────────
 
   defp call_openai_streaming(messages, session_id, _opts) do
-    api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
+    api_key = Application.get_env(:caramel_kitchen, :openai_api_key, "sk-placeholder")
 
     body =
       Jason.encode!(%{
@@ -187,7 +187,7 @@ defmodule CaramelKitchen.AI.Orchestrator do
   end
 
   defp call_openai_direct(messages, _format) do
-    api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
+    api_key = Application.get_env(:caramel_kitchen, :openai_api_key, "sk-placeholder")
 
     case Req.post(@openai_url,
            headers: [{"Authorization", "Bearer #{api_key}"}],

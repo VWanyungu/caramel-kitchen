@@ -22,8 +22,14 @@ defmodule CaramelKitchen.Content do
   alias CaramelKitchen.Recipes
   alias CaramelKitchen.Workers.PublishRecipeWorker
 
-  @bucket Application.compile_env(:caramel_kitchen, :s3_bucket, "caramel-kitchen-videos")
-  @cdn_url Application.compile_env(:caramel_kitchen, :cdn_url, "https://cdn.caramelkitchen.app")
+  defp bucket do
+    Application.get_env(:caramel_kitchen, :s3_bucket, "caramel-kitchen-videos")
+  end
+
+  defp cdn_url do
+    Application.get_env(:caramel_kitchen, :cdn_url, "https://cdn.caramelkitchen.app")
+  end
+
   # 15 minutes
   @presigned_ttl 900
 
@@ -39,7 +45,7 @@ defmodule CaramelKitchen.Content do
 
     config = ExAws.Config.new(:s3)
 
-    case ExAws.S3.presigned_url(config, :put, @bucket, key,
+    case ExAws.S3.presigned_url(config, :put, bucket(), key,
            expires_in: @presigned_ttl,
            headers: [{"content-type", content_type}],
            query_params: [{"x-amz-server-side-encryption", "AES256"}]
@@ -49,7 +55,7 @@ defmodule CaramelKitchen.Content do
          %{
            presigned_url: url,
            key: key,
-           cdn_url_after_process: "#{@cdn_url}/#{key}",
+           cdn_url_after_process: "#{cdn_url()}/#{key}",
            expires_in: @presigned_ttl
          }}
 
@@ -61,8 +67,8 @@ defmodule CaramelKitchen.Content do
 
   @doc "Called by webhook after S3 upload completes and transcoding finishes."
   def on_video_processed(recipe_id, video_key, duration_secs, thumbnail_key) do
-    cdn_video = "#{@cdn_url}/#{video_key}"
-    cdn_thumbnail = "#{@cdn_url}/#{thumbnail_key}"
+    cdn_video = "#{cdn_url()}/#{video_key}"
+    cdn_thumbnail = "#{cdn_url()}/#{thumbnail_key}"
 
     with {:ok, recipe} <- Recipes.get_recipe(recipe_id) do
       Recipes.set_video(recipe, %{
@@ -94,11 +100,11 @@ defmodule CaramelKitchen.Content do
   def archive_video(video_key) when is_binary(video_key) do
     archive_key = String.replace(video_key, "videos/", "archive/videos/")
 
-    ExAws.S3.put_object_copy(@bucket, archive_key, @bucket, video_key)
+    ExAws.S3.put_object_copy(bucket(), archive_key, bucket(), video_key)
     |> ExAws.request()
     |> case do
       {:ok, _} ->
-        ExAws.S3.delete_object(@bucket, video_key) |> ExAws.request()
+        ExAws.S3.delete_object(bucket(), video_key) |> ExAws.request()
 
       err ->
         err

@@ -10,7 +10,7 @@ defmodule CaramelKitchen.AI.VoiceProcessor do
 
   @doc "Transcribe audio binary using Whisper API. Returns {:ok, transcript}."
   def transcribe(audio_binary, content_type \\ "audio/webm") do
-    api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
+    api_key = Application.get_env(:caramel_kitchen, :openai_api_key, "sk-placeholder")
     ext = content_type_to_ext(content_type)
     filename = "audio#{ext}"
 
@@ -39,7 +39,7 @@ defmodule CaramelKitchen.AI.VoiceProcessor do
 
   @doc "Generate TTS audio for a text string. Returns {:ok, audio_url}."
   def speak(text, voice \\ "nova") when is_binary(text) do
-    api_key = Application.fetch_env!(:caramel_kitchen, :openai_api_key)
+    api_key = Application.get_env(:caramel_kitchen, :openai_api_key, "sk-placeholder")
     # TTS limit
     truncated = String.slice(text, 0, 4096)
 

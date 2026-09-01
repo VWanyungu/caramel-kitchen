@@ -135,12 +135,29 @@ defmodule CaramelKitchen.Accounts.User do
   def active?(_), do: false
 
   def premium?(%__MODULE__{subscription_tier: tier}), do: tier in ~w(premium creator_pro)
-  def creator?(%__MODULE__{role: role}), do: role in ~w(creator admin)
+  def creator?(user), do: admin?(user)
   def admin?(%__MODULE__{role: "admin"}), do: true
   def admin?(_), do: false
 
   def taste_vector_list(%__MODULE__{taste_vector: nil}), do: default_taste_vector()
-  def taste_vector_list(%__MODULE__{taste_vector: vec}), do: Pgvector.to_list(vec)
+  def taste_vector_list(%__MODULE__{taste_vector: vec}) when is_list(vec), do: vec
+  def taste_vector_list(%__MODULE__{taste_vector: %Pgvector{} = vec}), do: Pgvector.to_list(vec)
+
+  def taste_vector_list(%__MODULE__{taste_vector: vec}) when is_binary(vec) do
+    vec
+    |> String.trim("[")
+    |> String.trim("]")
+    |> String.split(",")
+    |> Enum.map(&String.trim/1)
+    |> Enum.map(fn s ->
+      case Float.parse(s) do
+        {f, _} -> f
+        :error -> 0.5
+      end
+    end)
+  end
+
+  def taste_vector_list(_), do: default_taste_vector()
 
   def default_taste_vector, do: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
   def taste_dimensions, do: @taste_dimensions

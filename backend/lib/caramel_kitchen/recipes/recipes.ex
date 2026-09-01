@@ -37,6 +37,10 @@ defmodule CaramelKitchen.Recipes do
       |> apply_filters(filters)
       |> apply_dietary_filter(user.dietary_flags)
       |> apply_after_cursor(after_id)
+      |> order_by([r],
+        desc: fragment("0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score", ^taste_vec),
+        desc: r.published_at
+      )
       |> select([r], %{
         recipe: r,
         taste_score: fragment("1 - (taste_profile <=> ?::vector)", ^taste_vec),
@@ -46,10 +50,6 @@ defmodule CaramelKitchen.Recipes do
             ^taste_vec
           )
       })
-      |> order_by([r, ...],
-        desc: fragment("combined_score"),
-        desc: r.published_at
-      )
       |> limit(^limit)
       |> Repo.all()
     end)
@@ -70,10 +70,13 @@ defmodule CaramelKitchen.Recipes do
     |> where(
       [r],
       fragment(
-        "search_vector @@ plainto_tsquery('english', ?) OR title ILIKE ?",
+        "(search_vector @@ plainto_tsquery('english', ?) OR title ILIKE ?)",
         ^sanitised,
         ^"%#{sanitised}%"
       )
+    )
+    |> order_by([r],
+      desc: fragment("ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)", ^sanitised, ^sanitised)
     )
     |> select([r], %{
       recipe: r,
@@ -84,7 +87,6 @@ defmodule CaramelKitchen.Recipes do
           ^sanitised
         )
     })
-    |> order_by([r, ...], desc: fragment("rank"))
     |> limit(^limit)
     |> offset(^offset)
     |> Repo.all()
@@ -112,17 +114,38 @@ defmodule CaramelKitchen.Recipes do
     end)
   end
 
-  def list_by_category(category, opts \\ []) do
+  def list_by_category(category, opts \\ [])
+
+  def list_by_category("all", opts) do
+    limit = Keyword.get(opts, :limit, 20)
+    filters = Keyword.get(opts, :filters, %{})
+
+    from(r in Recipe, where: r.status == "live")
+    |> apply_filters(filters)
+    |> order_by([r], desc: r.engagement_score)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  def list_by_category(category, opts) when is_binary(category) do
+    list_by_category([category], opts)
+  end
+
+  def list_by_category(categories, opts) when is_list(categories) do
     limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
 
     from(r in Recipe,
-      where: r.status == "live" and r.dish_category == ^category
+      where: r.status == "live" and fragment("? && ?", r.dish_categories, ^categories)
     )
     |> apply_filters(filters)
     |> order_by([r], desc: r.engagement_score)
     |> limit(^limit)
     |> Repo.all()
+  end
+
+  def list_by_category(category, opts) when is_nil(category) or category == "" do
+    list_by_category("all", opts)
   end
 
   def get_recipe!(id), do: Repo.get!(Recipe, id)
@@ -141,15 +164,22 @@ defmodule CaramelKitchen.Recipes do
   # ── Category counts ───────────────────────────────────────────
 
   def category_counts do
-    Cache.get_or_store("category_counts", :timer.minutes(10), fn ->
+    fetch_counts = fn ->
       from(r in Recipe,
-        where: r.status == "live" and not is_nil(r.dish_category),
-        group_by: r.dish_category,
-        select: {r.dish_category, count(r.id)}
+        where: r.status == "live",
+        cross_join: cat in fragment("unnest(?)", r.dish_categories),
+        group_by: fragment("?", cat),
+        select: {fragment("?", cat), count(r.id)}
       )
       |> Repo.all()
       |> Map.new()
-    end)
+    end
+
+    if Mix.env() == :test do
+      fetch_counts.()
+    else
+      Cache.get_or_store("category_counts", :timer.minutes(10), fetch_counts)
+    end
   end
 
   def dish_type_counts do
@@ -266,8 +296,18 @@ defmodule CaramelKitchen.Recipes do
       {:course, course}, q when is_binary(course) ->
         where(q, [r], r.course == ^course)
 
+      {:meal, meal}, q when is_binary(meal) ->
+        where(q, [r], r.meal == ^meal)
+
       {:category, cat}, q when is_binary(cat) ->
-        where(q, [r], r.dish_category == ^cat)
+        if cat == "all" do
+          q
+        else
+          where(q, [r], fragment("? && ?", r.dish_categories, ^[cat]))
+        end
+
+      {:category, cats}, q when is_list(cats) and length(cats) > 0 ->
+        where(q, [r], fragment("? && ?", r.dish_categories, ^cats))
 
       {:serving_context, ctx}, q when is_binary(ctx) ->
         case ctx do
@@ -304,12 +344,13 @@ defmodule CaramelKitchen.Recipes do
     where(query, [r], r.id < ^after_id)
   end
 
-  defp format_vector(list), do: "[#{Enum.join(list, ",")}]"
+  defp format_vector(list) when is_list(list), do: Pgvector.new(list)
+  defp format_vector(%Pgvector{} = vec), do: vec
 
   defp sanitise_search_query(q) do
     q
     |> String.trim()
-    |> String.replace(Regex.compile!("[^\\\\w\\\\s-]"), "")
+    |> String.replace(Regex.compile!("[^\\w\\s-]"), "")
     |> String.slice(0, 200)
   end
 

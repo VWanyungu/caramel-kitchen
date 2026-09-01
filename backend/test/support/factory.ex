@@ -39,10 +39,18 @@ defmodule CaramelKitchen.Factory do
   end
 
   def recipe_factory(attrs \\ %{}) do
-    %Recipe{
-      creator_id: attrs[:creator_id] || insert(:creator).id,
-      slug: sequence(:slug, &"test-recipe-#{&1}"),
-      title: sequence(:title, &"Test Recipe #{&1}"),
+    title = Map.get(attrs, :title) || sequence(:title, &"Test Recipe #{&1}")
+    slug = Map.get(attrs, :slug) || sequence(:slug, &"test-recipe-#{&1}")
+    creator_id = Map.get(attrs, :creator_id) || insert(:creator).id
+
+    prep_time = Map.get(attrs, :prep_time_mins, 10)
+    cook_time = Map.get(attrs, :cook_time_mins, 20)
+    total_time = Map.get(attrs, :total_time_mins, prep_time + cook_time)
+
+    recipe = %Recipe{
+      creator_id: creator_id,
+      slug: slug,
+      title: title,
       description: "A delicious test recipe",
       ingredients: [
         %{"name" => "chicken", "quantity" => 500, "unit" => "g"},
@@ -56,13 +64,14 @@ defmodule CaramelKitchen.Factory do
       ],
       serving_size: 2,
       dish_category: "meat_dishes",
+      dish_categories: ["meat_dishes"],
       course: "main",
       primary_method: "frying",
       difficulty: "intermediate",
       cuisine_origin: ["west_african"],
-      prep_time_mins: 10,
-      cook_time_mins: 20,
-      total_time_mins: 30,
+      prep_time_mins: prep_time,
+      cook_time_mins: cook_time,
+      total_time_mins: total_time,
       taste_tags: ["savory", "spicy"],
       taste_profile: [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
       dietary_flags: ["halal"],
@@ -77,6 +86,8 @@ defmodule CaramelKitchen.Factory do
       avg_rating: Decimal.new("4.2"),
       engagement_score: 0.75
     }
+
+    merge_attributes(recipe, attrs)
   end
 
   def draft_recipe_factory do
@@ -143,7 +154,6 @@ defmodule CaramelKitchenWeb.ConnCase do
 
   using do
     quote do
-      use Phoenix.ConnTest
       import Plug.Conn
       import Phoenix.ConnTest
       import CaramelKitchen.Factory

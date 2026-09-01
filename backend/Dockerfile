@@ -1,11 +1,11 @@
 # Dockerfile — multi-stage production build
 
 ARG ELIXIR_VERSION=1.16.3
-ARG OTP_VERSION=26.2.5
-ARG DEBIAN_VERSION=bullseye-20240701-slim
+ARG OTP_VERSION=26.2.5.21
+ARG DEBIAN_VERSION=bullseye-20260824-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG RUNNER_IMAGE="debian:bullseye-slim"
 
 # ── Build stage ───────────────────────────────────────────────
 FROM ${BUILDER_IMAGE} AS builder
@@ -32,6 +32,7 @@ RUN mix deps.compile
 
 COPY lib lib
 COPY priv priv
+COPY rel rel
 
 RUN mix compile
 
@@ -48,6 +49,7 @@ RUN apt-get update -y && apt-get install -y \
   libncurses5 \
   locales \
   ca-certificates \
+  curl \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
@@ -58,11 +60,11 @@ ENV LC_ALL en_US.UTF-8
 
 WORKDIR /app
 
-RUN chown nobody /app
-
 ENV MIX_ENV="prod"
+ENV RELEASE_DISTRIBUTION="none"
 
-COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/caramel_kitchen ./
+COPY --from=builder /app/_build/${MIX_ENV}/rel/caramel_kitchen ./
+RUN chown -R nobody:nogroup /app
 
 USER nobody
 

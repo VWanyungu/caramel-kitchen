@@ -80,13 +80,18 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
   end
 
   defp render_admin_recipe(recipe) do
+    categories = recipe.dish_categories || []
+    yt = CaramelKitchen.Recipes.Recipe.parse_youtube_video(recipe.video_url || "")
+
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       description: recipe.description,
       status: recipe.status,
-      dish_category: recipe.dish_category,
+      dish_category: recipe.dish_category || List.first(categories),
+      dish_categories: categories,
+      categories: categories,
       course: recipe.course,
       primary_method: recipe.primary_method,
       secondary_method: recipe.secondary_method,
@@ -101,7 +106,10 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
       cook_time_mins: recipe.cook_time_mins,
       total_time_mins: recipe.total_time_mins,
       thumbnail_url: recipe.thumbnail_url,
-      video_url: recipe.video_url,
+      video_url: recipe.video_url || yt.video_url,
+      video_embed_url: yt.video_embed_url,
+      video_iframe_html: yt.iframe_html,
+      youtube_video_id: yt.youtube_id,
       video_key: recipe.video_key,
       video_duration_secs: recipe.video_duration_secs,
       view_count: recipe.view_count,

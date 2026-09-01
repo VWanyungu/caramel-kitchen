@@ -218,6 +218,16 @@ defmodule CaramelKitchenWeb.MealPlanController do
           error: "insufficient_recipes",
           message: "Not enough recipes available for this goal type yet"
         })
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        conn
+        |> put_status(422)
+        |> json(%{error: "validation_error", details: inspect(changeset.errors)})
+
+      {:error, _reason} ->
+        conn
+        |> put_status(422)
+        |> json(%{error: "invalid_request", message: "Could not generate meal plan"})
     end
   end
 

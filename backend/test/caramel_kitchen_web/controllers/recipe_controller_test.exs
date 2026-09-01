@@ -1,5 +1,5 @@
 defmodule CaramelKitchenWeb.RecipeControllerTest do
-  use CaramelKitchenWeb.ConnCase, async: true
+  use CaramelKitchenWeb.ConnCase, async: false
 
   describe "GET /api/v1/recipes (public)" do
     setup do
@@ -36,7 +36,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
-        primary_method: "mixing",
+        dish_categories: ["salads"],
+        primary_method: "sauteing",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: [],
         course: "starter",
@@ -47,8 +48,9 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       # Fails category
       insert(:recipe,
         status: "live",
-        dish_category: "soups",
-        primary_method: "mixing",
+        dish_category: "soups_stews",
+        dish_categories: ["soups_stews"],
+        primary_method: "sauteing",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: [],
         course: "starter",
@@ -59,6 +61,7 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
+        dish_categories: ["salads"],
         primary_method: "baking",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: [],
@@ -70,7 +73,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
-        primary_method: "mixing",
+        dish_categories: ["salads"],
+        primary_method: "sauteing",
         dietary_flags: ["gluten_free"],
         allergens: [],
         course: "starter",
@@ -81,7 +85,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
-        primary_method: "mixing",
+        dish_categories: ["salads"],
+        primary_method: "sauteing",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: ["nuts"],
         course: "starter",
@@ -92,7 +97,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
-        primary_method: "mixing",
+        dish_categories: ["salads"],
+        primary_method: "sauteing",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: [],
         course: "main",
@@ -103,17 +109,20 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         status: "live",
         dish_category: "salads",
-        primary_method: "mixing",
+        dish_categories: ["salads"],
+        primary_method: "sauteing",
         dietary_flags: ["vegan", "gluten_free"],
         allergens: [],
         course: "starter",
+        prep_time_mins: 15,
+        cook_time_mins: 30,
         total_time_mins: 45
       )
 
       query =
         URI.encode_query(%{
           category: "salads",
-          cooking_method: "mixing",
+          cooking_method: "sauteing",
           dietary: "vegan,gluten_free",
           exclude_allergens: "nuts",
           course: "starter",
@@ -126,7 +135,7 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       assert length(body["data"]) == 1
       recipe = hd(body["data"])
       assert recipe["dish_category"] == "salads"
-      assert recipe["primary_method"] == "mixing"
+      assert recipe["primary_method"] == "sauteing"
       assert "vegan" in recipe["dietary_flags"]
       assert recipe["course"] == "starter"
     end
@@ -138,7 +147,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         title: "Spicy Vegan Taco",
         status: "live",
-        dish_category: "mexican",
+        dish_category: "vegetarian",
+        dish_categories: ["vegetarian"],
         dietary_flags: ["vegan"]
       )
 
@@ -146,24 +156,41 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       insert(:recipe,
         title: "Spicy Beef Taco",
         status: "live",
-        dish_category: "mexican",
+        dish_category: "vegetarian",
+        dish_categories: ["vegetarian"],
         dietary_flags: []
       )
 
       # Matches filter, fails text
       insert(:recipe,
         title: "Mild Vegan Wrap",
+        description: "Fresh vegetable wrap",
+        ingredients: [%{"name" => "tofu", "quantity" => 100, "unit" => "g"}],
+        taste_tags: ["mild"],
         status: "live",
-        dish_category: "mexican",
+        dish_category: "vegetarian",
+        dish_categories: ["vegetarian"],
         dietary_flags: ["vegan"]
       )
 
-      query = URI.encode_query(%{q: "Taco", dietary: "vegan", category: "mexican"})
+      query = URI.encode_query(%{q: "Taco", dietary: "vegan", category: "vegetarian"})
       conn = get(conn, "/api/v1/recipes/search?#{query}")
       body = json_response(conn, 200)
 
       assert length(body["data"]) == 1
       assert hd(body["data"])["title"] == "Spicy Vegan Taco"
+    end
+
+    test "filters recipes by meal", %{conn: conn} do
+      insert(:recipe, title: "Pancakes", meal: "breakfast", status: "live")
+      insert(:recipe, title: "Steak", meal: "dinner", status: "live")
+
+      conn = get(conn, "/api/v1/recipes/search?meal=breakfast")
+      body = json_response(conn, 200)
+
+      assert length(body["data"]) == 1
+      assert hd(body["data"])["title"] == "Pancakes"
+      assert hd(body["data"])["meal"] == "breakfast"
     end
   end
 
@@ -178,6 +205,8 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       assert body["data"]["ingredients"]
       assert body["data"]["steps"]
       assert body["data"]["macros"]
+      assert body["data"]["dish_categories"] == recipe.dish_categories
+      assert body["data"]["categories"] == recipe.dish_categories
     end
 
     test "returns 404 for non-existent recipe", %{conn: conn} do

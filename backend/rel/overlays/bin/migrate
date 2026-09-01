@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+cd -P -- "$(dirname -- "$(command -v -- "$0")")"
+exec ./caramel_kitchen eval "CaramelKitchen.Release.migrate()"

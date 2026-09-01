@@ -1,5 +1,5 @@
 defmodule CaramelKitchen.RecipesTest do
-  use CaramelKitchen.DataCase, async: true
+  use CaramelKitchen.DataCase, async: false
 
   alias CaramelKitchen.Recipes
   alias CaramelKitchen.Recipes.Recipe
@@ -42,6 +42,25 @@ defmodule CaramelKitchen.RecipesTest do
       assert not is_nil(recipe.taste_profile)
     end
 
+    test "creates recipe with updated course, cooking_method, and taste_tags (issue #52)", %{creator: creator} do
+      attrs = %{
+        "title" => "Air Fried Wings",
+        "description" => "Crispy air fried chicken wings",
+        "ingredients" => [%{"name" => "chicken wings", "quantity" => 500, "unit" => "g"}],
+        "steps" => [%{"order" => 1, "instruction" => "Air fry at 200C"}],
+        "course" => "appetizer",
+        "primary_method" => "air_frying",
+        "taste_tags" => ["savory", "tangy", "umami"],
+        "meal" => "snack"
+      }
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert recipe.course == "appetizer"
+      assert recipe.primary_method == "air_frying"
+      assert recipe.taste_tags == ["savory", "tangy", "umami"]
+      assert recipe.meal == "snack"
+    end
+
     test "rejects recipe without ingredients", %{creator: creator} do
       attrs = %{
         "title" => "Empty Recipe",
@@ -80,6 +99,21 @@ defmodule CaramelKitchen.RecipesTest do
       assert recipe1.slug != recipe2.slug
       assert String.starts_with?(recipe1.slug, "pepper-soup")
     end
+
+    test "parses YouTube iframe snippet and normalizes video_url", %{creator: creator} do
+      iframe_input =
+        ~s(<iframe width="1337" height="752" src="https://www.youtube.com/embed/t4NSPbreDgE" title="Top Generals" frameborder="0" allowfullscreen></iframe>)
+
+      attrs = Map.merge(base_recipe_attrs(), %{"video_url" => iframe_input})
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert recipe.video_url == "https://www.youtube.com/watch?v=t4NSPbreDgE"
+
+      parsed = Recipe.parse_youtube_video(recipe.video_url)
+      assert parsed.youtube_id == "t4NSPbreDgE"
+      assert parsed.video_embed_url == "https://www.youtube.com/embed/t4NSPbreDgE"
+      assert String.contains?(parsed.iframe_html, "https://www.youtube.com/embed/t4NSPbreDgE")
+    end
   end
 
   describe "update_recipe/2" do
@@ -109,15 +143,25 @@ defmodule CaramelKitchen.RecipesTest do
   end
 
   describe "category_counts/0" do
-    test "returns counts per dish category" do
-      insert(:recipe, dish_category: "meat_dishes")
-      insert(:recipe, dish_category: "meat_dishes")
-      insert(:recipe, dish_category: "rice_dishes")
+    test "returns counts per dish category including multi-category recipes" do
+      insert(:recipe, dish_categories: ["meat_dishes", "rice_dishes"])
+      insert(:recipe, dish_categories: ["meat_dishes"])
+      insert(:recipe, dish_categories: ["rice_dishes"])
 
       counts = Recipes.category_counts()
       assert is_map(counts)
       assert Map.get(counts, "meat_dishes") >= 2
-      assert Map.get(counts, "rice_dishes") >= 1
+      assert Map.get(counts, "rice_dishes") >= 2
+    end
+  end
+
+  describe "list_by_category/2" do
+    test "returns recipes matching a category in multi-category list" do
+      insert(:recipe, status: "live", dish_categories: ["breakfast", "egg_dishes"])
+      insert(:recipe, status: "live", dish_categories: ["dinner", "meat_dishes"])
+
+      results = Recipes.list_by_category("breakfast")
+      assert Enum.all?(results, fn r -> "breakfast" in r.dish_categories end)
     end
   end
 

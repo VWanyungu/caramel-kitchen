@@ -105,7 +105,8 @@ defmodule CaramelKitchenWeb.RecipeController do
     }
   )
 
-  def search(conn, %{"q" => q} = params) do
+  def search(conn, params) do
+    q = params["q"] || ""
     filters = parse_filters(params)
     limit = parse_int(params["limit"], 20)
     offset = parse_int(params["offset"], 0)
@@ -120,8 +121,6 @@ defmodule CaramelKitchenWeb.RecipeController do
       meta: %{query: q, limit: limit, offset: offset}
     })
   end
-
-  def search(conn, _), do: json(conn, %{data: [], meta: %{query: ""}})
 
   operation(:show,
     summary: "Get a recipe",
@@ -219,13 +218,18 @@ defmodule CaramelKitchenWeb.RecipeController do
   # ── Rendering ─────────────────────────────────────────────────
 
   defp render_recipe_card(recipe, meta) do
+    categories = recipe.dish_categories || []
+
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       thumbnail_url: recipe.thumbnail_url,
-      dish_category: recipe.dish_category,
+      dish_category: recipe.dish_category || List.first(categories),
+      dish_categories: categories,
+      categories: categories,
       course: recipe.course,
+      meal: recipe.meal,
       primary_method: recipe.primary_method,
       difficulty: recipe.difficulty,
       total_time_mins: recipe.total_time_mins,
@@ -242,6 +246,7 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp render_recipe_detail(recipe, user) do
     base = render_recipe_card(recipe, %{})
+    yt = CaramelKitchen.Recipes.Recipe.parse_youtube_video(recipe.video_url || "")
 
     Map.merge(base, %{
       description: recipe.description,
@@ -250,7 +255,10 @@ defmodule CaramelKitchenWeb.RecipeController do
       serving_size: recipe.serving_size,
       prep_time_mins: recipe.prep_time_mins,
       cook_time_mins: recipe.cook_time_mins,
-      video_url: recipe.video_url,
+      video_url: recipe.video_url || yt.video_url,
+      video_embed_url: yt.video_embed_url,
+      video_iframe_html: yt.iframe_html,
+      youtube_video_id: yt.youtube_id,
       video_duration_secs: recipe.video_duration_secs,
       secondary_method: recipe.secondary_method,
       allergens: recipe.allergens,
@@ -302,9 +310,11 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:difficulty, params["difficulty"])
     |> maybe_add(:cuisine, parse_list(params["cuisine"]))
     |> maybe_add(:course, params["course"])
+    |> maybe_add(:meal, params["meal"])
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])
+    |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
   end
 
   defp maybe_add(map, _key, nil), do: map

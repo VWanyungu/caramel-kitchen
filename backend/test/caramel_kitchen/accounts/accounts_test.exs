@@ -1,5 +1,5 @@
 defmodule CaramelKitchen.AccountsTest do
-  use CaramelKitchen.DataCase, async: true
+  use CaramelKitchen.DataCase, async: false
 
   alias CaramelKitchen.Accounts
   alias CaramelKitchen.Accounts.User
@@ -118,7 +118,7 @@ defmodule CaramelKitchen.AccountsTest do
     end
 
     test "returns error for deactivated account" do
-      user =
+      _user =
         insert(:user,
           email: "deac@example.com",
           password_hash: Bcrypt.hash_pwd_salt("pass123"),

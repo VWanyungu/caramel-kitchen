@@ -38,8 +38,7 @@ defmodule CaramelKitchen.PromEx do
       {:prom_ex, "beam.json"},
       {:prom_ex, "phoenix.json"},
       {:prom_ex, "ecto.json"},
-      {:prom_ex, "oban.json"},
-      {:caramel_kitchen, "priv/grafana/caramel_kitchen_business.json"}
+      {:prom_ex, "oban.json"}
     ]
   end
 end
