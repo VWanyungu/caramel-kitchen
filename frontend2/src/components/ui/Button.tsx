@@ -46,14 +46,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     } else {
       switch (variant) {
         case 'primary':
-          variantClasses = 'bg-butter hover:bg-butter/90 text-white shadow-xs border border-transparent'
+          variantClasses = 'bg-caramel hover:bg-caramel/90 text-white shadow-xs border border-transparent'
           break
         case 'dark':
-          variantClasses = 'bg-black hover:bg-gray-900 text-white border border-black shadow-xs'
+          variantClasses = 'bg-white dark:bg-black dark:text-white hover:bg-caramel/90 text-caramel hover:text-white border border-caramel/30 shadow-xs'
           break
         case 'secondary':
         case 'outline':
-          variantClasses = 'bg-white hover:bg-ink/5 text-ink border border-gray-300 shadow-xs'
+          variantClasses = 'bg-white dark:bg-transparent hover:bg-ink/5 dark:hover:bg-caramel/20 text-ink border border-gray-300 shadow-xs'
           break
         case 'ghost':
           variantClasses = 'bg-transparent text-gray-500 hover:text-ink hover:bg-gray-100 border border-transparent'

@@ -60,16 +60,16 @@ export function Hero() {
   return (
     <section className="py-12 px-8 lg:px-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div className="flex flex-col justify-center items-start">
-        <div className="rounded-full bg-gray-100 flex items-center">
+        {/* <div className="rounded-full bg-gray-100 flex items-center">
           <button className="cursor-pointer rounded-full px-4 py-1.5 bg-white shadow-xs border border-gray-200 text-xs font-semibold tracking-wider uppercase text-ink">
             discover
           </button>
           <button className="cursor-pointer rounded-full px-4 py-1.5 text-xs text-gray-500 hover:text-ink font-semibold tracking-wider uppercase transition-colors">
             create
           </button>
-        </div>
+        </div> */}
 
-        <h1 className="mt-6 font-serif text-4xl sm:text-5xl lg:text-6xl text-ink font-medium tracking-tighter leading-tight">
+        <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-ink font-medium tracking-tighter leading-tight">
           All the{" "}
           <span className="inline-flex h-[1.25em] overflow-hidden align-bottom -mb-1">
             <span
@@ -114,7 +114,7 @@ export function Hero() {
         </div>
 
         <button
-          className="capitalize mt-8 cursor-pointer font-semibold flex items-center gap-2 bg-butter hover:bg-butter/90 text-white rounded-full px-7 py-3.5 text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="capitalize mt-8 cursor-pointer font-semibold flex items-center gap-2 bg-caramel hover:bg-caramel/90 text-white rounded-full px-7 py-3.5 text-sm transition-all shadow-md hover:shadow-lg active:scale-95"
         >
           <Sparkles size={18} /> Create your first meal plan
         </button>
@@ -151,20 +151,20 @@ export function Hero() {
         <button
           onClick={prevSlide}
           aria-label="Previous slide"
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-white/30 backdrop-blur-md text-white hover:bg-white/80 hover:text-ink transition-all cursor-pointer opacity-90 group-hover:opacity-100 hover:scale-110"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-28 p-2.5 rounded-full bg-white/30 backdrop-blur-md text-white hover:bg-white/80 hover:text-ink transition-all cursor-pointer opacity-90 group-hover:opacity-100 hover:scale-110"
         >
           <ChevronLeft size={22} />
         </button>
         <button
           onClick={nextSlide}
           aria-label="Next slide"
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-white/30 backdrop-blur-md text-white hover:bg-white/80 hover:text-ink transition-all cursor-pointer opacity-90 group-hover:opacity-100 hover:scale-110"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-28 p-2.5 rounded-full bg-white/30 backdrop-blur-md text-white hover:bg-white/80 hover:text-ink transition-all cursor-pointer opacity-90 group-hover:opacity-100 hover:scale-110"
         >
           <ChevronRight size={22} />
         </button>
 
         {/* Slide Indicators / Dots */}
-        <div className="absolute bottom-6 right-6 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+        <div className="absolute bottom-6 right-6 z-28 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
           {SLIDES.map((_, index) => (
             <button
               key={index}

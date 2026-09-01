@@ -1,7 +1,11 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button, Dropdown, DurationPicker } from "../../components/ui";
-import { EMPTY_FILTERS, type Difficulty, type RecipeFilters } from "./types";
+import { Button, Dropdown, DurationPicker } from "./ui";
+import {
+  EMPTY_FILTERS,
+  type Difficulty,
+  type RecipeFilters,
+} from "../features/browse/types";
 
 const CUISINES = [
   "Italian",

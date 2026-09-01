@@ -92,6 +92,7 @@ export function useRecipes(filters: RecipeFilters = EMPTY_FILTERS) {
         setStatus("success");
         return;
 
+        /*
         if (data.length === 0) {
           setRecipes(PLACEHOLDER_RECIPES);
           setHasMore(false);
@@ -110,6 +111,7 @@ export function useRecipes(filters: RecipeFilters = EMPTY_FILTERS) {
           setHasMore(false);
         }
         setStatus("success");
+        */
       } catch {
         if (!cancelled) setStatus("error");
       }
