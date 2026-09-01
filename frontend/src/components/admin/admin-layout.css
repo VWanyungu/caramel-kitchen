@@ -1,0 +1,141 @@
+.admin-shell {
+  min-height: 100svh;
+  background: var(--bg-cream);
+}
+
+.admin-navbar {
+  background: var(--bg-espresso);
+  color: var(--cream-text);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.admin-navbar-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 16px 32px;
+}
+
+.admin-nav-links {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-nav-links-desktop {
+  flex: 1;
+}
+
+.admin-nav-link {
+  color: var(--cream-text);
+  opacity: 0.75;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.admin-nav-link:hover {
+  opacity: 1;
+  background: rgba(245, 234, 217, 0.08);
+}
+
+.admin-nav-link.is-active {
+  opacity: 1;
+  background: rgba(227, 168, 87, 0.16);
+  color: var(--gold);
+}
+
+.admin-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-user {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.admin-logout {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 234, 217, 0.3);
+  background: transparent;
+  color: var(--cream-text);
+  cursor: pointer;
+}
+
+.admin-logout:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.admin-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: auto;
+}
+
+.admin-menu-bar {
+  width: 22px;
+  height: 2px;
+  background: var(--cream-text);
+  border-radius: 2px;
+}
+
+.admin-drawer {
+  border-top: 1px solid rgba(245, 234, 217, 0.15);
+  padding: 16px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-drawer .admin-nav-links {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(245, 234, 217, 0.15);
+}
+
+@media (max-width: 720px) {
+  .admin-navbar-row {
+    padding: 14px 20px;
+  }
+
+  .admin-nav-links-desktop,
+  .admin-navbar-right-desktop {
+    display: none;
+  }
+
+  .admin-menu-toggle {
+    display: flex;
+  }
+}
+
+.admin-main {
+  padding: 32px;
+}
+
+@media (max-width: 720px) {
+  .admin-main {
+    padding: 20px;
+  }
+}

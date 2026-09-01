@@ -1,0 +1,51 @@
+# ── Elixir & Mix ──────────────────────────────────────────────
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+*.beam
+/tmp/
+
+# ── Phoenix ───────────────────────────────────────────────────
+/priv/static/assets/
+/priv/static/cache_manifest.json
+
+# ── Node.js (assets) ──────────────────────────────────────────
+/assets/node_modules/
+
+# ── Environment & Secrets ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.secret.exs
+/config/dev.secret.exs
+/config/prod.secret.exs
+
+# ── Dialyzer ──────────────────────────────────────────────────
+/priv/plts/
+*.plt
+*.plt.hash
+
+# ── Test coverage ─────────────────────────────────────────────
+/cover/
+
+# ── Editors ───────────────────────────────────────────────────
+.DS_Store
+.elixir_ls/
+.vscode/
+*.swp
+*.swo
+*~
+.idea/
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+/log/
+
+# ── Release ───────────────────────────────────────────────────
+/_build/rel/
+
+.env.example
