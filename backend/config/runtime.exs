@@ -11,12 +11,19 @@ if config_env() == :prod do
 
   socket_options = if System.get_env("ECTO_IPV6") == "true", do: [:inet6], else: []
 
+  ssl_enabled =
+    case System.get_env("DATABASE_SSL") do
+      "true" -> true
+      "false" -> false
+      nil -> String.contains?(database_url, "supabase") or String.contains?(database_url, "render") or String.contains?(database_url, "sslmode=require")
+    end
+
   config :caramel_kitchen, CaramelKitchen.Repo,
     url: database_url,
     pool_size: pool_size,
     prepare: :unnamed,
-    ssl: true,
-    ssl_opts: [verify: :verify_none],
+    ssl: ssl_enabled,
+    ssl_opts: if(ssl_enabled, do: [verify: :verify_none], else: []),
     socket_options: socket_options,
     queue_target: 5_000,
     queue_interval: 1_000,
@@ -43,7 +50,9 @@ if config_env() == :prod do
       nil -> [
         "https://caramelkitchen.app",
         "https://www.caramelkitchen.app",
-        "https://admin.caramelkitchen.app"
+        "https://admin.caramelkitchen.app",
+        "https://caramel-kitchen.vercel.app",
+        "https://caramel-kitchen.vercel.app/"
       ]
 
       origins ->
@@ -80,18 +89,30 @@ if config_env() == :prod do
 end
 
 if config_env() == :dev do
+  dev_db_url = System.get_env("DATABASE_URL")
+
+  dev_repo_config =
+    if dev_db_url do
+      [url: dev_db_url]
+    else
+      [
+        username: System.get_env("POSTGRES_USER", "postgres"),
+        password: System.get_env("POSTGRES_PASSWORD", "postgres"),
+        hostname: System.get_env("POSTGRES_HOST", "localhost"),
+        port: String.to_integer(System.get_env("POSTGRES_PORT", "5432")),
+        database: System.get_env("POSTGRES_DB", "caramel_kitchen_dev")
+      ]
+    end
+
   config :caramel_kitchen, CaramelKitchen.Repo,
-    username: "postgres",
-    password: "postgres",
-    port: 5444,
-    hostname: "127.0.0.1",
-    database: "caramel_kitchen_dev",
-    stacktrace: true,
-    show_sensitive_data_on_connection_error: true,
-    pool_size: 10
+    dev_repo_config ++ [
+      stacktrace: true,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: 10
+    ]
 
   config :caramel_kitchen, CaramelKitchenWeb.Endpoint,
-    http: [ip: {127, 0, 0, 1}, port: 4000],
+    http: [ip: {0, 0, 0, 0}, port: 4000],
     check_origin: false,
     code_reloader: true,
     debug_errors: true,
@@ -100,12 +121,21 @@ if config_env() == :dev do
 
   dev_allowed_origins =
     case System.get_env("ALLOWED_ORIGINS") do
-      nil -> ["http://localhost:3000", "http://localhost:4000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:4000", "http://127.0.0.1:5173"]
+      nil -> [
+        "http://localhost:3000",
+        "http://localhost:4000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:4000",
+        "http://127.0.0.1:5173",
+        "https://caramel-kitchen.vercel.app",
+        "https://caramel-kitchen.vercel.app/"
+      ]
       origins -> String.split(origins, ",") |> Enum.map(&String.trim/1)
     end
 
   config :caramel_kitchen,
-    redis_url: "redis://localhost:6379",
+    redis_url: System.get_env("REDIS_URL", "redis://localhost:6379"),
     openai_api_key: System.get_env("OPENAI_API_KEY", "sk-dev-placeholder"),
     s3_bucket: "caramel-kitchen-dev",
     cdn_url: "http://localhost:9000",
@@ -118,10 +148,11 @@ end
 
 if config_env() == :test do
   config :caramel_kitchen, CaramelKitchen.Repo,
-    username: "postgres",
-    password: "king",
-    hostname: "localhost",
-    database: "postgres#{System.get_env("MIX_TEST_PARTITION")}",
+    username: System.get_env("POSTGRES_USER", "postgres"),
+    password: System.get_env("POSTGRES_PASSWORD", "postgres"),
+    hostname: System.get_env("POSTGRES_HOST", "localhost"),
+    port: String.to_integer(System.get_env("POSTGRES_PORT", "5432")),
+    database: "caramel_kitchen_test#{System.get_env("MIX_TEST_PARTITION")}",
     pool: Ecto.Adapters.SQL.Sandbox,
     pool_size: 10
 

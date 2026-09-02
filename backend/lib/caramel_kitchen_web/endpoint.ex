@@ -53,10 +53,20 @@ defmodule CaramelKitchenWeb.Endpoint do
 
   def check_origin(origin) do
     allowed = allowed_origins()
-    Enum.any?(allowed, &(&1 == origin or String.ends_with?(origin, &1)))
+    normalized_origin = String.trim_trailing(origin, "/")
+
+    Enum.any?(allowed, fn target ->
+      target_clean = String.trim_trailing(target, "/")
+      target_clean == origin or target_clean == normalized_origin or String.ends_with?(normalized_origin, target_clean)
+    end)
   end
 
   def allowed_origins do
-    Application.get_env(:caramel_kitchen, :allowed_origins, ["http://localhost:3000"])
+    Application.get_env(:caramel_kitchen, :allowed_origins, [
+      "http://localhost:3000",
+      "http://localhost:4000",
+      "http://localhost:5173",
+      "https://caramel-kitchen.vercel.app"
+    ])
   end
 end
