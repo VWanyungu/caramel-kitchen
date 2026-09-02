@@ -4,8 +4,13 @@ This document provides a static reference for the core backend API endpoints and
 
 > **Note**: A live, interactive version of this documentation is always available by running the local server (`mix phx.server`) and navigating to `http://localhost:4000/api/swagger`.
 
-## Base URL
-All API requests should be prefixed with `/api/v1`
+## Base URL & Hosting Environments
+
+* **Production (Render Live URL):** `https://caramel-kitchen.onrender.com`
+* **Local Development:** `http://localhost:4000`
+
+All API requests should be prefixed with `/api/v1` (e.g., `https://caramel-kitchen.onrender.com/api/v1/recipes`).
+
 
 ## Rate Limiting & Security
 To ensure system stability, the API enforces rate limits on a per-user (or per-IP for unauthenticated) basis using a sliding window.
