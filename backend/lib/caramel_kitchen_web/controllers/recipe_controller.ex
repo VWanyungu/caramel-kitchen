@@ -270,7 +270,8 @@ defmodule CaramelKitchenWeb.RecipeController do
       search_rank: meta[:search_rank],
       is_special: is_special,
       is_premium: is_special,
-      is_locked: is_locked
+      is_locked: is_locked,
+      created_at: recipe.inserted_at
     }
   end
 
@@ -298,6 +299,7 @@ defmodule CaramelKitchenWeb.RecipeController do
       view_count: recipe.view_count,
       featured_until: recipe.featured_until,
       published_at: recipe.published_at,
+      created_at: recipe.inserted_at,
       allergy_alerts: compute_allergy_alerts(recipe, user),
       creator_id: recipe.creator_id
     })
@@ -347,6 +349,31 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:serving_context, params["context"])
     |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
     |> maybe_add(:is_special, parse_boolean(params["is_special"] || params["is_premium"]))
+    |> maybe_add(
+      :created_after,
+      parse_datetime_boundary(
+        params["created_after"] || params["created_from"] || params["from_date"] ||
+          params["start_date"],
+        :start_of_day
+      )
+    )
+    |> maybe_add(
+      :created_before,
+      parse_datetime_boundary(
+        params["created_before"] || params["created_to"] || params["to_date"] ||
+          params["end_date"],
+        :end_of_day
+      )
+    )
+    |> maybe_add(
+      :creation_date,
+      parse_exact_date_filter(
+        params["creation_date"] || params["created_at"] || params["created_date"] ||
+          params["date"]
+      )
+    )
+    |> maybe_apply_preset_filter(params["created_within"] || params["date_range"])
+    |> maybe_add(:sort, params["sort"])
   end
 
   defp maybe_add(map, _key, nil), do: map
@@ -374,6 +401,108 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp parse_int(val, _default) when is_integer(val), do: val
   defp parse_int(_, default), do: default
+
+  defp parse_datetime_boundary(nil, _), do: nil
+  defp parse_datetime_boundary("", _), do: nil
+  defp parse_datetime_boundary(%DateTime{} = dt, _), do: dt
+
+  defp parse_datetime_boundary(str, boundary) when is_binary(str) do
+    str = String.trim(str)
+
+    case DateTime.from_iso8601(str) do
+      {:ok, dt, _offset} ->
+        dt
+
+      {:error, _} ->
+        case Date.from_iso8601(str) do
+          {:ok, date} ->
+            time = if boundary == :end_of_day, do: ~T[23:59:59], else: ~T[00:00:00]
+            DateTime.new!(date, time, "Etc/UTC")
+
+          {:error, _} ->
+            case Integer.parse(str) do
+              {epoch, ""} ->
+                case DateTime.from_unix(epoch) do
+                  {:ok, dt} -> dt
+                  _ -> nil
+                end
+
+              _ ->
+                nil
+            end
+        end
+    end
+  end
+
+  defp parse_datetime_boundary(_, _), do: nil
+
+  defp parse_exact_date_filter(nil), do: nil
+  defp parse_exact_date_filter(""), do: nil
+
+  defp parse_exact_date_filter(str) when is_binary(str) do
+    str = String.trim(str)
+
+    case Date.from_iso8601(str) do
+      {:ok, date} ->
+        start_dt = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+        end_dt = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
+        {start_dt, end_dt}
+
+      {:error, _} ->
+        case DateTime.from_iso8601(str) do
+          {:ok, dt, _offset} ->
+            date = DateTime.to_date(dt)
+            start_dt = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+            end_dt = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
+            {start_dt, end_dt}
+
+          _ ->
+            nil
+        end
+    end
+  end
+
+  defp parse_exact_date_filter(_), do: nil
+
+  defp maybe_apply_preset_filter(map, nil), do: map
+  defp maybe_apply_preset_filter(map, ""), do: map
+
+  defp maybe_apply_preset_filter(map, preset) when is_binary(preset) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    today = Date.utc_today()
+
+    case String.downcase(String.trim(preset)) do
+      "today" ->
+        start_dt = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
+        Map.put(map, :created_after, start_dt)
+
+      "yesterday" ->
+        yesterday = Date.add(today, -1)
+        start_dt = DateTime.new!(yesterday, ~T[00:00:00], "Etc/UTC")
+        end_dt = DateTime.new!(yesterday, ~T[23:59:59], "Etc/UTC")
+
+        map
+        |> Map.put(:created_after, start_dt)
+        |> Map.put(:created_before, end_dt)
+
+      p when p in ["this_week", "last_7_days", "week"] ->
+        start_dt = DateTime.add(now, -7, :day)
+        Map.put(map, :created_after, start_dt)
+
+      p when p in ["this_month", "last_30_days", "month"] ->
+        start_dt = DateTime.add(now, -30, :day)
+        Map.put(map, :created_after, start_dt)
+
+      p when p in ["this_year", "year"] ->
+        start_dt = DateTime.new!(Date.new!(today.year, 1, 1), ~T[00:00:00], "Etc/UTC")
+        Map.put(map, :created_after, start_dt)
+
+      _ ->
+        map
+    end
+  end
+
+  defp maybe_apply_preset_filter(map, _), do: map
 end
 
 # ── Feed Controller ────────────────────────────────────────────

@@ -227,6 +227,100 @@ defmodule CaramelKitchen.RecipesTest do
       times = Enum.map(results, fn %{recipe: r} -> r.total_time_mins end)
       assert Enum.all?(times, &(&1 <= 25))
     end
+
+    test "filters by creation date: created_after and created_before" do
+      old_recipe = insert(:recipe, status: "live", title: "Ancient Recipe")
+      new_recipe = insert(:recipe, status: "live", title: "Modern Recipe")
+
+      from(r in Recipe, where: r.id == ^old_recipe.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-01 00:00:00Z]])
+
+      from(r in Recipe, where: r.id == ^new_recipe.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-09-05 12:00:00Z]])
+
+      after_results =
+        Recipes.list_by_category("all",
+          filters: %{created_after: ~U[2026-09-01 00:00:00Z]}
+        )
+
+      after_ids = Enum.map(after_results, & &1.id)
+      assert new_recipe.id in after_ids
+      refute old_recipe.id in after_ids
+
+      before_results =
+        Recipes.list_by_category("all",
+          filters: %{created_before: ~U[2026-08-15 23:59:59Z]}
+        )
+
+      before_ids = Enum.map(before_results, & &1.id)
+      assert old_recipe.id in before_ids
+      refute new_recipe.id in before_ids
+    end
+
+    test "filters by exact creation date range" do
+      target_recipe = insert(:recipe, status: "live", title: "Exact Day Recipe")
+      other_recipe = insert(:recipe, status: "live", title: "Other Day Recipe")
+
+      from(r in Recipe, where: r.id == ^target_recipe.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-20 14:30:00Z]])
+
+      from(r in Recipe, where: r.id == ^other_recipe.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-21 01:00:00Z]])
+
+      results =
+        Recipes.list_by_category("all",
+          filters: %{
+            creation_date: {~U[2026-08-20 00:00:00Z], ~U[2026-08-20 23:59:59Z]}
+          }
+        )
+
+      ids = Enum.map(results, & &1.id)
+      assert target_recipe.id in ids
+      refute other_recipe.id in ids
+    end
+
+    test "orders by creation date newest and oldest" do
+      r1 = insert(:recipe, status: "live")
+      r2 = insert(:recipe, status: "live")
+
+      from(r in Recipe, where: r.id == ^r1.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-07-01 00:00:00Z]])
+
+      from(r in Recipe, where: r.id == ^r2.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-09-01 00:00:00Z]])
+
+      newest = Recipes.list_by_category("all", sort: "newest")
+      oldest = Recipes.list_by_category("all", sort: "oldest")
+
+      newest_idx_r2 = Enum.find_index(newest, &(&1.id == r2.id))
+      newest_idx_r1 = Enum.find_index(newest, &(&1.id == r1.id))
+      assert newest_idx_r2 < newest_idx_r1
+
+      oldest_idx_r1 = Enum.find_index(oldest, &(&1.id == r1.id))
+      oldest_idx_r2 = Enum.find_index(oldest, &(&1.id == r2.id))
+      assert oldest_idx_r1 < oldest_idx_r2
+    end
+
+    test "list_creator_recipes filters by creation date" do
+      creator = insert(:creator)
+      old_r = insert(:recipe, creator_id: creator.id, status: "live")
+      new_r = insert(:recipe, creator_id: creator.id, status: "live")
+
+      from(r in Recipe, where: r.id == ^old_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-01 00:00:00Z]])
+
+      from(r in Recipe, where: r.id == ^new_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-09-05 00:00:00Z]])
+
+      filtered =
+        Recipes.list_creator_recipes(creator.id,
+          filters: %{created_after: ~U[2026-09-01 00:00:00Z]}
+        )
+
+      ids = Enum.map(filtered, & &1.id)
+      assert new_r.id in ids
+      refute old_r.id in ids
+    end
   end
 
   # ── Helpers ───────────────────────────────────────────────────

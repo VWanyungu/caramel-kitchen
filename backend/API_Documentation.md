@@ -60,6 +60,7 @@ interface RecipeCard {
   is_special: boolean;
   is_premium: boolean;
   is_locked: boolean;
+  created_at: string;       // ISO8601 UTC
 }
 ```
 
@@ -113,6 +114,7 @@ interface RecipeDetail {
   is_special: boolean;
   is_premium: boolean;
   is_locked: boolean;
+  created_at: string;       // ISO8601 UTC
 }
 ```
 
@@ -177,6 +179,11 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 - `cuisine` (string): Comma-separated list of cuisine origins.
 - `max_calories` (integer): Filter for recipes with calories <= X.
 - `is_special` (boolean, optional): Filter for special premium recipes (`true`) or free standard recipes (`false`). Also accepts `is_premium`.
+- `created_after` (ISO8601 / YYYY-MM-DD): Filter recipes created on or after this date. (Also accepts `created_from`, `from_date`, `start_date`).
+- `created_before` (ISO8601 / YYYY-MM-DD): Filter recipes created on or before this date. (Also accepts `created_to`, `to_date`, `end_date`).
+- `creation_date` (YYYY-MM-DD): Filter recipes created on an exact calendar date. (Also accepts `created_at`, `created_date`, `date`).
+- `created_within` (string): Preset time window filter: `today`, `yesterday`, `this_week`, `last_7_days`, `this_month`, `last_30_days`, `this_year`. (Also accepts `date_range`).
+- `sort` (string, optional): Order recipes by creation timestamp: `newest` (`created_at_desc`) or `oldest` (`created_at_asc`).
 
 > **Access Gating (Issue #58 - Premium Recipes)**: Recipes marked with `is_special: true` are restricted to premium subscribers. While special recipes appear in list and search feeds with `is_special: true` and `is_locked: true`, accessing their full details via `GET /api/v1/recipes/:id` or `GET /api/v1/recipes/slug/:slug` by unauthenticated guests or free-tier users will return `402 Payment Required` with `error: "premium_required"`. Users with `premium`, `creator_pro`, or `admin` roles receive full access.
 - `context` (string): Special UI context filters. Maps to multiple parameters under the hood:
