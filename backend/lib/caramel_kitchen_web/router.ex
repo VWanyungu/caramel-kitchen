@@ -112,6 +112,11 @@ defmodule CaramelKitchenWeb.Router do
     get "/dish-types", RecipeController, :dish_types
     get "/shopping/shared/:token", ShoppingController, :show_shared
 
+    # Taxonomy discovery
+    get "/cuisines", AdminTaxonomyController, :public_cuisines
+    get "/dietary-tags", AdminTaxonomyController, :public_dietary_tags
+    get "/difficulties", AdminTaxonomyController, :public_difficulties
+
     # Video browsing
     get "/videos", VideoController, :index
     get "/videos/categories", VideoController, :categories
@@ -212,6 +217,31 @@ defmodule CaramelKitchenWeb.Router do
     get "/analytics/recipes", AdminAnalyticsController, :recipes
     get "/analytics/taste", AdminAnalyticsController, :taste_distribution
     get "/analytics/ai", AdminAnalyticsController, :ai_queries
+
+    # Taxonomy management
+    get "/categories", AdminTaxonomyController, :index_categories
+    post "/categories", AdminTaxonomyController, :create_category
+    get "/categories/:id", AdminTaxonomyController, :show_category
+    put "/categories/:id", AdminTaxonomyController, :update_category
+    delete "/categories/:id", AdminTaxonomyController, :delete_category
+
+    get "/cuisines", AdminTaxonomyController, :index_cuisines
+    post "/cuisines", AdminTaxonomyController, :create_cuisine
+    get "/cuisines/:id", AdminTaxonomyController, :show_cuisine
+    put "/cuisines/:id", AdminTaxonomyController, :update_cuisine
+    delete "/cuisines/:id", AdminTaxonomyController, :delete_cuisine
+
+    get "/dietary-tags", AdminTaxonomyController, :index_dietary_tags
+    post "/dietary-tags", AdminTaxonomyController, :create_dietary_tag
+    get "/dietary-tags/:id", AdminTaxonomyController, :show_dietary_tag
+    put "/dietary-tags/:id", AdminTaxonomyController, :update_dietary_tag
+    delete "/dietary-tags/:id", AdminTaxonomyController, :delete_dietary_tag
+
+    get "/difficulties", AdminTaxonomyController, :index_difficulties
+    post "/difficulties", AdminTaxonomyController, :create_difficulty
+    get "/difficulties/:id", AdminTaxonomyController, :show_difficulty
+    put "/difficulties/:id", AdminTaxonomyController, :update_difficulty
+    delete "/difficulties/:id", AdminTaxonomyController, :delete_difficulty
   end
 
   # ── Super Admin ───────────────────────────────────────────────

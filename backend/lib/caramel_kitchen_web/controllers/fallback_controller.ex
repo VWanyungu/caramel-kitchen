@@ -77,7 +77,6 @@ defmodule CaramelKitchenWeb.HealthController do
   end
 end
 
-
 # ── Shopping Controller ────────────────────────────────────────
 
 defmodule CaramelKitchenWeb.ShoppingController do

@@ -84,8 +84,6 @@ defmodule CaramelKitchen.Application do
       nil
     )
   end
-
-
 end
 
 defmodule CaramelKitchen.ObanLogger do

@@ -18,7 +18,7 @@ defmodule CaramelKitchenWeb.NotificationController do
 
     # Subscribe to the user's specific notification topic
     Phoenix.PubSub.subscribe(CaramelKitchen.PubSub, "user_notifications:#{user.id}")
-    
+
     Logger.info("SSE Stream started for user: #{user.id}")
 
     # Enter the recursive receive loop
@@ -40,7 +40,6 @@ defmodule CaramelKitchenWeb.NotificationController do
             # Connection closed by client
             conn
         end
-
     after
       # 30-second heartbeat ping to prevent reverse-proxy timeouts
       30_000 ->

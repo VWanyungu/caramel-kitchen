@@ -15,7 +15,12 @@ defmodule CaramelKitchen.Notifications do
   def notify_user(user_id, title, body, data \\ %{}) do
     # Broadcast to active SSE/WebSocket clients
     payload = %{title: title, body: body, data: data}
-    Phoenix.PubSub.broadcast(CaramelKitchen.PubSub, "user_notifications:#{user_id}", {:notification, payload})
+
+    Phoenix.PubSub.broadcast(
+      CaramelKitchen.PubSub,
+      "user_notifications:#{user_id}",
+      {:notification, payload}
+    )
 
     # Dispatch to mobile tokens (FCM/APNs)
     tokens = get_tokens(user_id)
