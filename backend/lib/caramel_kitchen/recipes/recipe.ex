@@ -12,7 +12,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
   @valid_statuses ~w(draft scheduled live archived)
   @valid_meals ~w(breakfast lunch dinner snack brunch dessert beverage)
   @valid_courses ~w(breakfast lunch dinner main side snack dessert desert beverage brunch appetizer)
-  @valid_cooking_methods ~w(roasting boiling frying baking grilling steaming sauteing braising slow_cooking pressure_cooking smoking air_frying raw no_cook) ++ ["slow cooking", "pressure cooking", "air frying"]
+  @valid_cooking_methods ~w(roasting boiling frying baking grilling steaming sauteing braising slow_cooking pressure_cooking smoking air_frying raw no_cook) ++
+                           ["slow cooking", "pressure cooking", "air frying"]
 
   schema "recipes" do
     belongs_to :creator, CaramelKitchen.Accounts.User
@@ -63,6 +64,10 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :rating_count, :integer, default: 0
     field :engagement_score, :float, default: 0.0
 
+    # Special / Premium Access
+    field :is_special, :boolean, default: false
+    field :is_premium, :boolean, virtual: true
+
     # Publishing
     field :status, :string, default: "draft"
     field :published_at, :utc_datetime
@@ -106,10 +111,13 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :video_url,
       :video_key,
       :video_duration_secs,
+      :is_special,
+      :is_premium,
       :status,
       :scheduled_at,
       :creator_id
     ])
+    |> sync_special_and_premium()
     |> validate_required([:title, :ingredients, :steps, :primary_method, :creator_id])
     |> validate_length(:title, min: 3, max: 255)
     |> validate_length(:description, max: 2000)
@@ -162,10 +170,13 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :video_url,
       :video_key,
       :video_duration_secs,
+      :is_special,
+      :is_premium,
       :status,
       :scheduled_at,
       :featured_until
     ])
+    |> sync_special_and_premium()
     |> validate_required([:title, :ingredients, :steps])
     |> validate_subset(:taste_tags, @valid_taste_tags)
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
@@ -220,7 +231,10 @@ defmodule CaramelKitchen.Recipes.Recipe do
     video_id =
       cond do
         String.contains?(trimmed, "<iframe") ->
-          case Regex.run(Regex.compile!("youtube\\.com/(?:embed/|watch\\?v=)([a-zA-Z0-9_-]{11})"), trimmed) do
+          case Regex.run(
+                 Regex.compile!("youtube\\.com/(?:embed/|watch\\?v=)([a-zA-Z0-9_-]{11})"),
+                 trimmed
+               ) do
             [_, id] -> id
             _ -> nil
           end
@@ -439,4 +453,17 @@ defmodule CaramelKitchen.Recipes.Recipe do
   defp wrap_in_list(val) when is_list(val), do: val
   defp wrap_in_list(val) when is_binary(val), do: [val]
   defp wrap_in_list(_), do: []
+
+  defp sync_special_and_premium(cs) do
+    case {get_change(cs, :is_special), get_change(cs, :is_premium)} do
+      {spec, nil} when not is_nil(spec) ->
+        cs
+
+      {nil, prem} when not is_nil(prem) ->
+        put_change(cs, :is_special, prem)
+
+      _ ->
+        cs
+    end
+  end
 end

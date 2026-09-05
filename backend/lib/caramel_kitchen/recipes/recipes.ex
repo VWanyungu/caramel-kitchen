@@ -38,7 +38,11 @@ defmodule CaramelKitchen.Recipes do
       |> apply_dietary_filter(user.dietary_flags)
       |> apply_after_cursor(after_id)
       |> order_by([r],
-        desc: fragment("0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score", ^taste_vec),
+        desc:
+          fragment(
+            "0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score",
+            ^taste_vec
+          ),
         desc: r.published_at
       )
       |> select([r], %{
@@ -76,7 +80,12 @@ defmodule CaramelKitchen.Recipes do
       )
     )
     |> order_by([r],
-      desc: fragment("ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)", ^sanitised, ^sanitised)
+      desc:
+        fragment(
+          "ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)",
+          ^sanitised,
+          ^sanitised
+        )
     )
     |> select([r], %{
       recipe: r,
@@ -160,6 +169,21 @@ defmodule CaramelKitchen.Recipes do
   def get_recipe_by_slug(slug) do
     Repo.fetch(from r in Recipe, where: r.slug == ^slug and r.status == "live")
   end
+
+  @doc "Checks whether a user has access to view a recipe's full details"
+  def has_recipe_access?(%Recipe{is_special: false}, _user), do: true
+  def has_recipe_access?(%Recipe{is_special: true}, nil), do: false
+
+  def has_recipe_access?(
+        %Recipe{is_special: true} = recipe,
+        %CaramelKitchen.Accounts.User{} = user
+      ) do
+    user.id == recipe.creator_id ||
+      CaramelKitchen.Accounts.User.admin?(user) ||
+      CaramelKitchen.Accounts.User.premium?(user)
+  end
+
+  def has_recipe_access?(_, _), do: false
 
   # ── Category counts ───────────────────────────────────────────
 
@@ -323,6 +347,18 @@ defmodule CaramelKitchen.Recipes do
 
       {:max_calories, cal}, q when is_integer(cal) ->
         where(q, [r], r.calories <= ^cal)
+
+      {:is_special, val}, q when val in [true, "true"] ->
+        where(q, [r], r.is_special == true)
+
+      {:is_special, val}, q when val in [false, "false"] ->
+        where(q, [r], r.is_special == false)
+
+      {:is_premium, val}, q when val in [true, "true"] ->
+        where(q, [r], r.is_special == true)
+
+      {:is_premium, val}, q when val in [false, "false"] ->
+        where(q, [r], r.is_special == false)
 
       _, q ->
         q

@@ -57,6 +57,9 @@ interface RecipeCard {
   cuisine_origin: string[];
   taste_score?: number;
   search_rank?: number;
+  is_special: boolean;
+  is_premium: boolean;
+  is_locked: boolean;
 }
 ```
 
@@ -107,6 +110,9 @@ interface RecipeDetail {
     duration_minutes: number | null;
     tip: string | null;
   }[];
+  is_special: boolean;
+  is_premium: boolean;
+  is_locked: boolean;
 }
 ```
 
@@ -170,6 +176,9 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 - `difficulty` (string): Filter by difficulty level (`beginner`, `intermediate`, `advanced`).
 - `cuisine` (string): Comma-separated list of cuisine origins.
 - `max_calories` (integer): Filter for recipes with calories <= X.
+- `is_special` (boolean, optional): Filter for special premium recipes (`true`) or free standard recipes (`false`). Also accepts `is_premium`.
+
+> **Access Gating (Issue #58 - Premium Recipes)**: Recipes marked with `is_special: true` are restricted to premium subscribers. While special recipes appear in list and search feeds with `is_special: true` and `is_locked: true`, accessing their full details via `GET /api/v1/recipes/:id` or `GET /api/v1/recipes/slug/:slug` by unauthenticated guests or free-tier users will return `402 Payment Required` with `error: "premium_required"`. Users with `premium`, `creator_pro`, or `admin` roles receive full access.
 - `context` (string): Special UI context filters. Maps to multiple parameters under the hood:
   - `quick`: Total time <= 30 mins
   - `family`: Serving size >= 4
