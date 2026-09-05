@@ -121,6 +121,10 @@ defmodule CaramelKitchenWeb.Router do
     get "/videos", VideoController, :index
     get "/videos/categories", VideoController, :categories
     get "/videos/:id", VideoController, :show
+
+    # Collections browsing
+    get "/collections", CollectionController, :index
+    get "/collections/:id", CollectionController, :show
   end
 
   # ── Authenticated ─────────────────────────────────────────────
@@ -157,6 +161,14 @@ defmodule CaramelKitchenWeb.Router do
 
     # Course builder (free tier)
     resources "/courses", CourseController, only: [:index, :create, :show, :update, :delete]
+
+    # Collections (curated recipe & video groups)
+    get "/me/collections", CollectionController, :my_collections
+    post "/collections", CollectionController, :create
+    put "/collections/:id", CollectionController, :update
+    delete "/collections/:id", CollectionController, :delete
+    post "/collections/:id/items", CollectionController, :add_item
+    delete "/collections/:id/items/:item_id", CollectionController, :remove_item
 
     # Subscription
     get "/subscription", SubscriptionController, :show

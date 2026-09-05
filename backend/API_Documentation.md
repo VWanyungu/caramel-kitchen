@@ -148,6 +148,67 @@ interface Video {
   created_at: string;              // ISO8601 UTC
   updated_at: string;              // ISO8601 UTC
 }
+### `CollectionCard`
+Represents a collection summary in list and discovery feeds.
+```typescript
+interface CollectionCard {
+  id: string;                      // UUID
+  name: string;
+  slug: string;
+  description: string | null;
+  cover_image_url: string | null;  // Explicit cover or auto-derived from first item
+  is_public: boolean;
+  is_curated: boolean;
+  item_count: number;
+  recipe_count: number;
+  video_count: number;
+  author: {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+  };
+  inserted_at: string;             // ISO8601 UTC
+  updated_at: string;              // ISO8601 UTC
+}
+```
+
+### `CollectionDetail`
+Represents the full collection details including all nested recipe and video items.
+```typescript
+interface CollectionDetail extends CollectionCard {
+  items: CollectionItem[];
+}
+
+interface CollectionItem {
+  id: string;                      // UUID
+  collection_id: string;
+  item_type: "recipe" | "video";
+  position: number;
+  notes: string | null;
+  inserted_at: string;             // ISO8601 UTC
+  recipe?: {
+    id: string;
+    title: string;
+    slug: string;
+    thumbnail_url: string | null;
+    difficulty: string;
+    total_time_mins: number;
+    calories: number | null;
+    avg_rating: number;
+    is_special: boolean;
+  };
+  video?: {
+    id: string;
+    title: string;
+    description: string | null;
+    category: string;
+    thumbnail_url: string | null;
+    duration_secs: number | null;
+    is_premium: boolean;
+    is_special: boolean;
+    youtube_video_id: string | null;
+  };
+}
 ```
 
 ### `ErrorResponse`
@@ -869,4 +930,241 @@ Returns full details for a single video. Automatically increments view count. Re
   }
 }
 ```
+
+---
+
+## 9. Collections API (`/api/v1/collections`)
+
+Collections allow users and curators to organize recipes and videos into thematic groups (e.g. "Weekend Italian Dinners", "Knife Skills & Sauces").
+
+### 9.1 Public & Discovery Endpoints
+
+#### List & Filter Collections
+**GET** `/api/v1/collections`
+
+Retrieves a paginated list of public collections matching query filters. If authenticated, private collections owned by the caller are also accessible.
+
+**Query Parameters (Multi-Dimension Filters):**
+- `limit` (integer, default: 20, max: 50): Number of results to return.
+- `offset` (integer, default: 0): Offset for pagination.
+- `search` or `q` (string): Text search matching collection name and description (case-insensitive).
+- `recipe_id` (UUID): Filter collections containing a specific recipe.
+- `video_id` (UUID): Filter collections containing a specific video.
+- `user_id` or `creator_id` (UUID): Filter collections created by a specific user.
+- `mine` (`true`): Returns only the authenticated user's collections (requires Bearer token).
+- `is_curated` (boolean): Filter for staff-curated collections (`true`) or community collections (`false`).
+- `sort` (string): Sort order:
+  - `newest` (default) - Most recently created
+  - `oldest` - Earliest created
+  - `name_asc` - Alphabetical by name
+  - `name_desc` - Reverse alphabetical
+  - `item_count` - Collections with the most items first
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+      "name": "Quick Weeknight Dinners",
+      "slug": "quick-weeknight-dinners",
+      "description": "30-minute meals and quick technique videos",
+      "cover_image_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "is_public": true,
+      "is_curated": false,
+      "item_count": 5,
+      "recipe_count": 3,
+      "video_count": 2,
+      "author": {
+        "id": "3b290df6-bce7-494f-a9cb-b66fe859d57a",
+        "display_name": "Chef Maria",
+        "avatar_url": "https://example.com/maria.jpg"
+      },
+      "inserted_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "limit": 20,
+    "offset": 0,
+    "total_count": 1
+  }
+}
+```
+
+#### Get Collection Details
+**GET** `/api/v1/collections/:id`
+
+Retrieves a single collection by its UUID or unique slug. Private collections can only be viewed by their creator or an admin. Includes all collection items with full recipe and video details ordered by position.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+    "name": "Quick Weeknight Dinners",
+    "slug": "quick-weeknight-dinners",
+    "description": "30-minute meals and quick technique videos",
+    "cover_image_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+    "is_public": true,
+    "is_curated": false,
+    "item_count": 2,
+    "recipe_count": 1,
+    "video_count": 1,
+    "author": {
+      "id": "3b290df6-bce7-494f-a9cb-b66fe859d57a",
+      "display_name": "Chef Maria",
+      "avatar_url": "https://example.com/maria.jpg"
+    },
+    "inserted_at": "2026-09-06T00:00:00Z",
+    "updated_at": "2026-09-06T00:00:00Z",
+    "items": [
+      {
+        "id": "8d63c5aa-82fe-43dc-aa91-44755f11cefa",
+        "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+        "item_type": "recipe",
+        "position": 1,
+        "notes": "Best served with fresh parmesan",
+        "inserted_at": "2026-09-06T00:00:00Z",
+        "recipe": {
+          "id": "22ff7799-d4bc-4182-8eb1-fceb20531c08",
+          "title": "Creamy Garlic Parmesan Pasta",
+          "slug": "creamy-garlic-parmesan-pasta",
+          "thumbnail_url": "https://example.com/pasta.jpg",
+          "difficulty": "beginner",
+          "total_time_mins": 25,
+          "calories": 480,
+          "avg_rating": 4.9,
+          "is_special": false
+        }
+      },
+      {
+        "id": "c16fa0e9-b505-4c07-8822-259fc6c3c545",
+        "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+        "item_type": "video",
+        "position": 2,
+        "notes": null,
+        "inserted_at": "2026-09-06T00:00:00Z",
+        "video": {
+          "id": "0d635ea7-fa74-4b57-a9a3-5c8e31245ba9",
+          "title": "How to Emulsify Pasta Sauces",
+          "description": "Never break your pasta sauce again",
+          "category": "Cooking_Techniques",
+          "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+          "duration_secs": 210,
+          "is_premium": false,
+          "is_special": false,
+          "youtube_video_id": "dQw4w9WgXcQ"
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 9.2 Authenticated Collection Endpoints
+*All requests require `Authorization: Bearer <jwt_token>`.*
+
+#### Get Current User's Collections
+**GET** `/api/v1/me/collections`
+
+Returns all collections created by the currently authenticated user (including private ones).
+
+**Query Parameters:**
+- `sort` (`newest`, `oldest`, `name_asc`, `name_desc`, `item_count`)
+- `limit` (integer, default 20)
+- `offset` (integer, default 0)
+
+#### Create Collection
+**POST** `/api/v1/collections`
+
+Creates a new collection. Can optionally accept an initial batch of recipe and video IDs to populate the collection immediately.
+
+**Request Body:**
+```json
+{
+  "name": "Sunday Roasts & Braises",
+  "description": "Comfort food recipes and roasting techniques",
+  "is_public": true,
+  "cover_image_url": "https://example.com/cover.jpg",
+  "recipe_ids": ["22ff7799-d4bc-4182-8eb1-fceb20531c08"],
+  "video_ids": ["0d635ea7-fa74-4b57-a9a3-5c8e31245ba9"]
+}
+```
+
+*Note: `is_curated` cannot be set by standard users; only administrators can flag a collection as curated.*
+
+**Response (201 Created):** Returns full `CollectionDetail` object.
+
+#### Update Collection
+**PUT** `/api/v1/collections/:id`
+
+Updates collection metadata. Only the owner or an admin can update.
+
+**Request Body:**
+```json
+{
+  "name": "Ultimate Sunday Roasts",
+  "is_public": false
+}
+```
+
+**Response (200 OK):** Returns updated `CollectionDetail` object.
+
+#### Delete Collection
+**DELETE** `/api/v1/collections/:id`
+
+Deletes a collection and its item associations. Only the owner or an admin can delete.
+
+**Response (204 No Content)**
+
+---
+
+### 9.3 Collection Items Management
+*All requests require `Authorization: Bearer <jwt_token>` and collection ownership (or admin).*
+
+#### Add Item to Collection
+**POST** `/api/v1/collections/:id/items`
+
+Appends a recipe or video to the collection. Position is automatically calculated to place the item at the end of the collection if omitted.
+
+**Request Body:**
+```json
+{
+  "recipe_id": "22ff7799-d4bc-4182-8eb1-fceb20531c08",
+  "notes": "Double the garlic in this recipe"
+}
+```
+*Or for a video:*
+```json
+{
+  "video_id": "0d635ea7-fa74-4b57-a9a3-5c8e31245ba9"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "data": {
+    "id": "8d63c5aa-82fe-43dc-aa91-44755f11cefa",
+    "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+    "item_type": "recipe",
+    "position": 3,
+    "notes": "Double the garlic in this recipe",
+    "recipe_id": "22ff7799-d4bc-4182-8eb1-fceb20531c08",
+    "video_id": null,
+    "inserted_at": "2026-09-06T00:00:00Z"
+  }
+}
+```
+
+#### Remove Item from Collection
+**DELETE** `/api/v1/collections/:id/items/:item_id`
+
+Removes a specific item from the collection by its item ID.
+
+**Response (204 No Content)**
+
 
