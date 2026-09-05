@@ -110,6 +110,38 @@ interface RecipeDetail {
 }
 ```
 
+### `Video`
+Represents a cooking or tutorial video with category metadata, YouTube embedding, and tier-based access status.
+```typescript
+interface Video {
+  id: string;                      // UUID
+  title: string;
+  description: string | null;
+  category: 
+    | "Recipe_Videos"
+    | "Cooking_Tips"
+    | "Cooking_Techniques"
+    | "Quick Cooking"
+    | "Tutorials"
+    | "Premium_Videos"
+    | "Masterclasses"
+    | "Caramel_Academy";
+  is_premium: boolean;
+  is_special: boolean;
+  is_locked: boolean;              // true if content is gated for current user tier
+  yt_embed_code: string | null;    // null if is_locked is true
+  youtube_video_id: string | null;
+  video_url: string | null;        // null if is_locked is true
+  video_embed_url: string | null;  // null if is_locked is true
+  thumbnail_url: string | null;
+  duration_secs: number | null;
+  view_count: number;
+  creator_id: string | null;
+  created_at: string;              // ISO8601 UTC
+  updated_at: string;              // ISO8601 UTC
+}
+```
+
 ### `ErrorResponse`
 Returned when a request fails or is unauthorized.
 ```typescript
@@ -520,3 +552,153 @@ Returns live server telemetry including:
 - `oban_queues`: Status of background queues (`default`, `content`, `email`, `analytics`, `maintenance`, `ai`)
 - `cache_stats`: Redis hit/miss rates, connected clients, used memory
 - `node_info`: Erlang node name, Elixir/Erlang runtime version, server uptime, process count, memory usage in MB
+
+---
+
+## 8. Video Management & Streaming
+
+### 8.1 Video Categories
+Caramel Kitchen supports 8 canonical video categories:
+- `Recipe_Videos`
+- `Cooking_Tips`
+- `Cooking_Techniques`
+- `Quick Cooking` *(also accepts `Quick_Cooking`)*
+- `Tutorials`
+- `Premium_Videos`
+- `Masterclasses`
+- `Caramel_Academy`
+
+### 8.2 Video Access Levels (Sub-Issue #105)
+- **Free Videos (`is_premium: false`)**: Available to all users, including unauthenticated guests. Returns full iframe `yt_embed_code` and `video_embed_url`.
+- **Premium / Special Videos (`is_premium: true` or `is_special: true`)**:
+  - Unauthenticated guests and users on the `free` tier receive a preview response with `is_locked: true`, while `yt_embed_code`, `video_url`, and `video_embed_url` are masked (`null`).
+  - Authenticated users with `premium` or `creator_pro` tier, as well as administrators, receive the unlocked payload (`is_locked: false`) with full embed codes and streaming links.
+
+### 8.3 Public Video Browsing (`/api/v1/videos`)
+
+#### List Videos
+**GET** `/api/v1/videos`
+
+Supports multi-factor filtering, fuzzy text search, and pagination.
+
+**Query Parameters:**
+- `category` *(optional)*: Filter by exact category name (e.g. `Cooking_Tips`, `Quick Cooking`).
+- `search` *(optional)*: Case-insensitive trigram search matching against `title` and `description`.
+- `upload_date` *(optional)*: Filter by time period (`"today"`, `"this_week"`, `"this_month"`, `"this_year"`) or ISO date (`YYYY-MM-DD`).
+- `is_premium` *(optional)*: `"true"` | `"false"`
+- `is_special` *(optional)*: `"true"` | `"false"`
+- `order` *(optional)*: `"newest"` (default) | `"oldest"` | `"popular"`
+- `limit` *(optional, default: 20, max: 100)*: Number of items to return.
+- `offset` *(optional, default: 0)*: Number of items to skip.
+- `page` *(optional, default: 1)*: Page number (alternative to offset).
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "e4b1bf10-a294-4d8b-b8aa-852fc74b971a",
+      "title": "Mastering French Sauces",
+      "description": "Comprehensive guide to classic mother sauces",
+      "category": "Masterclasses",
+      "is_premium": true,
+      "is_special": true,
+      "is_locked": false,
+      "yt_embed_code": "<iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\" ...></iframe>",
+      "youtube_video_id": "dQw4w9WgXcQ",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_embed_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "duration_secs": 920,
+      "view_count": 142,
+      "creator_id": "c18712db-f2ca-4fb3-98ff-888f45f6e859",
+      "created_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "total_count": 45,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+#### List Video Categories
+**GET** `/api/v1/videos/categories`
+
+Returns all 8 categories with the count of videos published in each.
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {"name": "Recipe_Videos", "count": 24},
+    {"name": "Cooking_Tips", "count": 18},
+    {"name": "Cooking_Techniques", "count": 12},
+    {"name": "Quick Cooking", "count": 15},
+    {"name": "Tutorials", "count": 9},
+    {"name": "Premium_Videos", "count": 8},
+    {"name": "Masterclasses", "count": 6},
+    {"name": "Caramel_Academy", "count": 4}
+  ]
+}
+```
+
+#### Get Video Details
+**GET** `/api/v1/videos/:id`
+
+Returns full details for a single video. Automatically increments view count. Respects access tier rules.
+
+---
+
+### 8.4 Admin Video Management (`/api/v1/admin/videos`)
+*Requires `Authorization: Bearer <jwt_token>` with role `admin`.*
+
+#### Create Video
+**POST** `/api/v1/admin/videos`
+
+**Request Body:**
+```json
+{
+  "title": "Knife Skills 101",
+  "description": "Essential cuts every home cook should know",
+  "category": "Cooking_Techniques",
+  "yt_embed_code": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "is_premium": false,
+  "duration_secs": 360
+}
+```
+
+*Note: `yt_embed_code` accepts full YouTube watch URLs, short links (`youtu.be/...`), embed URLs, raw 11-char video IDs, or full `<iframe>` HTML snippets. YouTube IDs and thumbnails are automatically extracted and populated.*
+
+**Response (201 Created):** Returns the created `Video` object.
+
+#### Update Video
+**PUT** `/api/v1/admin/videos/:id`
+
+**Request Body:**
+```json
+{
+  "title": "Advanced Knife Skills & Maintenance",
+  "category": "Masterclasses",
+  "is_premium": true
+}
+```
+
+**Response (200 OK):** Returns the updated `Video` object.
+
+#### Delete Video
+**DELETE** `/api/v1/admin/videos/:id`
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "id": "e4b1bf10-a294-4d8b-b8aa-852fc74b971a",
+    "message": "Video deleted successfully"
+  }
+}
+```
+
