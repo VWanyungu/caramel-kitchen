@@ -8,6 +8,7 @@ defmodule CaramelKitchen.Factory do
   alias CaramelKitchen.Monetisation.Subscription
   alias CaramelKitchen.Videos.Video
   alias CaramelKitchen.Taxonomies.Taxonomy
+  alias CaramelKitchen.Collections.{Collection, CollectionItem}
 
   def user_factory do
     %User{
@@ -168,6 +169,49 @@ defmodule CaramelKitchen.Factory do
     }
 
     merge_attributes(taxonomy, attrs)
+  end
+
+  def collection_factory(attrs \\ %{}) do
+    user_id = Map.get(attrs, :user_id) || insert(:user).id
+    name = Map.get(attrs, :name) || sequence(:collection_name, &"Collection #{&1}")
+    slug = Map.get(attrs, :slug) || sequence(:collection_slug, &"collection_#{&1}")
+
+    collection = %Collection{
+      user_id: user_id,
+      name: name,
+      slug: slug,
+      description: Map.get(attrs, :description, "A curated group of recipes and videos"),
+      cover_image_url: Map.get(attrs, :cover_image_url),
+      is_public: Map.get(attrs, :is_public, true),
+      is_curated: Map.get(attrs, :is_curated, false)
+    }
+
+    merge_attributes(collection, attrs)
+  end
+
+  def collection_item_factory(attrs \\ %{}) do
+    collection_id = Map.get(attrs, :collection_id) || insert(:collection).id
+    item_type = Map.get(attrs, :item_type, "recipe")
+
+    {recipe_id, video_id} =
+      case item_type do
+        "recipe" ->
+          {Map.get(attrs, :recipe_id) || insert(:recipe).id, nil}
+
+        "video" ->
+          {nil, Map.get(attrs, :video_id) || insert(:video).id}
+      end
+
+    item = %CollectionItem{
+      collection_id: collection_id,
+      item_type: item_type,
+      recipe_id: recipe_id,
+      video_id: video_id,
+      position: Map.get(attrs, :position, 1),
+      notes: Map.get(attrs, :notes)
+    }
+
+    merge_attributes(item, attrs)
   end
 end
 
