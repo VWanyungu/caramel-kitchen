@@ -38,7 +38,7 @@ services:
     container_name: caramel_kitchen_backend
     restart: unless-stopped
     ports:
-      - "4000:4000"
+      - "4001:4000"
     environment:
       - PORT=4000
       - MIX_ENV=prod

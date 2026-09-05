@@ -6,6 +6,7 @@ defmodule CaramelKitchen.Factory do
   alias CaramelKitchen.MealPlans.MealPlan
 
   alias CaramelKitchen.Monetisation.Subscription
+  alias CaramelKitchen.Videos.Video
 
   def user_factory do
     %User{
@@ -30,12 +31,40 @@ defmodule CaramelKitchen.Factory do
     })
   end
 
+  def admin_factory do
+    struct!(user_factory(), %{
+      role: "admin",
+      subscription_tier: "creator_pro"
+    })
+  end
+
   def premium_user_factory do
     struct!(user_factory(), %{
       subscription_tier: "premium",
       taste_survey_done: true,
       taste_vector: [0.8, 0.3, 0.7, 0.9, 0.6, 0.2, 0.5, 0.1]
     })
+  end
+
+  def video_factory(attrs \\ %{}) do
+    title = Map.get(attrs, :title) || sequence(:title, &"Test Video #{&1}")
+    category = Map.get(attrs, :category, "Recipe_Videos")
+    yt_embed = Map.get(attrs, :yt_embed_code, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+    %Video{
+      title: title,
+      description: Map.get(attrs, :description, "A test cooking video tutorial"),
+      category: category,
+      is_premium: Map.get(attrs, :is_premium, false),
+      is_special: Map.get(attrs, :is_special, false),
+      yt_embed_code: yt_embed,
+      youtube_video_id: "dQw4w9WgXcQ",
+      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      video_embed_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      duration_secs: 180,
+      view_count: 0
+    }
   end
 
   def recipe_factory(attrs \\ %{}) do

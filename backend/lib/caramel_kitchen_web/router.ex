@@ -3,6 +3,7 @@ defmodule CaramelKitchenWeb.Router do
 
   alias CaramelKitchenWeb.Plugs.{
     AuthenticateUser,
+    LoadCurrentUser,
     RequirePremium,
     RequireCreator,
     RequireAdmin,
@@ -22,6 +23,10 @@ defmodule CaramelKitchenWeb.Router do
 
   pipeline :authenticated do
     plug AuthenticateUser
+  end
+
+  pipeline :load_user do
+    plug LoadCurrentUser
   end
 
   pipeline :premium do
@@ -94,9 +99,9 @@ defmodule CaramelKitchenWeb.Router do
     get "/auth/verify-email/:token", AuthController, :verify_email
   end
 
-  # ── Public Recipe browsing (no auth required) ─────────────────
+  # ── Public Recipe & Video browsing ───────────────────────────
   scope "/api/v1", CaramelKitchenWeb do
-    pipe_through [:api, :rate_limit_api]
+    pipe_through [:api, :rate_limit_api, :load_user]
 
     get "/recipes", RecipeController, :index
     get "/recipes/trending", RecipeController, :trending
@@ -106,6 +111,11 @@ defmodule CaramelKitchenWeb.Router do
     get "/categories", RecipeController, :categories
     get "/dish-types", RecipeController, :dish_types
     get "/shopping/shared/:token", ShoppingController, :show_shared
+
+    # Video browsing
+    get "/videos", VideoController, :index
+    get "/videos/categories", VideoController, :categories
+    get "/videos/:id", VideoController, :show
   end
 
   # ── Authenticated ─────────────────────────────────────────────
@@ -187,6 +197,11 @@ defmodule CaramelKitchenWeb.Router do
     post "/recipes/:id/publish", AdminRecipeController, :publish
     post "/recipes/:id/archive", AdminRecipeController, :archive
     delete "/recipes/:id", AdminRecipeController, :delete
+
+    # Video management
+    post "/videos", VideoController, :create
+    put "/videos/:id", VideoController, :update
+    delete "/videos/:id", VideoController, :delete
 
     # Video upload
     post "/videos/presigned-url", AdminVideoController, :presigned_url
