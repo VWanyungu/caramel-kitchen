@@ -8,8 +8,15 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
   def index(conn, params) do
     creator = conn.assigns.current_user
     status = params["status"]
+    filters = parse_admin_filters(params)
 
-    recipes = Recipes.list_creator_recipes(creator.id, status: status, limit: 100)
+    recipes =
+      Recipes.list_creator_recipes(creator.id,
+        status: status,
+        filters: filters,
+        limit: 100
+      )
+
     json(conn, %{data: Enum.map(recipes, &render_admin_recipe/1)})
   end
 
@@ -120,9 +127,52 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
       avg_rating: recipe.avg_rating,
       published_at: recipe.published_at,
       scheduled_at: recipe.scheduled_at,
+      created_at: recipe.inserted_at,
       inserted_at: recipe.inserted_at,
       updated_at: recipe.updated_at
     }
+  end
+
+  defp parse_admin_filters(params) do
+    %{}
+    |> maybe_add_date(:created_after, params["created_after"] || params["created_from"])
+    |> maybe_add_date(:created_before, params["created_before"] || params["created_to"])
+    |> maybe_add_exact_date(params["creation_date"] || params["created_at"])
+  end
+
+  defp maybe_add_date(map, _key, nil), do: map
+  defp maybe_add_date(map, _key, ""), do: map
+
+  defp maybe_add_date(map, key, str) when is_binary(str) do
+    case DateTime.from_iso8601(String.trim(str)) do
+      {:ok, dt, _} ->
+        Map.put(map, key, dt)
+
+      {:error, _} ->
+        case Date.from_iso8601(String.trim(str)) do
+          {:ok, date} ->
+            time = if key == :created_before, do: ~T[23:59:59], else: ~T[00:00:00]
+            Map.put(map, key, DateTime.new!(date, time, "Etc/UTC"))
+
+          _ ->
+            map
+        end
+    end
+  end
+
+  defp maybe_add_exact_date(map, nil), do: map
+  defp maybe_add_exact_date(map, ""), do: map
+
+  defp maybe_add_exact_date(map, str) when is_binary(str) do
+    case Date.from_iso8601(String.trim(str)) do
+      {:ok, date} ->
+        start_dt = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+        end_dt = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
+        Map.put(map, :creation_date, {start_dt, end_dt})
+
+      _ ->
+        map
+    end
   end
 end
 

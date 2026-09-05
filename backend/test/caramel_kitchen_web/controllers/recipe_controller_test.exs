@@ -1,6 +1,10 @@
 defmodule CaramelKitchenWeb.RecipeControllerTest do
   use CaramelKitchenWeb.ConnCase, async: false
 
+  import Ecto.Query
+  alias CaramelKitchen.Repo
+  alias CaramelKitchen.Recipes.Recipe
+
   describe "GET /api/v1/recipes (public)" do
     setup do
       insert_list(5, :recipe, status: "live")
@@ -321,6 +325,70 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       body_free = json_response(conn_free, 200)
       assert Enum.any?(body_free["data"], &(&1["title"] == "Only Free Recipe"))
       refute Enum.any?(body_free["data"], &(&1["title"] == "Only Special Recipe"))
+    end
+  end
+
+  describe "creation date filtering and metadata" do
+    test "exposes created_at in recipe card and detail responses", %{conn: conn} do
+      recipe = insert(:recipe, status: "live", title: "Dated Recipe")
+
+      conn_list = get(conn, "/api/v1/recipes")
+      card = Enum.find(json_response(conn_list, 200)["data"], &(&1["id"] == recipe.id))
+      assert card["created_at"] != nil
+
+      conn_detail = get(conn, "/api/v1/recipes/#{recipe.id}")
+      detail = json_response(conn_detail, 200)["data"]
+      assert detail["created_at"] != nil
+    end
+
+    test "filters recipes by created_after and created_before", %{conn: conn} do
+      old_r = insert(:recipe, status: "live", title: "June Recipe")
+      new_r = insert(:recipe, status: "live", title: "September Recipe")
+
+      from(r in Recipe, where: r.id == ^old_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-06-01 10:00:00Z]])
+
+      from(r in Recipe, where: r.id == ^new_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-09-05 12:00:00Z]])
+
+      conn_after = get(conn, "/api/v1/recipes?created_after=2026-09-01")
+      data_after = json_response(conn_after, 200)["data"]
+      assert Enum.any?(data_after, &(&1["id"] == new_r.id))
+      refute Enum.any?(data_after, &(&1["id"] == old_r.id))
+
+      conn_before = get(conn, "/api/v1/recipes?created_before=2026-07-01")
+      data_before = json_response(conn_before, 200)["data"]
+      assert Enum.any?(data_before, &(&1["id"] == old_r.id))
+      refute Enum.any?(data_before, &(&1["id"] == new_r.id))
+    end
+
+    test "filters recipes by creation_date (exact day)", %{conn: conn} do
+      target_r = insert(:recipe, status: "live", title: "Target Day Recipe")
+      other_r = insert(:recipe, status: "live", title: "Other Day Recipe")
+
+      from(r in Recipe, where: r.id == ^target_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-15 14:00:00Z]])
+
+      from(r in Recipe, where: r.id == ^other_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2026-08-16 09:00:00Z]])
+
+      conn_exact = get(conn, "/api/v1/recipes?creation_date=2026-08-15")
+      data_exact = json_response(conn_exact, 200)["data"]
+      assert Enum.any?(data_exact, &(&1["id"] == target_r.id))
+      refute Enum.any?(data_exact, &(&1["id"] == other_r.id))
+    end
+
+    test "filters recipes by created_within preset", %{conn: conn} do
+      recent_r = insert(:recipe, status: "live", title: "Recent Recipe")
+      ancient_r = insert(:recipe, status: "live", title: "Ancient Recipe")
+
+      from(r in Recipe, where: r.id == ^ancient_r.id)
+      |> Repo.update_all(set: [inserted_at: ~U[2025-01-01 00:00:00Z]])
+
+      conn_preset = get(conn, "/api/v1/recipes?created_within=last_7_days")
+      data_preset = json_response(conn_preset, 200)["data"]
+      assert Enum.any?(data_preset, &(&1["id"] == recent_r.id))
+      refute Enum.any?(data_preset, &(&1["id"] == ancient_r.id))
     end
   end
 end

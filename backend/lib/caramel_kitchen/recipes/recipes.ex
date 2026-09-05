@@ -128,10 +128,11 @@ defmodule CaramelKitchen.Recipes do
   def list_by_category("all", opts) do
     limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
+    sort = Keyword.get(opts, :sort, Map.get(filters, :sort))
 
     from(r in Recipe, where: r.status == "live")
     |> apply_filters(filters)
-    |> order_by([r], desc: r.engagement_score)
+    |> apply_recipe_ordering(sort)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -143,12 +144,13 @@ defmodule CaramelKitchen.Recipes do
   def list_by_category(categories, opts) when is_list(categories) do
     limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
+    sort = Keyword.get(opts, :sort, Map.get(filters, :sort))
 
     from(r in Recipe,
       where: r.status == "live" and fragment("? && ?", r.dish_categories, ^categories)
     )
     |> apply_filters(filters)
-    |> order_by([r], desc: r.engagement_score)
+    |> apply_recipe_ordering(sort)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -270,11 +272,13 @@ defmodule CaramelKitchen.Recipes do
   def list_creator_recipes(creator_id, opts \\ []) do
     status = Keyword.get(opts, :status)
     limit = Keyword.get(opts, :limit, 50)
+    filters = Keyword.get(opts, :filters, %{})
 
     q = from r in Recipe, where: r.creator_id == ^creator_id
 
     q
     |> then(fn q -> if status, do: where(q, [r], r.status == ^status), else: q end)
+    |> apply_filters(filters)
     |> order_by([r], desc: r.inserted_at)
     |> limit(^limit)
     |> Repo.all()
@@ -360,12 +364,44 @@ defmodule CaramelKitchen.Recipes do
       {:is_premium, val}, q when val in [false, "false"] ->
         where(q, [r], r.is_special == false)
 
+      {:created_after, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
+      {:created_before, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at <= ^dt)
+
+      {:created_from, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
+      {:created_to, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at <= ^dt)
+
+      {:creation_date, {start_dt, end_dt}}, q when not is_nil(start_dt) and not is_nil(end_dt) ->
+        where(q, [r], r.inserted_at >= ^start_dt and r.inserted_at <= ^end_dt)
+
+      {:creation_date, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
       _, q ->
         q
     end)
   end
 
   defp apply_filters(query, _), do: query
+
+  defp apply_recipe_ordering(query, sort)
+       when sort in [:newest, "newest", :created_at_desc, "created_at_desc"] do
+    order_by(query, [r], desc: r.inserted_at)
+  end
+
+  defp apply_recipe_ordering(query, sort)
+       when sort in [:oldest, "oldest", :created_at_asc, "created_at_asc"] do
+    order_by(query, [r], asc: r.inserted_at)
+  end
+
+  defp apply_recipe_ordering(query, _) do
+    order_by(query, [r], desc: r.engagement_score)
+  end
 
   defp apply_dietary_filter(query, []), do: query
 
