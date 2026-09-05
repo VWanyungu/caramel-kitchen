@@ -302,6 +302,75 @@ Returns an aggregation of recipe dish types (`course`) and their live counts.
 }
 ```
 
+### `GET /api/v1/cuisines`
+Returns a list of all active cuisines for client discovery and filtering.
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "7bf3fa43-0c46-4c40-9689-d4cbf239f8aa",
+      "type": "cuisine",
+      "name": "West African",
+      "slug": "west_african",
+      "description": null,
+      "icon_url": null,
+      "display_order": 1,
+      "is_active": true,
+      "created_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ]
+}
+```
+
+### `GET /api/v1/dietary-tags`
+Returns a list of all active dietary tags (e.g. `vegetarian`, `vegan`, `gluten_free`, `halal`).
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "e2298710-85fb-4187-8bc8-b4bc8f0fe923",
+      "type": "dietary_tag",
+      "name": "Vegetarian",
+      "slug": "vegetarian",
+      "description": null,
+      "icon_url": null,
+      "display_order": 1,
+      "is_active": true,
+      "created_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ]
+}
+```
+
+### `GET /api/v1/difficulties`
+Returns a list of active recipe difficulty levels (`beginner`, `intermediate`, `advanced`).
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "1f8f74a0-53ae-4322-9218-a6d5954620f4",
+      "type": "difficulty",
+      "name": "Beginner",
+      "slug": "beginner",
+      "description": null,
+      "icon_url": null,
+      "display_order": 1,
+      "is_active": true,
+      "created_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ]
+}
+```
+
 ---
 
 ## 4. Authentication & Headers
@@ -561,6 +630,89 @@ Returns live server telemetry including:
 - `oban_queues`: Status of background queues (`default`, `content`, `email`, `analytics`, `maintenance`, `ai`)
 - `cache_stats`: Redis hit/miss rates, connected clients, used memory
 - `node_info`: Erlang node name, Elixir/Erlang runtime version, server uptime, process count, memory usage in MB
+
+---
+
+### 7.6 Taxonomy Management (`/api/v1/admin/{resource}`)
+Admin CRUD operations for managing system taxonomies:
+- Categories: `/api/v1/admin/categories`
+- Cuisines: `/api/v1/admin/cuisines`
+- Dietary Tags: `/api/v1/admin/dietary-tags`
+- Difficulties: `/api/v1/admin/difficulties`
+
+#### List Taxonomies
+**GET** `/api/v1/admin/categories`  
+**GET** `/api/v1/admin/cuisines`  
+**GET** `/api/v1/admin/dietary-tags`  
+**GET** `/api/v1/admin/difficulties`  
+Query Parameters:
+- `active_only` *(optional)*: `"true"` | `"false"` (default: `"false"` for admin)
+- `search` *(optional)*: search query string (matches `name` or `slug`)
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "b3e34b97-84a1-4323-93d3-ae5560b4c3e8",
+      "type": "category",
+      "name": "Egg Dishes",
+      "slug": "egg_dishes",
+      "description": "Scrambled, fried, poached, omelettes",
+      "icon_url": "https://example.com/icons/egg.svg",
+      "display_order": 1,
+      "is_active": true,
+      "created_at": "2026-09-06T00:00:00Z",
+      "updated_at": "2026-09-06T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### Get Single Taxonomy
+**GET** `/api/v1/admin/categories/:id`  
+**GET** `/api/v1/admin/cuisines/:id`  
+**GET** `/api/v1/admin/dietary-tags/:id`  
+**GET** `/api/v1/admin/difficulties/:id`
+
+#### Create Taxonomy Item
+**POST** `/api/v1/admin/categories`  
+**POST** `/api/v1/admin/cuisines`  
+**POST** `/api/v1/admin/dietary-tags`  
+**POST** `/api/v1/admin/difficulties`  
+Request Body:
+```json
+{
+  "name": "Brunch Specialties",
+  "slug": "brunch_specialties",
+  "description": "Weekend brunch recipes",
+  "icon_url": "https://example.com/icons/brunch.svg",
+  "display_order": 15,
+  "is_active": true
+}
+```
+*Note: `slug` is optional and will be automatically derived from `name` if omitted.*
+
+#### Update Taxonomy Item
+**PUT** `/api/v1/admin/categories/:id`  
+**PUT** `/api/v1/admin/cuisines/:id`  
+**PUT** `/api/v1/admin/dietary-tags/:id`  
+**PUT** `/api/v1/admin/difficulties/:id`  
+Request Body:
+```json
+{
+  "name": "Updated Name",
+  "display_order": 20,
+  "is_active": false
+}
+```
+
+#### Delete Taxonomy Item
+**DELETE** `/api/v1/admin/categories/:id`  
+**DELETE** `/api/v1/admin/cuisines/:id`  
+**DELETE** `/api/v1/admin/dietary-tags/:id`  
+**DELETE** `/api/v1/admin/difficulties/:id`  
+Response: `204 No Content`
 
 ---
 

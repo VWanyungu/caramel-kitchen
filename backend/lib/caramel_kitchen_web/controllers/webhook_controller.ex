@@ -10,19 +10,23 @@ defmodule CaramelKitchenWeb.WebhookController do
   """
   def stripe(conn, _params) do
     # If the plug assigned the verified event, we can use it directly
-    event = conn.assigns[:stripe_event] || %{
-      "type" => conn.params["type"],
-      "data" => conn.params["data"]
-    }
-    
+    event =
+      conn.assigns[:stripe_event] ||
+        %{
+          "type" => conn.params["type"],
+          "data" => conn.params["data"]
+        }
+
     # We pass the raw map to Monetisation.handle_webhook/1 which expects %{"type" => ..., "data" => ...}
     # If it's a Stripe.Event struct, we convert it to the expected map structure
-    event_map = case event do
-      %Stripe.Event{} -> 
-        %{"type" => event.type, "data" => %{"object" => event.data.object}}
-      map when is_map(map) -> 
-        map
-    end
+    event_map =
+      case event do
+        %Stripe.Event{} ->
+          %{"type" => event.type, "data" => %{"object" => event.data.object}}
+
+        map when is_map(map) ->
+          map
+      end
 
     case Monetisation.handle_webhook(event_map) do
       {:ok, _} ->

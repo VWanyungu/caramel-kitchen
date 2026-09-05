@@ -13,9 +13,15 @@ if config_env() == :prod do
 
   ssl_enabled =
     case System.get_env("DATABASE_SSL") do
-      "true" -> true
-      "false" -> false
-      nil -> String.contains?(database_url, "supabase") or String.contains?(database_url, "render") or String.contains?(database_url, "sslmode=require")
+      "true" ->
+        true
+
+      "false" ->
+        false
+
+      nil ->
+        String.contains?(database_url, "supabase") or String.contains?(database_url, "render") or
+          String.contains?(database_url, "sslmode=require")
     end
 
   config :caramel_kitchen, CaramelKitchen.Repo,
@@ -47,13 +53,14 @@ if config_env() == :prod do
 
   prod_allowed_origins =
     case System.get_env("ALLOWED_ORIGINS") do
-      nil -> [
-        "https://caramelkitchen.app",
-        "https://www.caramelkitchen.app",
-        "https://admin.caramelkitchen.app",
-        "https://caramel-kitchen.vercel.app",
-        "https://caramel-kitchen.vercel.app/"
-      ]
+      nil ->
+        [
+          "https://caramelkitchen.app",
+          "https://www.caramelkitchen.app",
+          "https://admin.caramelkitchen.app",
+          "https://caramel-kitchen.vercel.app",
+          "https://caramel-kitchen.vercel.app/"
+        ]
 
       origins ->
         String.split(origins, ",") |> Enum.map(&String.trim/1)
@@ -104,12 +111,14 @@ if config_env() == :dev do
       ]
     end
 
-  config :caramel_kitchen, CaramelKitchen.Repo,
-    dev_repo_config ++ [
-      stacktrace: true,
-      show_sensitive_data_on_connection_error: true,
-      pool_size: 10
-    ]
+  config :caramel_kitchen,
+         CaramelKitchen.Repo,
+         dev_repo_config ++
+           [
+             stacktrace: true,
+             show_sensitive_data_on_connection_error: true,
+             pool_size: 10
+           ]
 
   config :caramel_kitchen, CaramelKitchenWeb.Endpoint,
     http: [ip: {0, 0, 0, 0}, port: 4000],
@@ -121,17 +130,20 @@ if config_env() == :dev do
 
   dev_allowed_origins =
     case System.get_env("ALLOWED_ORIGINS") do
-      nil -> [
-        "http://localhost:3000",
-        "http://localhost:4000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:4000",
-        "http://127.0.0.1:5173",
-        "https://caramel-kitchen.vercel.app",
-        "https://caramel-kitchen.vercel.app/"
-      ]
-      origins -> String.split(origins, ",") |> Enum.map(&String.trim/1)
+      nil ->
+        [
+          "http://localhost:3000",
+          "http://localhost:4000",
+          "http://localhost:5173",
+          "http://127.0.0.1:3000",
+          "http://127.0.0.1:4000",
+          "http://127.0.0.1:5173",
+          "https://caramel-kitchen.vercel.app",
+          "https://caramel-kitchen.vercel.app/"
+        ]
+
+      origins ->
+        String.split(origins, ",") |> Enum.map(&String.trim/1)
     end
 
   config :caramel_kitchen,

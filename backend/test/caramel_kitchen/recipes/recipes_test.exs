@@ -42,7 +42,9 @@ defmodule CaramelKitchen.RecipesTest do
       assert not is_nil(recipe.taste_profile)
     end
 
-    test "creates recipe with updated course, cooking_method, and taste_tags (issue #52)", %{creator: creator} do
+    test "creates recipe with updated course, cooking_method, and taste_tags (issue #52)", %{
+      creator: creator
+    } do
       attrs = %{
         "title" => "Air Fried Wings",
         "description" => "Crispy air fried chicken wings",

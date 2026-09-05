@@ -7,6 +7,7 @@ defmodule CaramelKitchen.Factory do
 
   alias CaramelKitchen.Monetisation.Subscription
   alias CaramelKitchen.Videos.Video
+  alias CaramelKitchen.Taxonomies.Taxonomy
 
   def user_factory do
     %User{
@@ -149,6 +150,24 @@ defmodule CaramelKitchen.Factory do
       current_period_end:
         DateTime.add(DateTime.utc_now(), 30 * 86_400, :second) |> DateTime.truncate(:second)
     }
+  end
+
+  def taxonomy_factory(attrs \\ %{}) do
+    type = Map.get(attrs, :type, "category")
+    name = Map.get(attrs, :name) || sequence(:taxonomy_name, &"Taxonomy Item #{&1}")
+    slug = Map.get(attrs, :slug) || sequence(:taxonomy_slug, &"taxonomy_item_#{&1}")
+
+    taxonomy = %Taxonomy{
+      type: to_string(type),
+      name: name,
+      slug: slug,
+      description: Map.get(attrs, :description, "A test taxonomy item"),
+      icon_url: Map.get(attrs, :icon_url, "https://example.com/icon.svg"),
+      display_order: Map.get(attrs, :display_order, 0),
+      is_active: Map.get(attrs, :is_active, true)
+    }
+
+    merge_attributes(taxonomy, attrs)
   end
 end
 

@@ -57,7 +57,9 @@ defmodule CaramelKitchenWeb.Endpoint do
 
     Enum.any?(allowed, fn target ->
       target_clean = String.trim_trailing(target, "/")
-      target_clean == origin or target_clean == normalized_origin or String.ends_with?(normalized_origin, target_clean)
+
+      target_clean == origin or target_clean == normalized_origin or
+        String.ends_with?(normalized_origin, target_clean)
     end)
   end
 
