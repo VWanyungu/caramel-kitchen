@@ -89,6 +89,8 @@ defmodule CaramelKitchenWeb.AdminRecipeController do
       title: recipe.title,
       description: recipe.description,
       status: recipe.status,
+      is_special: recipe.is_special || false,
+      is_premium: recipe.is_special || false,
       dish_category: recipe.dish_category || List.first(categories),
       dish_categories: categories,
       categories: categories,

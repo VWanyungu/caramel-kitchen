@@ -45,14 +45,14 @@ defmodule CaramelKitchenWeb.RecipeController do
           filters: filters
         )
         |> Enum.map(fn %{recipe: r, taste_score: ts, combined_score: cs} ->
-          render_recipe_card(r, %{taste_score: ts, combined_score: cs})
+          render_recipe_card(r, %{taste_score: ts, combined_score: cs, current_user: user})
         end)
       else
         Recipes.list_by_category(filters[:category] || "all",
           limit: limit,
           filters: filters
         )
-        |> Enum.map(&render_recipe_card(&1, %{}))
+        |> Enum.map(&render_recipe_card(&1, %{current_user: nil}))
       end
 
     json(conn, %{data: recipes, meta: %{count: length(recipes), after_id: after_id}})
@@ -79,8 +79,9 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   def trending(conn, params) do
     limit = parse_int(params["limit"], 10) |> min(30)
+    user = conn.assigns[:current_user]
     recipes = Recipes.trending(limit: limit)
-    json(conn, %{data: Enum.map(recipes, &render_recipe_card(&1, %{}))})
+    json(conn, %{data: Enum.map(recipes, &render_recipe_card(&1, %{current_user: user}))})
   end
 
   # GET /api/v1/recipes/search?q=...
@@ -110,13 +111,14 @@ defmodule CaramelKitchenWeb.RecipeController do
     filters = parse_filters(params)
     limit = parse_int(params["limit"], 20)
     offset = parse_int(params["offset"], 0)
+    user = conn.assigns[:current_user]
 
     results = Recipes.search(q, filters: filters, limit: limit, offset: offset)
 
     json(conn, %{
       data:
         Enum.map(results, fn %{recipe: r, rank: rank} ->
-          render_recipe_card(r, %{search_rank: rank})
+          render_recipe_card(r, %{search_rank: rank, current_user: user})
         end),
       meta: %{query: q, limit: limit, offset: offset}
     })
@@ -141,10 +143,21 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   # GET /api/v1/recipes/:id
   def show(conn, %{"id" => id}) do
+    user = conn.assigns[:current_user]
+
     with {:ok, recipe} <- Recipes.get_recipe(id) do
-      user = conn.assigns[:current_user]
-      if user, do: Recipes.track_view(id, user.id)
-      json(conn, %{data: render_recipe_detail(recipe, user)})
+      if (recipe.is_special || false) && not Recipes.has_recipe_access?(recipe, user) do
+        conn
+        |> put_status(:payment_required)
+        |> json(%{
+          error: "premium_required",
+          message: "This special recipe requires a Premium subscription",
+          upgrade_url: "/subscription/checkout"
+        })
+      else
+        if user, do: Recipes.track_view(id, user.id)
+        json(conn, %{data: render_recipe_detail(recipe, user)})
+      end
     end
   end
 
@@ -167,9 +180,20 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   # GET /api/v1/recipes/slug/:slug
   def show_by_slug(conn, %{"slug" => slug}) do
+    user = conn.assigns[:current_user]
+
     with {:ok, recipe} <- Recipes.get_recipe_by_slug(slug) do
-      user = conn.assigns[:current_user]
-      json(conn, %{data: render_recipe_detail(recipe, user)})
+      if (recipe.is_special || false) && not Recipes.has_recipe_access?(recipe, user) do
+        conn
+        |> put_status(:payment_required)
+        |> json(%{
+          error: "premium_required",
+          message: "This special recipe requires a Premium subscription",
+          upgrade_url: "/subscription/checkout"
+        })
+      else
+        json(conn, %{data: render_recipe_detail(recipe, user)})
+      end
     end
   end
 
@@ -219,6 +243,9 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp render_recipe_card(recipe, meta) do
     categories = recipe.dish_categories || []
+    user = meta[:current_user]
+    is_special = Map.get(recipe, :is_special, false) || false
+    is_locked = is_special and not Recipes.has_recipe_access?(recipe, user)
 
     %{
       id: recipe.id,
@@ -240,12 +267,15 @@ defmodule CaramelKitchenWeb.RecipeController do
       rating_count: recipe.rating_count,
       cuisine_origin: recipe.cuisine_origin,
       taste_score: meta[:taste_score],
-      search_rank: meta[:search_rank]
+      search_rank: meta[:search_rank],
+      is_special: is_special,
+      is_premium: is_special,
+      is_locked: is_locked
     }
   end
 
   defp render_recipe_detail(recipe, user) do
-    base = render_recipe_card(recipe, %{})
+    base = render_recipe_card(recipe, %{current_user: user})
     yt = CaramelKitchen.Recipes.Recipe.parse_youtube_video(recipe.video_url || "")
 
     Map.merge(base, %{
@@ -277,23 +307,24 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp compute_allergy_alerts(recipe, user) do
     user_allergens = user.allergy_flags || []
-    
+
     # 1. Exact match against explicitly defined recipe allergens
     explicit_alerts = Enum.filter(recipe.allergens, &(&1 in user_allergens))
-    
+
     # 2. Case-insensitive substring match against actual ingredients
     ingredient_alerts =
       Enum.reduce(user_allergens, [], fn allergy, acc ->
         allergy_down = String.downcase(allergy)
-        
+
         found? =
           Enum.any?(recipe.ingredients, fn
             %{"name" => name} when is_binary(name) ->
               String.contains?(String.downcase(name), allergy_down)
+
             _ ->
               false
           end)
-          
+
         if found?, do: [allergy | acc], else: acc
       end)
 
@@ -315,6 +346,7 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])
     |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
+    |> maybe_add(:is_special, parse_boolean(params["is_special"] || params["is_premium"]))
   end
 
   defp maybe_add(map, _key, nil), do: map
@@ -324,6 +356,11 @@ defmodule CaramelKitchenWeb.RecipeController do
   defp parse_list(nil), do: []
   defp parse_list(str) when is_binary(str), do: String.split(str, ",", trim: true)
   defp parse_list(list) when is_list(list), do: list
+
+  defp parse_boolean(nil), do: nil
+  defp parse_boolean(val) when val in [true, "true", "1"], do: true
+  defp parse_boolean(val) when val in [false, "false", "0"], do: false
+  defp parse_boolean(_), do: nil
 
   defp parse_int(val, default \\ nil)
   defp parse_int(nil, default), do: default
@@ -335,7 +372,7 @@ defmodule CaramelKitchenWeb.RecipeController do
     end
   end
 
-  defp parse_int(val, _) when is_integer(val), do: val
+  defp parse_int(val, _default) when is_integer(val), do: val
   defp parse_int(_, default), do: default
 end
 

@@ -232,4 +232,95 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       assert is_map(body["data"])
     end
   end
+
+  describe "is_special access control (Issue #58)" do
+    test "blocks unauthenticated user from accessing is_special recipe detail", %{conn: conn} do
+      recipe = insert(:recipe, status: "live", is_special: true)
+
+      conn_id = get(conn, "/api/v1/recipes/#{recipe.id}")
+      assert json_response(conn_id, 402)["error"] == "premium_required"
+
+      conn_slug = get(conn, "/api/v1/recipes/slug/#{recipe.slug}")
+      assert json_response(conn_slug, 402)["error"] == "premium_required"
+    end
+
+    test "blocks free user from accessing is_special recipe detail", %{conn: conn} do
+      recipe = insert(:recipe, status: "live", is_special: true)
+      free_user = insert(:user, subscription_tier: "free")
+
+      conn = authenticate_conn(conn, free_user)
+      conn_id = get(conn, "/api/v1/recipes/#{recipe.id}")
+      assert json_response(conn_id, 402)["error"] == "premium_required"
+
+      conn_slug = get(conn, "/api/v1/recipes/slug/#{recipe.slug}")
+      assert json_response(conn_slug, 402)["error"] == "premium_required"
+    end
+
+    test "allows premium user to access is_special recipe detail", %{conn: conn} do
+      recipe = insert(:recipe, status: "live", is_special: true)
+      prem_user = insert(:premium_user)
+
+      conn = authenticate_conn(conn, prem_user)
+      conn_id = get(conn, "/api/v1/recipes/#{recipe.id}")
+      body = json_response(conn_id, 200)
+
+      assert body["data"]["id"] == recipe.id
+      assert body["data"]["is_special"] == true
+      assert body["data"]["is_locked"] == false
+      assert length(body["data"]["ingredients"]) > 0
+      assert length(body["data"]["steps"]) > 0
+
+      conn_slug = get(conn, "/api/v1/recipes/slug/#{recipe.slug}")
+      assert json_response(conn_slug, 200)["data"]["id"] == recipe.id
+    end
+
+    test "allows admin user to access is_special recipe detail", %{conn: conn} do
+      recipe = insert(:recipe, status: "live", is_special: true)
+      admin = insert(:admin)
+
+      conn = authenticate_conn(conn, admin)
+      conn_id = get(conn, "/api/v1/recipes/#{recipe.id}")
+      assert json_response(conn_id, 200)["data"]["id"] == recipe.id
+    end
+
+    test "marks is_locked on recipe cards according to user subscription", %{conn: conn} do
+      insert(:recipe, status: "live", is_special: true, title: "VIP Truffle Pasta")
+      insert(:recipe, status: "live", is_special: false, title: "Standard Pasta")
+
+      # 1. Unauthenticated
+      conn_anon = get(conn, "/api/v1/recipes")
+      body_anon = json_response(conn_anon, 200)
+      vip_card_anon = Enum.find(body_anon["data"], &(&1["title"] == "VIP Truffle Pasta"))
+      std_card_anon = Enum.find(body_anon["data"], &(&1["title"] == "Standard Pasta"))
+
+      assert vip_card_anon["is_special"] == true
+      assert vip_card_anon["is_locked"] == true
+      assert std_card_anon["is_special"] == false
+      assert std_card_anon["is_locked"] == false
+
+      # 2. Premium user
+      prem_user = insert(:premium_user)
+      conn_prem = conn |> authenticate_conn(prem_user) |> get("/api/v1/recipes")
+      body_prem = json_response(conn_prem, 200)
+      vip_card_prem = Enum.find(body_prem["data"], &(&1["title"] == "VIP Truffle Pasta"))
+
+      assert vip_card_prem["is_special"] == true
+      assert vip_card_prem["is_locked"] == false
+    end
+
+    test "filters recipes by is_special query parameter", %{conn: conn} do
+      insert(:recipe, status: "live", is_special: true, title: "Only Special Recipe")
+      insert(:recipe, status: "live", is_special: false, title: "Only Free Recipe")
+
+      conn_spec = get(conn, "/api/v1/recipes?is_special=true")
+      body_spec = json_response(conn_spec, 200)
+      assert Enum.any?(body_spec["data"], &(&1["title"] == "Only Special Recipe"))
+      refute Enum.any?(body_spec["data"], &(&1["title"] == "Only Free Recipe"))
+
+      conn_free = get(conn, "/api/v1/recipes?is_special=false")
+      body_free = json_response(conn_free, 200)
+      assert Enum.any?(body_free["data"], &(&1["title"] == "Only Free Recipe"))
+      refute Enum.any?(body_free["data"], &(&1["title"] == "Only Special Recipe"))
+    end
+  end
 end

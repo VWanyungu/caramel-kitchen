@@ -108,6 +108,7 @@ defmodule CaramelKitchen.Factory do
       calories: 450,
       macros: %{"protein_g" => 35, "carbs_g" => 10, "fat_g" => 28},
       status: "live",
+      is_special: Map.get(attrs, :is_special, false),
       published_at: DateTime.utc_now() |> DateTime.truncate(:second),
       view_count: 100,
       save_count: 25,
