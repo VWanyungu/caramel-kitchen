@@ -47,6 +47,15 @@ defmodule CaramelKitchen.Videos.Video do
     field :thumbnail_url, :string
     field :duration_secs, :integer
     field :view_count, :integer, default: 0
+    field :favorite_count, :integer, default: 0
+    field :save_count, :integer, default: 0
+
+    # Virtual fields populated for authenticated user context
+    field :is_favorited, :boolean, virtual: true, default: false
+    field :is_saved, :boolean, virtual: true, default: false
+    field :interacted_at, :utc_datetime, virtual: true
+
+    has_many :interactions, CaramelKitchen.Videos.UserVideoInteraction
 
     timestamps(type: :utc_datetime)
   end

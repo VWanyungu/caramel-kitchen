@@ -144,6 +144,10 @@ interface Video {
   thumbnail_url: string | null;
   duration_secs: number | null;
   view_count: number;
+  favorite_count: number;
+  save_count: number;
+  is_favorited: boolean;           // true if authenticated caller favorited this video
+  is_saved: boolean;               // true if authenticated caller saved this video to watch later
   creator_id: string | null;
   created_at: string;              // ISO8601 UTC
   updated_at: string;              // ISO8601 UTC
@@ -927,6 +931,210 @@ Returns full details for a single video. Automatically increments view count. Re
   "data": {
     "id": "e4b1bf10-a294-4d8b-b8aa-852fc74b971a",
     "message": "Video deleted successfully"
+  }
+}
+```
+
+---
+
+### 8.5 Video Interactions: Favourite & Saved Videos (Issue #112)
+
+Fulfills GitHub Issue **#112** under parent issue **MAIN NAVIGATION BAR #62**. 
+Enforces strict architectural and functional separation between:
+- **Favourite Videos** (`action: "favorite"`): Videos the user explicitly enjoys and likes.
+- **Saved Videos** (`action: "saved"`): Videos the user intends to bookmark and watch later.
+
+A user can favorite a video, save it to watch later, or both simultaneously without collision. Both British (`/favourite`, `/favourites`) and American (`/favorite`, `/favorites`) spelling aliases are supported across all routes.
+
+#### 1. Favorite a Video
+**POST** `/api/v1/videos/:id/favorite`  
+*Alias:* `POST /api/v1/videos/:id/favourite`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Idempotently marks a video as favorited and increments the video's `favorite_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "video_id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+    "action": "favorite",
+    "status": "favorited",
+    "is_favorited": true,
+    "is_saved": false,
+    "favorite_count": 42,
+    "save_count": 18,
+    "interacted_at": "2026-09-07T22:30:00Z"
+  }
+}
+```
+
+#### 2. Unfavorite a Video
+**DELETE** `/api/v1/videos/:id/favorite`  
+*Aliases:* `DELETE /api/v1/videos/:id/favourite`, `POST /api/v1/videos/:id/unfavorite`, `POST /api/v1/videos/:id/unfavourite`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Removes a video from the user's favorites and decrements `favorite_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "video_id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+    "action": "favorite",
+    "status": "unfavorited",
+    "is_favorited": false,
+    "is_saved": false,
+    "favorite_count": 41,
+    "save_count": 18,
+    "interacted_at": null
+  }
+}
+```
+
+#### 3. Save Video to Watch Later
+**POST** `/api/v1/videos/:id/save`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Idempotently bookmarks a video for watch later and increments the video's `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "video_id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+    "action": "saved",
+    "status": "saved",
+    "is_favorited": true,
+    "is_saved": true,
+    "favorite_count": 41,
+    "save_count": 19,
+    "interacted_at": "2026-09-07T22:32:00Z"
+  }
+}
+```
+
+#### 4. Unsave Video
+**DELETE** `/api/v1/videos/:id/save`  
+*Alias:* `POST /api/v1/videos/:id/unsave`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Removes a video from watch later and decrements `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "video_id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+    "action": "saved",
+    "status": "unsaved",
+    "is_favorited": true,
+    "is_saved": false,
+    "favorite_count": 41,
+    "save_count": 18,
+    "interacted_at": null
+  }
+}
+```
+
+#### 5. Get Video Interaction Status
+**GET** `/api/v1/videos/:id/status`  
+*Alias:* `GET /api/v1/videos/:id/interaction`  
+*Optional `Authorization: Bearer <jwt_token>`.*
+
+Returns whether the calling user has favorited or saved the specified video, alongside aggregated counts. Unauthenticated guests receive `is_favorited: false` and `is_saved: false`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "video_id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+    "is_favorited": true,
+    "is_saved": false,
+    "favorite_count": 41,
+    "save_count": 18
+  }
+}
+```
+
+#### 6. List User's Favorited Videos
+**GET** `/api/v1/me/videos/favorites`  
+*Aliases:* `GET /api/v1/me/videos/favourites`, `GET /api/v1/me/favorites/videos`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Retrieves a paginated list of videos favorited by the authenticated user, ordered from most recently favorited.
+
+**Query Parameters:**
+- `limit` (integer, default: 20, max: 100)
+- `offset` (integer, default: 0)
+- `category` (string, optional): Filter by canonical video category
+- `search` (string, optional): Text match on title or description
+- `order` (string, default: "newest", options: "newest", "oldest")
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "c71a3375-39d7-463d-8eb9-db64a4bfba92",
+      "title": "Knife Skills 101",
+      "category": "Cooking_Techniques",
+      "is_premium": false,
+      "is_locked": false,
+      "is_favorited": true,
+      "is_saved": false,
+      "favorite_count": 41,
+      "save_count": 18,
+      "favorited_at": "2026-09-07T22:30:00Z",
+      "video": { ... }
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "total_count": 1,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+#### 7. List User's Saved Videos (Watch Later)
+**GET** `/api/v1/me/videos/saved`  
+*Alias:* `GET /api/v1/me/saved/videos`  
+*Requires `Authorization: Bearer <jwt_token>`.*
+
+Retrieves a paginated list of videos saved for later by the authenticated user, ordered from most recently saved.
+
+**Query Parameters:**
+- `limit` (integer, default: 20, max: 100)
+- `offset` (integer, default: 0)
+- `category` (string, optional)
+- `search` (string, optional)
+- `order` (string, default: "newest", options: "newest", "oldest")
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "893c52e1-4567-48bb-a63e-63f538562d91",
+      "title": "Slow Braised Beef Short Ribs",
+      "category": "Recipe_Videos",
+      "is_premium": false,
+      "is_locked": false,
+      "is_favorited": false,
+      "is_saved": true,
+      "favorite_count": 12,
+      "save_count": 35,
+      "saved_at": "2026-09-07T22:32:00Z",
+      "video": { ... }
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "total_count": 1,
+    "limit": 20,
+    "offset": 0
   }
 }
 ```
