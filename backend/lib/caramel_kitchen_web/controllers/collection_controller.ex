@@ -14,6 +14,7 @@ defmodule CaramelKitchenWeb.CollectionController do
 
     render(conn, :index,
       collections: collections,
+      current_user: viewer,
       meta: %{
         total_count: total,
         limit: Keyword.get(opts, :limit, 20),
@@ -32,6 +33,7 @@ defmodule CaramelKitchenWeb.CollectionController do
 
     render(conn, :index,
       collections: collections,
+      current_user: user,
       meta: %{
         total_count: total,
         limit: Keyword.get(opts, :limit, 20),
@@ -46,7 +48,17 @@ defmodule CaramelKitchenWeb.CollectionController do
 
     case Collections.get_collection(id, viewer: viewer) do
       {:ok, collection} ->
-        render(conn, :show, collection: collection)
+        if (collection.is_premium || false) && not Collections.has_access?(collection, viewer) do
+          conn
+          |> put_status(:payment_required)
+          |> json(%{
+            error: "premium_required",
+            message: "This collection requires a Premium subscription",
+            upgrade_url: "/subscription/checkout"
+          })
+        else
+          render(conn, :show, collection: collection, current_user: viewer)
+        end
 
       {:error, :not_found} ->
         {:error, :not_found}
@@ -138,6 +150,7 @@ defmodule CaramelKitchenWeb.CollectionController do
     |> maybe_put(:video_id, params["video_id"])
     |> maybe_put(:is_curated, parse_boolean(params["is_curated"]))
     |> maybe_put(:is_public, parse_boolean(params["is_public"]))
+    |> maybe_put(:is_premium, parse_boolean(params["is_premium"]))
     |> maybe_put(:search, params["search"] || params["q"])
     |> maybe_put(:sort, params["sort"])
     |> maybe_put(:limit, parse_int(params["limit"]))

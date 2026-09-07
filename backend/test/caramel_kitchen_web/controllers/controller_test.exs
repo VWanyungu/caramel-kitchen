@@ -161,7 +161,7 @@ defmodule CaramelKitchenWeb.MealPlanControllerTest do
     setup %{conn: conn} do
       user = insert(:premium_user)
       insert(:meal_plan, user_id: user.id)
-      {:ok, conn: authenticate_conn(conn, user)}
+      {:ok, conn: authenticate_conn(conn, user), user: user}
     end
 
     test "lists user's meal plans", %{conn: conn} do
@@ -169,6 +169,16 @@ defmodule CaramelKitchenWeb.MealPlanControllerTest do
       body = json_response(conn, 200)
       assert is_list(body["data"])
       assert length(body["data"]) >= 1
+    end
+
+    test "exposes is_premium flag on meal plan summaries", %{conn: conn, user: user} do
+      insert(:meal_plan, user_id: user.id, is_premium: true)
+
+      conn = get(conn, "/api/v1/meal-plans")
+      body = json_response(conn, 200)
+      plans = body["data"]
+
+      assert Enum.any?(plans, &(&1["is_premium"] == true))
     end
   end
 end

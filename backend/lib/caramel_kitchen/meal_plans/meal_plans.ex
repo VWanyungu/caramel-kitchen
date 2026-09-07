@@ -135,8 +135,9 @@ defmodule CaramelKitchen.MealPlans do
     )
   end
 
-  def list_plans(user_id) do
+  def list_plans(user_id, opts \\ []) do
     from(p in MealPlan, where: p.user_id == ^user_id, order_by: [desc: p.inserted_at])
+    |> apply_meal_plan_premium_filter(Keyword.get(opts, :is_premium))
     |> Repo.all()
   end
 
@@ -169,7 +170,8 @@ defmodule CaramelKitchen.MealPlans do
         days: plan_data["days"],
         is_ai_generated: true,
         ai_model: "gpt-4o",
-        is_active: true
+        is_active: true,
+        is_premium: CaramelKitchen.Accounts.User.premium?(user)
       },
       [
         :user_id,
@@ -182,12 +184,23 @@ defmodule CaramelKitchen.MealPlans do
         :days,
         :is_ai_generated,
         :ai_model,
-        :is_active
+        :is_active,
+        :is_premium
       ]
     )
     |> Ecto.Changeset.validate_required([:user_id, :goal_type, :week_start, :week_end])
     |> Repo.insert()
   end
+
+  defp apply_meal_plan_premium_filter(query, nil), do: query
+
+  defp apply_meal_plan_premium_filter(query, val) when val in [true, "true", "1"],
+    do: from(p in query, where: p.is_premium == true)
+
+  defp apply_meal_plan_premium_filter(query, val) when val in [false, "false", "0"],
+    do: from(p in query, where: p.is_premium == false)
+
+  defp apply_meal_plan_premium_filter(query, _), do: query
 
   defp parse_plan_response(json_text) do
     clean = json_text |> String.replace(Regex.compile!("```json|```"), "") |> String.trim()

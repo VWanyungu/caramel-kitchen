@@ -74,6 +74,24 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert col1.id in curated_ids
       refute col2.id in curated_ids
     end
+
+    test "filters by is_premium", %{conn: conn} do
+      user = insert(:user)
+      col1 = insert(:collection, user_id: user.id, name: "Premium Collection", is_premium: true)
+      col2 = insert(:collection, user_id: user.id, name: "Free Collection", is_premium: false)
+
+      conn_prem = get(conn, "/api/v1/collections?is_premium=true")
+      body_prem = json_response(conn_prem, 200)
+      prem_ids = Enum.map(body_prem["data"], & &1["id"])
+      assert col1.id in prem_ids
+      refute col2.id in prem_ids
+
+      conn_free = get(conn, "/api/v1/collections?is_premium=false")
+      body_free = json_response(conn_free, 200)
+      free_ids = Enum.map(body_free["data"], & &1["id"])
+      assert col2.id in free_ids
+      refute col1.id in free_ids
+    end
   end
 
   describe "GET /api/v1/collections/:id" do
@@ -131,6 +149,34 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
 
       assert json_response(conn_owner, 200)["data"]["id"] == private_col.id
     end
+
+    test "premium collection access gating: 402 for free/guest, 200 for owner, premium, and admin", %{conn: conn} do
+      owner = insert(:user)
+      free_user = insert(:user, subscription_tier: "free")
+      premium_user = insert(:premium_user)
+      admin = insert(:admin)
+      col = insert(:collection, user_id: owner.id, name: "Gourmet Techniques", is_premium: true)
+
+      # Guest: 402
+      conn_guest = get(conn, "/api/v1/collections/#{col.id}")
+      assert json_response(conn_guest, 402)["error"] == "premium_required"
+
+      # Free user: 402
+      conn_free = conn |> authenticate_conn(free_user) |> get("/api/v1/collections/#{col.id}")
+      assert json_response(conn_free, 402)["error"] == "premium_required"
+
+      # Owner: 200
+      conn_owner = conn |> authenticate_conn(owner) |> get("/api/v1/collections/#{col.id}")
+      assert json_response(conn_owner, 200)["data"]["id"] == col.id
+
+      # Premium user: 200
+      conn_prem = conn |> authenticate_conn(premium_user) |> get("/api/v1/collections/#{col.id}")
+      assert json_response(conn_prem, 200)["data"]["id"] == col.id
+
+      # Admin: 200
+      conn_admin = conn |> authenticate_conn(admin) |> get("/api/v1/collections/#{col.id}")
+      assert json_response(conn_admin, 200)["data"]["id"] == col.id
+    end
   end
 
   describe "GET /api/v1/me/collections" do
@@ -186,6 +232,21 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert data["recipe_count"] == 1
       assert data["video_count"] == 1
       assert length(data["items"]) == 2
+      assert data["is_premium"] == false
+    end
+
+    test "creates a premium collection", %{conn: conn} do
+      user = insert(:user)
+
+      payload = %{
+        "name" => "Premium Cooking School",
+        "is_premium" => true
+      }
+
+      conn = conn |> authenticate_conn(user) |> post("/api/v1/collections", payload)
+      body = json_response(conn, 201)
+      assert body["data"]["name"] == "Premium Cooking School"
+      assert body["data"]["is_premium"] == true
     end
   end
 
@@ -203,6 +264,20 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
 
       assert body["data"]["name"] == "New Title"
       assert body["data"]["is_public"] == false
+      assert body["data"]["is_premium"] == false
+    end
+
+    test "owner can update is_premium status", %{conn: conn} do
+      user = insert(:user)
+      col = insert(:collection, user_id: user.id, is_premium: false)
+
+      conn =
+        conn
+        |> authenticate_conn(user)
+        |> put("/api/v1/collections/#{col.id}", %{"is_premium" => true})
+
+      body = json_response(conn, 200)
+      assert body["data"]["is_premium"] == true
     end
 
     test "non-owner receives 403 Forbidden", %{conn: conn} do
