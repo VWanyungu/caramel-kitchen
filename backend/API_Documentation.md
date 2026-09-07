@@ -1380,4 +1380,125 @@ Removes a specific item from the collection by its item ID.
 
 **Response (204 No Content)**
 
+---
+
+### 9.4 Collection Save & Interaction Endpoints
+*All interaction requests require `Authorization: Bearer <jwt_token>` except status checking.*
+
+#### Save a Collection
+**POST** `/api/v1/collections/:id/save`
+
+Saves a collection to the user's library. Idempotent. Increments `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+    "action": "saved",
+    "status": "saved",
+    "is_saved": true,
+    "save_count": 1,
+    "saved_at": "2026-09-07T23:45:00Z"
+  }
+}
+```
+
+#### Unsave a Collection
+**DELETE** `/api/v1/collections/:id/save`  
+*Alias:* `POST /api/v1/collections/:id/unsave`
+
+Removes a collection from the user's library. Decrements `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+    "action": "saved",
+    "status": "unsaved",
+    "is_saved": false,
+    "save_count": 0
+  }
+}
+```
+
+#### Get Collection Interaction Status
+**GET** `/api/v1/collections/:id/status`
+
+Returns whether the authenticated caller has saved this collection.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "collection_id": "e7bf5412-f47a-4cba-a1c2-19e34e5695cf",
+    "is_saved": true,
+    "save_count": 1
+  }
+}
+```
+
+#### List User's Saved Collections
+**GET** `/api/v1/me/collections/saved`  
+*Alias:* `GET /api/v1/me/saved/collections`
+
+Retrieves a paginated list of collections saved by the authenticated user.
+
+---
+
+## 10. Meal Plans Save & Interaction API (`/api/v1/meal-plans`)
+
+### 10.1 Save & Status Endpoints
+*All requests require `Authorization: Bearer <jwt_token>`.*
+
+#### Save a Meal Plan
+**POST** `/api/v1/meal-plans/:id/save`
+
+Saves a meal plan to user's saved library. Idempotent. Increments `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "meal_plan_id": "4e1a6132-7204-4fa0-82a8-f7b587fcf39a",
+    "action": "saved",
+    "status": "saved",
+    "is_saved": true,
+    "save_count": 1,
+    "saved_at": "2026-09-07T23:45:00Z"
+  }
+}
+```
+
+#### Unsave a Meal Plan
+**DELETE** `/api/v1/meal-plans/:id/save`  
+*Alias:* `POST /api/v1/meal-plans/:id/unsave`
+
+Removes a meal plan from user's saved library. Decrements `save_count`.
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "meal_plan_id": "4e1a6132-7204-4fa0-82a8-f7b587fcf39a",
+    "action": "saved",
+    "status": "unsaved",
+    "is_saved": false,
+    "save_count": 0
+  }
+}
+```
+
+#### Get Meal Plan Status
+**GET** `/api/v1/meal-plans/:id/status`
+
+Returns interaction status (`is_saved` and `save_count`) for the given meal plan.
+
+#### List User's Saved Meal Plans
+**GET** `/api/v1/me/meal-plans/saved`  
+*Alias:* `GET /api/v1/me/saved/meal-plans`
+
+Retrieves a paginated list of meal plans saved by the authenticated user.
+
 

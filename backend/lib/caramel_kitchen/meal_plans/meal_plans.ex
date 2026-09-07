@@ -6,7 +6,8 @@ defmodule CaramelKitchen.MealPlans do
 
   import Ecto.Query
   alias CaramelKitchen.Repo
-  alias CaramelKitchen.MealPlans.MealPlan
+  alias CaramelKitchen.Accounts.User
+  alias CaramelKitchen.MealPlans.{MealPlan, UserMealPlanInteraction}
   alias CaramelKitchen.AI.{Orchestrator, PromptBuilder}
   alias CaramelKitchen.Recipes
   alias CaramelKitchen.Shopping
@@ -142,6 +143,163 @@ defmodule CaramelKitchen.MealPlans do
   end
 
   def get_plan!(id), do: Repo.get!(MealPlan, id)
+
+  def get_plan(id) do
+    case Repo.get(MealPlan, id) do
+      nil -> {:error, :not_found}
+      plan -> {:ok, plan}
+    end
+  end
+
+  # ── User Interaction (Save / Unsave) ─────────────────────────
+
+  @doc """
+  Saves a meal plan for a user. Idempotent.
+  Increments meal_plan.save_count on initial save.
+  """
+  def save_meal_plan(%User{} = user, meal_plan_id, metadata \\ %{}) do
+    with {:ok, meal_plan} <- get_plan(meal_plan_id) do
+      case Repo.get_by(UserMealPlanInteraction, user_id: user.id, meal_plan_id: meal_plan.id, action: "saved") do
+        nil ->
+          %UserMealPlanInteraction{}
+          |> UserMealPlanInteraction.changeset(%{
+            user_id: user.id,
+            meal_plan_id: meal_plan.id,
+            action: "saved",
+            metadata: metadata
+          })
+          |> Repo.insert()
+          |> case do
+            {:ok, interaction} ->
+              from(m in MealPlan, where: m.id == ^meal_plan.id)
+              |> Repo.update_all(inc: [save_count: 1])
+
+              updated = get_plan!(meal_plan.id)
+
+              {:ok,
+               %{
+                 meal_plan_id: meal_plan.id,
+                 action: "saved",
+                 status: "saved",
+                 is_saved: true,
+                 save_count: updated.save_count,
+                 saved_at: interaction.inserted_at
+               }}
+
+            {:error, changeset} ->
+              {:error, changeset}
+          end
+
+        existing ->
+          {:ok,
+           %{
+             meal_plan_id: meal_plan.id,
+             action: "saved",
+             status: "already_saved",
+             is_saved: true,
+             save_count: meal_plan.save_count,
+             saved_at: existing.inserted_at
+           }}
+      end
+    end
+  end
+
+  @doc """
+  Unsaves a meal plan for a user.
+  Decrements meal_plan.save_count safely.
+  """
+  def unsave_meal_plan(%User{} = user, meal_plan_id) do
+    with {:ok, meal_plan} <- get_plan(meal_plan_id) do
+      case Repo.get_by(UserMealPlanInteraction, user_id: user.id, meal_plan_id: meal_plan.id, action: "saved") do
+        nil ->
+          {:ok,
+           %{
+             meal_plan_id: meal_plan.id,
+             action: "saved",
+             status: "not_saved",
+             is_saved: false,
+             save_count: meal_plan.save_count
+           }}
+
+        interaction ->
+          case Repo.delete(interaction) do
+            {:ok, _} ->
+              from(m in MealPlan, where: m.id == ^meal_plan.id and m.save_count > 0)
+              |> Repo.update_all(inc: [save_count: -1])
+
+              updated = get_plan!(meal_plan.id)
+
+              {:ok,
+               %{
+                 meal_plan_id: meal_plan.id,
+                 action: "saved",
+                 status: "unsaved",
+                 is_saved: false,
+                 save_count: updated.save_count
+               }}
+
+            error ->
+              error
+          end
+      end
+    end
+  end
+
+  @doc "Checks if a user has saved a meal plan"
+  def is_saved?(nil, _meal_plan_id), do: false
+
+  def is_saved?(%User{id: user_id}, meal_plan_id) do
+    Repo.exists?(
+      from i in UserMealPlanInteraction,
+        where: i.user_id == ^user_id and i.meal_plan_id == ^meal_plan_id and i.action == "saved"
+    )
+  end
+
+  def is_saved?(%{id: user_id}, meal_plan_id) do
+    Repo.exists?(
+      from i in UserMealPlanInteraction,
+        where: i.user_id == ^user_id and i.meal_plan_id == ^meal_plan_id and i.action == "saved"
+    )
+  end
+
+  @doc "Get user meal plan interaction status and count"
+  def get_user_meal_plan_status(user, meal_plan_id) do
+    with {:ok, meal_plan} <- get_plan(meal_plan_id) do
+      is_sav = is_saved?(user, meal_plan.id)
+
+      {:ok,
+       %{
+         meal_plan_id: meal_plan.id,
+         is_saved: is_sav,
+         save_count: meal_plan.save_count
+       }}
+    end
+  end
+
+  @doc "List meal plans saved by user with pagination"
+  def list_saved_meal_plans(%User{id: user_id}, opts \\ []) do
+    limit = (Keyword.get(opts, :limit) || 20) |> min(100)
+    offset = Keyword.get(opts, :offset) || 0
+
+    from(m in MealPlan,
+      join: i in UserMealPlanInteraction,
+      on: i.meal_plan_id == m.id,
+      where: i.user_id == ^user_id and i.action == "saved",
+      order_by: [desc: i.inserted_at],
+      limit: ^limit,
+      offset: ^offset
+    )
+    |> Repo.all()
+  end
+
+  @doc "Count meal plans saved by user"
+  def count_saved_meal_plans(%User{id: user_id}, _opts \\ []) do
+    Repo.one(
+      from i in UserMealPlanInteraction,
+        where: i.user_id == ^user_id and i.action == "saved",
+        select: count(i.id)
+    ) || 0
+  end
 
   def daily_summary(meal_plan, day_offset) do
     day = Enum.find(meal_plan.days, &(&1["date_offset"] == day_offset))

@@ -127,6 +127,10 @@ defmodule CaramelKitchenWeb.Router do
     # Collections browsing
     get "/collections", CollectionController, :index
     get "/collections/:id", CollectionController, :show
+    get "/collections/:id/status", CollectionController, :status
+
+    # Meal plans status
+    get "/meal-plans/:id/status", MealPlanController, :status
   end
 
   # ── Authenticated ─────────────────────────────────────────────
@@ -170,6 +174,20 @@ defmodule CaramelKitchenWeb.Router do
     get "/me/favorites/videos", VideoInteractionController, :favorite_videos
     get "/me/videos/saved", VideoInteractionController, :saved_videos
     get "/me/saved/videos", VideoInteractionController, :saved_videos
+
+    # Collection Save Interactions
+    post "/collections/:id/save", CollectionController, :save
+    delete "/collections/:id/save", CollectionController, :unsave
+    post "/collections/:id/unsave", CollectionController, :unsave
+    get "/me/collections/saved", CollectionController, :saved_collections
+    get "/me/saved/collections", CollectionController, :saved_collections
+
+    # Meal Plan Save Interactions
+    post "/meal-plans/:id/save", MealPlanController, :save
+    delete "/meal-plans/:id/save", MealPlanController, :unsave
+    post "/meal-plans/:id/unsave", MealPlanController, :unsave
+    get "/me/meal-plans/saved", MealPlanController, :saved_meal_plans
+    get "/me/saved/meal-plans", MealPlanController, :saved_meal_plans
 
     # Shopping (basic — from single recipe)
     get "/shopping", ShoppingController, :index

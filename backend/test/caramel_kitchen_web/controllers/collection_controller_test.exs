@@ -347,4 +347,51 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert Repo.get(CollectionItem, item_id) == nil
     end
   end
+
+  describe "Collection save interactions" do
+    test "authenticates save and unsave", %{conn: conn} do
+      col = insert(:collection)
+
+      conn_unauth = post(conn, "/api/v1/collections/#{col.id}/save")
+      assert json_response(conn_unauth, 401)
+
+      conn_unauth_del = delete(conn, "/api/v1/collections/#{col.id}/save")
+      assert json_response(conn_unauth_del, 401)
+    end
+
+    test "saves, gets status, and unsaves collection", %{conn: conn} do
+      user = insert(:user)
+      col = insert(:collection, save_count: 0)
+
+      # 1. Save
+      conn_save = conn |> authenticate_conn(user) |> post("/api/v1/collections/#{col.id}/save")
+      body_save = json_response(conn_save, 200)["data"]
+      assert body_save["collection_id"] == col.id
+      assert body_save["is_saved"] == true
+      assert body_save["save_count"] == 1
+
+      # 2. Status
+      conn_stat = conn |> authenticate_conn(user) |> get("/api/v1/collections/#{col.id}/status")
+      body_stat = json_response(conn_stat, 200)["data"]
+      assert body_stat["is_saved"] == true
+      assert body_stat["save_count"] == 1
+
+      # 3. List saved
+      conn_list = conn |> authenticate_conn(user) |> get("/api/v1/me/collections/saved")
+      body_list = json_response(conn_list, 200)
+      assert length(body_list["data"]) == 1
+      assert hd(body_list["data"])["id"] == col.id
+      assert hd(body_list["data"])["is_saved"] == true
+
+      # 4. Unsave
+      conn_unsave = conn |> authenticate_conn(user) |> delete("/api/v1/collections/#{col.id}/save")
+      body_unsave = json_response(conn_unsave, 200)["data"]
+      assert body_unsave["is_saved"] == false
+      assert body_unsave["save_count"] == 0
+
+      # 5. Status after unsave
+      conn_stat2 = conn |> authenticate_conn(user) |> get("/api/v1/collections/#{col.id}/status")
+      assert json_response(conn_stat2, 200)["data"]["is_saved"] == false
+    end
+  end
 end

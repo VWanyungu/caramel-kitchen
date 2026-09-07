@@ -6,6 +6,7 @@ defmodule CaramelKitchen.MealPlans.MealPlan do
 
   schema "meal_plans" do
     belongs_to :user, CaramelKitchen.Accounts.User
+    has_many :interactions, CaramelKitchen.MealPlans.UserMealPlanInteraction, on_delete: :delete_all
 
     field :goal_type, :string
     field :name, :string
@@ -18,6 +19,7 @@ defmodule CaramelKitchen.MealPlans.MealPlan do
     field :ai_model, :string
     field :is_active, :boolean, default: true
     field :is_premium, :boolean, default: false
+    field :save_count, :integer, default: 0
 
     timestamps(type: :utc_datetime)
   end

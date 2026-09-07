@@ -5,7 +5,8 @@ defmodule CaramelKitchen.Collections do
   """
   import Ecto.Query
   alias CaramelKitchen.Repo
-  alias CaramelKitchen.Collections.{Collection, CollectionItem}
+  alias CaramelKitchen.Accounts.User
+  alias CaramelKitchen.Collections.{Collection, CollectionItem, UserCollectionInteraction}
 
   # ── Collections Querying ──────────────────────────────────────
 
@@ -166,6 +167,156 @@ defmodule CaramelKitchen.Collections do
       nil -> {:error, :not_found}
       item -> Repo.delete(item)
     end
+  end
+
+  # ── User Interaction (Save / Unsave) ─────────────────────────
+
+  @doc """
+  Saves a collection for a user. Idempotent.
+  Increments collection.save_count on initial save.
+  """
+  def save_collection(%User{} = user, collection_id, metadata \\ %{}) do
+    with {:ok, collection} <- get_collection(collection_id, viewer: user) do
+      case Repo.get_by(UserCollectionInteraction, user_id: user.id, collection_id: collection.id, action: "saved") do
+        nil ->
+          %UserCollectionInteraction{}
+          |> UserCollectionInteraction.changeset(%{
+            user_id: user.id,
+            collection_id: collection.id,
+            action: "saved",
+            metadata: metadata
+          })
+          |> Repo.insert()
+          |> case do
+            {:ok, interaction} ->
+              from(c in Collection, where: c.id == ^collection.id)
+              |> Repo.update_all(inc: [save_count: 1])
+
+              updated = get_collection!(collection.id)
+
+              {:ok,
+               %{
+                 collection_id: collection.id,
+                 action: "saved",
+                 status: "saved",
+                 is_saved: true,
+                 save_count: updated.save_count,
+                 saved_at: interaction.inserted_at
+               }}
+
+            {:error, changeset} ->
+              {:error, changeset}
+          end
+
+        existing ->
+          {:ok,
+           %{
+             collection_id: collection.id,
+             action: "saved",
+             status: "already_saved",
+             is_saved: true,
+             save_count: collection.save_count,
+             saved_at: existing.inserted_at
+           }}
+      end
+    end
+  end
+
+  @doc """
+  Unsaves a collection for a user.
+  Decrements collection.save_count safely.
+  """
+  def unsave_collection(%User{} = user, collection_id) do
+    with {:ok, collection} <- get_collection(collection_id, viewer: user) do
+      case Repo.get_by(UserCollectionInteraction, user_id: user.id, collection_id: collection.id, action: "saved") do
+        nil ->
+          {:ok,
+           %{
+             collection_id: collection.id,
+             action: "saved",
+             status: "not_saved",
+             is_saved: false,
+             save_count: collection.save_count
+           }}
+
+        interaction ->
+          case Repo.delete(interaction) do
+            {:ok, _} ->
+              from(c in Collection, where: c.id == ^collection.id and c.save_count > 0)
+              |> Repo.update_all(inc: [save_count: -1])
+
+              updated = get_collection!(collection.id)
+
+              {:ok,
+               %{
+                 collection_id: collection.id,
+                 action: "saved",
+                 status: "unsaved",
+                 is_saved: false,
+                 save_count: updated.save_count
+               }}
+
+            error ->
+              error
+          end
+      end
+    end
+  end
+
+  @doc "Checks if a user has saved a collection"
+  def is_saved?(nil, _collection_id), do: false
+
+  def is_saved?(%User{id: user_id}, collection_id) do
+    Repo.exists?(
+      from i in UserCollectionInteraction,
+        where: i.user_id == ^user_id and i.collection_id == ^collection_id and i.action == "saved"
+    )
+  end
+
+  def is_saved?(%{id: user_id}, collection_id) do
+    Repo.exists?(
+      from i in UserCollectionInteraction,
+        where: i.user_id == ^user_id and i.collection_id == ^collection_id and i.action == "saved"
+    )
+  end
+
+  @doc "Get user collection interaction status and count"
+  def get_user_collection_status(user, collection_id) do
+    with {:ok, collection} <- get_collection(collection_id, viewer: user) do
+      is_sav = is_saved?(user, collection.id)
+
+      {:ok,
+       %{
+         collection_id: collection.id,
+         is_saved: is_sav,
+         save_count: collection.save_count
+       }}
+    end
+  end
+
+  @doc "List collections saved by a user with pagination"
+  def list_saved_collections(%User{id: user_id}, opts \\ []) do
+    limit = (Keyword.get(opts, :limit) || 20) |> min(100)
+    offset = Keyword.get(opts, :offset) || 0
+
+    from(c in base_query(),
+      join: i in UserCollectionInteraction,
+      on: i.collection_id == c.id,
+      where: i.user_id == ^user_id and i.action == "saved",
+      order_by: [desc: i.inserted_at],
+      limit: ^limit,
+      offset: ^offset
+    )
+    |> Repo.all()
+  end
+
+  @doc "Count collections saved by a user"
+  def count_saved_collections(%User{id: user_id}, _opts \\ []) do
+    Repo.one(
+      from i in UserCollectionInteraction,
+        where: i.user_id == ^user_id and i.action == "saved",
+        select: count(i.id)
+    ) || 0
   end
 
   # ── Access Control Helper ─────────────────────────────────────

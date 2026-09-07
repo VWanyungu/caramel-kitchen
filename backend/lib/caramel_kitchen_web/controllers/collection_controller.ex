@@ -3,6 +3,7 @@ defmodule CaramelKitchenWeb.CollectionController do
   action_fallback CaramelKitchenWeb.FallbackController
 
   alias CaramelKitchen.Collections
+  alias CaramelKitchenWeb.CollectionJSON
 
   # GET /api/v1/collections
   def index(conn, params) do
@@ -138,6 +139,54 @@ defmodule CaramelKitchenWeb.CollectionController do
         {:error, :forbidden}
       end
     end
+  end
+
+  # ── User Interaction (Save / Unsave) ─────────────────────────
+
+  # POST /api/v1/collections/:id/save
+  def save(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+    metadata = Map.get(params, "metadata", %{})
+
+    with {:ok, result} <- Collections.save_collection(user, id, metadata) do
+      json(conn, CollectionJSON.action_result(%{result: result}))
+    end
+  end
+
+  # DELETE /api/v1/collections/:id/save
+  def unsave(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+
+    with {:ok, result} <- Collections.unsave_collection(user, id) do
+      json(conn, CollectionJSON.action_result(%{result: result}))
+    end
+  end
+
+  # GET /api/v1/collections/:id/status
+  def status(conn, %{"id" => id}) do
+    user = conn.assigns[:current_user]
+
+    with {:ok, status} <- Collections.get_user_collection_status(user, id) do
+      json(conn, CollectionJSON.status(%{status: status}))
+    end
+  end
+
+  # GET /api/v1/me/collections/saved
+  def saved_collections(conn, params) do
+    user = conn.assigns.current_user
+    opts = build_query_opts(params, user)
+    collections = Collections.list_saved_collections(user, opts)
+    total = Collections.count_saved_collections(user, opts)
+
+    render(conn, :index,
+      collections: collections,
+      current_user: user,
+      meta: %{
+        total_count: total,
+        limit: Keyword.get(opts, :limit, 20),
+        offset: Keyword.get(opts, :offset, 0)
+      }
+    )
   end
 
   # ── Helpers ───────────────────────────────────────────────────

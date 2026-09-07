@@ -272,6 +272,55 @@ defmodule CaramelKitchenWeb.MealPlanController do
     end
   end
 
+  # POST /api/v1/meal-plans/:id/save
+  def save(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+    metadata = Map.get(params, "metadata", %{})
+
+    with {:ok, result} <- MealPlans.save_meal_plan(user, id, metadata) do
+      json(conn, %{data: result})
+    end
+  end
+
+  # DELETE /api/v1/meal-plans/:id/save
+  def unsave(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+
+    with {:ok, result} <- MealPlans.unsave_meal_plan(user, id) do
+      json(conn, %{data: result})
+    end
+  end
+
+  # GET /api/v1/meal-plans/:id/status
+  def status(conn, %{"id" => id}) do
+    user = conn.assigns[:current_user]
+
+    with {:ok, status} <- MealPlans.get_user_meal_plan_status(user, id) do
+      json(conn, %{data: status})
+    end
+  end
+
+  # GET /api/v1/me/meal-plans/saved
+  def saved_meal_plans(conn, params) do
+    user = conn.assigns.current_user
+    limit = min(String.to_integer(params["limit"] || "20"), 100)
+    offset = String.to_integer(params["offset"] || "0")
+    opts = [limit: limit, offset: offset]
+
+    plans = MealPlans.list_saved_meal_plans(user, opts)
+    total = MealPlans.count_saved_meal_plans(user, opts)
+
+    json(conn, %{
+      data: Enum.map(plans, &render_plan_summary/1),
+      meta: %{
+        total_count: total,
+        count: length(plans),
+        limit: limit,
+        offset: offset
+      }
+    })
+  end
+
   defp render_plan_summary(plan) do
     %{
       id: plan.id,
@@ -282,6 +331,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
       calorie_target: plan.calorie_target,
       is_active: plan.is_active,
       is_premium: plan.is_premium || false,
+      save_count: plan.save_count || 0,
       inserted_at: plan.inserted_at
     }
   end
