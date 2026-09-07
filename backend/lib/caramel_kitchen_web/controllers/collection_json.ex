@@ -6,23 +6,27 @@ defmodule CaramelKitchenWeb.CollectionJSON do
 
   def index(%{collections: collections} = assigns) do
     meta = Map.get(assigns, :meta, %{})
+    viewer = Map.get(assigns, :current_user)
 
     %{
-      data: Enum.map(collections, &collection_card/1),
+      data: Enum.map(collections, &collection_card(&1, viewer)),
       meta: meta
     }
   end
 
-  def show(%{collection: collection}) do
-    %{data: collection_detail(collection)}
+  def show(%{collection: collection} = assigns) do
+    viewer = Map.get(assigns, :current_user)
+    %{data: collection_detail(collection, viewer)}
   end
 
   def item(%{item: item}) do
     %{data: render_item(item)}
   end
 
-  def collection_card(collection) do
+  def collection_card(collection, viewer \\ nil) do
     items = collection.items || []
+    is_premium = collection.is_premium || false
+    is_locked = is_premium and not CaramelKitchen.Collections.has_access?(collection, viewer)
 
     %{
       id: collection.id,
@@ -33,6 +37,8 @@ defmodule CaramelKitchenWeb.CollectionJSON do
       cover_image_url: derive_cover_image(collection, items),
       is_public: collection.is_public,
       is_curated: collection.is_curated,
+      is_premium: is_premium,
+      is_locked: is_locked,
       recipe_count: Enum.count(items, &(&1.item_type == "recipe")),
       video_count: Enum.count(items, &(&1.item_type == "video")),
       total_items: length(items),
@@ -42,11 +48,11 @@ defmodule CaramelKitchenWeb.CollectionJSON do
     }
   end
 
-  def collection_detail(collection) do
+  def collection_detail(collection, viewer \\ nil) do
     items = collection.items || []
 
     collection
-    |> collection_card()
+    |> collection_card(viewer)
     |> Map.put(:items, Enum.map(items, &render_item/1))
   end
 

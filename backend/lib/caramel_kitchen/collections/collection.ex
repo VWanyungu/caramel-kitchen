@@ -18,6 +18,7 @@ defmodule CaramelKitchen.Collections.Collection do
     field :cover_image_url, :string
     field :is_public, :boolean, default: true
     field :is_curated, :boolean, default: false
+    field :is_premium, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -31,7 +32,8 @@ defmodule CaramelKitchen.Collections.Collection do
       :description,
       :cover_image_url,
       :is_public,
-      :is_curated
+      :is_curated,
+      :is_premium
     ])
     |> validate_required([:user_id, :name])
     |> put_slug()
@@ -43,7 +45,15 @@ defmodule CaramelKitchen.Collections.Collection do
 
   def update_changeset(collection, attrs) do
     collection
-    |> cast(attrs, [:name, :slug, :description, :cover_image_url, :is_public, :is_curated])
+    |> cast(attrs, [
+      :name,
+      :slug,
+      :description,
+      :cover_image_url,
+      :is_public,
+      :is_curated,
+      :is_premium
+    ])
     |> put_slug()
     |> unique_constraint(:slug,
       name: :collections_user_id_slug_index,

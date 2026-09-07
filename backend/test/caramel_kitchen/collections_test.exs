@@ -208,6 +208,66 @@ defmodule CaramelKitchen.CollectionsTest do
       assert {:ok, _} = Collections.remove_item_by_ref(collection, %{"video_id" => video.id})
       assert Repo.get(CollectionItem, item2.id) == nil
     end
+
+    test "create_collection/2 and update_collection/2 support is_premium" do
+      user = insert(:user)
+
+      assert {:ok, col} =
+               Collections.create_collection(user, %{
+                 "name" => "Masterclass Series",
+                 "is_premium" => true
+               })
+
+      assert col.is_premium == true
+
+      assert {:ok, updated} =
+               Collections.update_collection(col, %{
+                 "is_premium" => false
+               })
+
+      assert updated.is_premium == false
+    end
+
+    test "list_collections/1 and count_collections/1 filter by is_premium" do
+      user = insert(:user)
+      premium_col = insert(:collection, user_id: user.id, name: "Premium Collection", is_premium: true)
+      free_col = insert(:collection, user_id: user.id, name: "Free Collection", is_premium: false)
+
+      prem_results = Collections.list_collections(is_premium: true)
+      prem_ids = Enum.map(prem_results, & &1.id)
+      assert premium_col.id in prem_ids
+      refute free_col.id in prem_ids
+      assert Collections.count_collections(is_premium: true) >= 1
+
+      free_results = Collections.list_collections(is_premium: false)
+      free_ids = Enum.map(free_results, & &1.id)
+      assert free_col.id in free_ids
+      refute premium_col.id in free_ids
+    end
+
+    test "has_access?/2 gates access based on tier and ownership" do
+      owner = insert(:user)
+      free_user = insert(:user, subscription_tier: "free")
+      premium_user = insert(:premium_user)
+      creator_pro_user = insert(:user, subscription_tier: "creator_pro")
+      admin = insert(:admin)
+
+      free_col = insert(:collection, user_id: owner.id, is_premium: false)
+      premium_col = insert(:collection, user_id: owner.id, is_premium: true)
+
+      # Non-premium collection is accessible by everyone
+      assert Collections.has_access?(free_col, nil) == true
+      assert Collections.has_access?(free_col, free_user) == true
+      assert Collections.has_access?(free_col, premium_user) == true
+
+      # Premium collection
+      assert Collections.has_access?(premium_col, nil) == false
+      assert Collections.has_access?(premium_col, free_user) == false
+      assert Collections.has_access?(premium_col, owner) == true
+      assert Collections.has_access?(premium_col, admin) == true
+      assert Collections.has_access?(premium_col, premium_user) == true
+      assert Collections.has_access?(premium_col, creator_pro_user) == true
+    end
   end
 
   defp errors_on(changeset) do

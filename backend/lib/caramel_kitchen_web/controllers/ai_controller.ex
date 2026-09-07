@@ -281,6 +281,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
       week_end: plan.week_end,
       calorie_target: plan.calorie_target,
       is_active: plan.is_active,
+      is_premium: plan.is_premium || false,
       inserted_at: plan.inserted_at
     }
   end

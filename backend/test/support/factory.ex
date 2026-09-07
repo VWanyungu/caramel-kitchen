@@ -139,19 +139,22 @@ defmodule CaramelKitchen.Factory do
     struct!(recipe_factory(), %{status: "draft", published_at: nil})
   end
 
-  def meal_plan_factory do
-    %MealPlan{
-      user_id: insert(:premium_user).id,
-      goal_type: "balanced",
-      name: "Test Meal Plan",
-      week_start: Date.utc_today(),
-      week_end: Date.add(Date.utc_today(), 6),
-      calorie_target: 2000,
-      macro_split: %{protein_pct: 30, carbs_pct: 40, fat_pct: 30},
-      days: [],
-      is_ai_generated: false,
-      is_active: true
+  def meal_plan_factory(attrs \\ %{}) do
+    meal_plan = %MealPlan{
+      user_id: Map.get(attrs, :user_id) || insert(:premium_user).id,
+      goal_type: Map.get(attrs, :goal_type, "balanced"),
+      name: Map.get(attrs, :name, "Test Meal Plan"),
+      week_start: Map.get(attrs, :week_start, Date.utc_today()),
+      week_end: Map.get(attrs, :week_end, Date.add(Date.utc_today(), 6)),
+      calorie_target: Map.get(attrs, :calorie_target, 2000),
+      macro_split: Map.get(attrs, :macro_split, %{protein_pct: 30, carbs_pct: 40, fat_pct: 30}),
+      days: Map.get(attrs, :days, []),
+      is_ai_generated: Map.get(attrs, :is_ai_generated, false),
+      is_active: Map.get(attrs, :is_active, true),
+      is_premium: Map.get(attrs, :is_premium, false)
     }
+
+    merge_attributes(meal_plan, attrs)
   end
 
   def subscription_factory do
@@ -196,7 +199,8 @@ defmodule CaramelKitchen.Factory do
       description: Map.get(attrs, :description, "A curated group of recipes and videos"),
       cover_image_url: Map.get(attrs, :cover_image_url),
       is_public: Map.get(attrs, :is_public, true),
-      is_curated: Map.get(attrs, :is_curated, false)
+      is_curated: Map.get(attrs, :is_curated, false),
+      is_premium: Map.get(attrs, :is_premium, false)
     }
 
     merge_attributes(collection, attrs)
@@ -272,7 +276,11 @@ defmodule CaramelKitchenWeb.ConnCase do
 
   setup tags do
     CaramelKitchen.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    conn = %{
+      Phoenix.ConnTest.build_conn()
+      | remote_ip: {127, 0, rem(System.unique_integer([:positive]), 250) + 1, rem(System.unique_integer([:positive]), 250) + 1}
+    }
+    {:ok, conn: conn}
   end
 
   def authenticate_conn(conn, user) do

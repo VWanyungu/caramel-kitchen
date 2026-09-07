@@ -36,6 +36,7 @@ defmodule CaramelKitchen.Collections do
     |> apply_video_filter(Keyword.get(opts, :video_id))
     |> apply_curated_filter(Keyword.get(opts, :is_curated))
     |> apply_public_filter(Keyword.get(opts, :is_public))
+    |> apply_premium_filter(Keyword.get(opts, :is_premium))
     |> apply_search_filter(Keyword.get(opts, :search) || Keyword.get(opts, :q))
     |> apply_sorting(Keyword.get(opts, :sort, "newest"))
     |> limit(^limit)
@@ -54,6 +55,7 @@ defmodule CaramelKitchen.Collections do
     |> apply_video_filter(Keyword.get(opts, :video_id))
     |> apply_curated_filter(Keyword.get(opts, :is_curated))
     |> apply_public_filter(Keyword.get(opts, :is_public))
+    |> apply_premium_filter(Keyword.get(opts, :is_premium))
     |> apply_search_filter(Keyword.get(opts, :search) || Keyword.get(opts, :q))
     |> Repo.aggregate(:count, :id)
   end
@@ -173,6 +175,18 @@ defmodule CaramelKitchen.Collections do
   def can_manage?(_collection, %{role: "admin"}), do: true
   def can_manage?(_collection, _user), do: false
 
+  @doc "Checks if a user has access to view a collection's content"
+  def has_access?(%Collection{is_premium: false}, _user), do: true
+  def has_access?(%Collection{is_premium: true}, nil), do: false
+  def has_access?(%Collection{is_premium: true, user_id: user_id}, %{id: user_id}), do: true
+
+  def has_access?(%Collection{is_premium: true}, %CaramelKitchen.Accounts.User{} = user) do
+    CaramelKitchen.Accounts.User.admin?(user) || CaramelKitchen.Accounts.User.premium?(user)
+  end
+
+  def has_access?(%Collection{is_premium: true}, %{role: "admin"}), do: true
+  def has_access?(%Collection{is_premium: true}, _), do: false
+
   defp can_view_private?(%Collection{user_id: user_id}, %{id: user_id}), do: true
   defp can_view_private?(_collection, %{role: "admin"}), do: true
   defp can_view_private?(_collection, _), do: false
@@ -261,6 +275,16 @@ defmodule CaramelKitchen.Collections do
     do: from(c in query, where: c.is_public == false)
 
   defp apply_public_filter(query, _), do: query
+
+  defp apply_premium_filter(query, nil), do: query
+
+  defp apply_premium_filter(query, val) when val in [true, "true", "1"],
+    do: from(c in query, where: c.is_premium == true)
+
+  defp apply_premium_filter(query, val) when val in [false, "false", "0"],
+    do: from(c in query, where: c.is_premium == false)
+
+  defp apply_premium_filter(query, _), do: query
 
   defp apply_search_filter(query, nil), do: query
   defp apply_search_filter(query, ""), do: query

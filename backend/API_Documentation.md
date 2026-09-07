@@ -1161,6 +1161,7 @@ Retrieves a paginated list of public collections matching query filters. If auth
 - `user_id` or `creator_id` (UUID): Filter collections created by a specific user.
 - `mine` (`true`): Returns only the authenticated user's collections (requires Bearer token).
 - `is_curated` (boolean): Filter for staff-curated collections (`true`) or community collections (`false`).
+- `is_premium` (boolean): Filter for premium collections (`true`) or free collections (`false`).
 - `sort` (string): Sort order:
   - `newest` (default) - Most recently created
   - `oldest` - Earliest created
@@ -1180,6 +1181,8 @@ Retrieves a paginated list of public collections matching query filters. If auth
       "cover_image_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
       "is_public": true,
       "is_curated": false,
+      "is_premium": false,
+      "is_locked": false,
       "item_count": 5,
       "recipe_count": 3,
       "video_count": 2,
@@ -1203,7 +1206,7 @@ Retrieves a paginated list of public collections matching query filters. If auth
 #### Get Collection Details
 **GET** `/api/v1/collections/:id`
 
-Retrieves a single collection by its UUID or unique slug. Private collections can only be viewed by their creator or an admin. Includes all collection items with full recipe and video details ordered by position.
+Retrieves a single collection by its UUID or unique slug. Private collections can only be viewed by their creator or an admin. If marked `is_premium: true`, full access is granted to the creator, admins, and subscribers (`premium`, `creator_pro`); unauthenticated visitors and free users receive `402 Payment Required`.
 
 **Response (200 OK):**
 ```json
@@ -1216,6 +1219,8 @@ Retrieves a single collection by its UUID or unique slug. Private collections ca
     "cover_image_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     "is_public": true,
     "is_curated": false,
+    "is_premium": false,
+    "is_locked": false,
     "item_count": 2,
     "recipe_count": 1,
     "video_count": 1,

@@ -17,6 +17,7 @@ defmodule CaramelKitchen.MealPlans.MealPlan do
     field :is_ai_generated, :boolean, default: true
     field :ai_model, :string
     field :is_active, :boolean, default: true
+    field :is_premium, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
