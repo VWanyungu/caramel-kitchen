@@ -3,12 +3,12 @@ defmodule CaramelKitchen.Factory do
 
   alias CaramelKitchen.Accounts.User
   alias CaramelKitchen.Recipes.Recipe
-  alias CaramelKitchen.MealPlans.MealPlan
+  alias CaramelKitchen.MealPlans.{MealPlan, UserMealPlanInteraction}
 
   alias CaramelKitchen.Monetisation.Subscription
   alias CaramelKitchen.Videos.{Video, UserVideoInteraction}
   alias CaramelKitchen.Taxonomies.Taxonomy
-  alias CaramelKitchen.Collections.{Collection, CollectionItem}
+  alias CaramelKitchen.Collections.{Collection, CollectionItem, UserCollectionInteraction}
 
   def user_factory do
     %User{
@@ -77,6 +77,28 @@ defmodule CaramelKitchen.Factory do
     %UserVideoInteraction{
       user: build(:user),
       video: build(:video),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
+    }
+  end
+
+  def user_collection_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "saved")
+
+    %UserCollectionInteraction{
+      user: build(:user),
+      collection: build(:collection),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
+    }
+  end
+
+  def user_meal_plan_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "saved")
+
+    %UserMealPlanInteraction{
+      user: build(:user),
+      meal_plan: build(:meal_plan),
       action: action,
       metadata: Map.get(attrs, :metadata, %{})
     }

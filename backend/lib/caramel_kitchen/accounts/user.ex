@@ -50,6 +50,8 @@ defmodule CaramelKitchen.Accounts.User do
     has_many :shopping_lists, CaramelKitchen.Shopping.ShoppingList
     has_many :collections, CaramelKitchen.Collections.Collection
     has_many :video_interactions, CaramelKitchen.Videos.UserVideoInteraction
+    has_many :collection_interactions, CaramelKitchen.Collections.UserCollectionInteraction
+    has_many :meal_plan_interactions, CaramelKitchen.MealPlans.UserMealPlanInteraction
     has_one :subscription, CaramelKitchen.Monetisation.Subscription
 
     timestamps(type: :utc_datetime)

@@ -23,10 +23,19 @@ defmodule CaramelKitchenWeb.CollectionJSON do
     %{data: render_item(item)}
   end
 
+  def action_result(%{result: result}) do
+    %{data: result}
+  end
+
+  def status(%{status: status}) do
+    %{data: status}
+  end
+
   def collection_card(collection, viewer \\ nil) do
     items = collection.items || []
     is_premium = collection.is_premium || false
     is_locked = is_premium and not CaramelKitchen.Collections.has_access?(collection, viewer)
+    is_saved = CaramelKitchen.Collections.is_saved?(viewer, collection.id)
 
     %{
       id: collection.id,
@@ -39,6 +48,8 @@ defmodule CaramelKitchenWeb.CollectionJSON do
       is_curated: collection.is_curated,
       is_premium: is_premium,
       is_locked: is_locked,
+      save_count: collection.save_count || 0,
+      is_saved: is_saved,
       recipe_count: Enum.count(items, &(&1.item_type == "recipe")),
       video_count: Enum.count(items, &(&1.item_type == "video")),
       total_items: length(items),
