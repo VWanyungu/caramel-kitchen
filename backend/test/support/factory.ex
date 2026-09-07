@@ -6,7 +6,7 @@ defmodule CaramelKitchen.Factory do
   alias CaramelKitchen.MealPlans.MealPlan
 
   alias CaramelKitchen.Monetisation.Subscription
-  alias CaramelKitchen.Videos.Video
+  alias CaramelKitchen.Videos.{Video, UserVideoInteraction}
   alias CaramelKitchen.Taxonomies.Taxonomy
   alias CaramelKitchen.Collections.{Collection, CollectionItem}
 
@@ -65,7 +65,20 @@ defmodule CaramelKitchen.Factory do
       video_embed_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
       thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
       duration_secs: 180,
-      view_count: 0
+      view_count: Map.get(attrs, :view_count, 0),
+      favorite_count: Map.get(attrs, :favorite_count, 0),
+      save_count: Map.get(attrs, :save_count, 0)
+    }
+  end
+
+  def user_video_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "favorite")
+
+    %UserVideoInteraction{
+      user: build(:user),
+      video: build(:video),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
     }
   end
 

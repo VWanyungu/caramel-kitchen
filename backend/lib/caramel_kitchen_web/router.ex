@@ -121,6 +121,8 @@ defmodule CaramelKitchenWeb.Router do
     get "/videos", VideoController, :index
     get "/videos/categories", VideoController, :categories
     get "/videos/:id", VideoController, :show
+    get "/videos/:id/status", VideoInteractionController, :status
+    get "/videos/:id/interaction", VideoInteractionController, :status
 
     # Collections browsing
     get "/collections", CollectionController, :index
@@ -150,6 +152,24 @@ defmodule CaramelKitchenWeb.Router do
     post "/recipes/:id/skip", InteractionController, :skip
     post "/recipes/:id/rate", InteractionController, :rate
     get "/me/saved", InteractionController, :saved_recipes
+
+    # Video Interactions: Favourite and Saved videos (Issue #112)
+    post "/videos/:id/favorite", VideoInteractionController, :favorite
+    post "/videos/:id/favourite", VideoInteractionController, :favorite
+    delete "/videos/:id/favorite", VideoInteractionController, :unfavorite
+    delete "/videos/:id/favourite", VideoInteractionController, :unfavorite
+    post "/videos/:id/unfavorite", VideoInteractionController, :unfavorite
+    post "/videos/:id/unfavourite", VideoInteractionController, :unfavorite
+
+    post "/videos/:id/save", VideoInteractionController, :save
+    delete "/videos/:id/save", VideoInteractionController, :unsave
+    post "/videos/:id/unsave", VideoInteractionController, :unsave
+
+    get "/me/videos/favorites", VideoInteractionController, :favorite_videos
+    get "/me/videos/favourites", VideoInteractionController, :favorite_videos
+    get "/me/favorites/videos", VideoInteractionController, :favorite_videos
+    get "/me/videos/saved", VideoInteractionController, :saved_videos
+    get "/me/saved/videos", VideoInteractionController, :saved_videos
 
     # Shopping (basic — from single recipe)
     get "/shopping", ShoppingController, :index
