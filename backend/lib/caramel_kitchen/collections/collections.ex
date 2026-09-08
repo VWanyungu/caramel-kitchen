@@ -20,6 +20,11 @@ defmodule CaramelKitchen.Collections do
   - :video_id — filter collections containing this video
   - :is_curated — boolean
   - :is_public — boolean
+  - :is_premium — boolean
+  - :is_seasonal — boolean
+  - :season_name — string
+  - :active_seasonal_only — boolean (defaults to true for public/users, false for admin)
+  - :current_date — Date (default Date.utc_today())
   - :search / :q — string to match name or description
   - :sort — "newest" | "oldest" | "name" | "items_count"
   - :limit — integer (default 20, max 100)
@@ -38,6 +43,8 @@ defmodule CaramelKitchen.Collections do
     |> apply_curated_filter(Keyword.get(opts, :is_curated))
     |> apply_public_filter(Keyword.get(opts, :is_public))
     |> apply_premium_filter(Keyword.get(opts, :is_premium))
+    |> apply_seasonal_filter(viewer, opts)
+    |> apply_season_name_filter(Keyword.get(opts, :season_name))
     |> apply_search_filter(Keyword.get(opts, :search) || Keyword.get(opts, :q))
     |> apply_sorting(Keyword.get(opts, :sort, "newest"))
     |> limit(^limit)
@@ -57,16 +64,20 @@ defmodule CaramelKitchen.Collections do
     |> apply_curated_filter(Keyword.get(opts, :is_curated))
     |> apply_public_filter(Keyword.get(opts, :is_public))
     |> apply_premium_filter(Keyword.get(opts, :is_premium))
+    |> apply_seasonal_filter(viewer, opts)
+    |> apply_season_name_filter(Keyword.get(opts, :season_name))
     |> apply_search_filter(Keyword.get(opts, :search) || Keyword.get(opts, :q))
     |> Repo.aggregate(:count, :id)
   end
 
   @doc """
   Gets a single collection by ID with preloaded items.
-  Optionally checks privacy against :viewer.
+  Optionally checks privacy against :viewer and enforces seasonal date range.
   """
   def get_collection(id, opts \\ []) do
     viewer = Keyword.get(opts, :viewer)
+    check_season = Keyword.get(opts, :check_season, true)
+    today = Keyword.get(opts, :current_date, Date.utc_today())
 
     case Repo.get(base_query(), id) do
       nil ->
@@ -74,14 +85,51 @@ defmodule CaramelKitchen.Collections do
 
       %Collection{is_public: false} = collection ->
         if can_view_private?(collection, viewer) do
-          {:ok, collection}
+          maybe_check_season(collection, viewer, check_season, today)
         else
           {:error, :not_found}
         end
 
       %Collection{} = collection ->
-        {:ok, collection}
+        maybe_check_season(collection, viewer, check_season, today)
     end
+  end
+
+  defp maybe_check_season(collection, viewer, true, today) do
+    if collection.is_seasonal and not Collection.in_season?(collection, today) and
+         not can_manage?(collection, viewer) do
+      {:error, :not_found}
+    else
+      {:ok, collection}
+    end
+  end
+
+  defp maybe_check_season(collection, _viewer, false, _today), do: {:ok, collection}
+
+  @doc "Lists active seasonal collections (under Premium by default)"
+  def list_seasonal_collections(opts \\ []) do
+    opts =
+      opts
+      |> Keyword.put_new(:is_seasonal, true)
+      |> Keyword.put_new(:is_premium, true)
+
+    list_collections(opts)
+  end
+
+  @doc "Lists distinct season names"
+  def list_seasons do
+    from(c in Collection,
+      where: c.is_seasonal == true and not is_nil(c.season_name),
+      distinct: true,
+      select: c.season_name
+    )
+    |> Repo.all()
+  end
+
+  @doc "Returns active seasonal collections grouped by season_name"
+  def grouped_seasonal_collections(opts \\ []) do
+    collections = list_seasonal_collections(opts)
+    Enum.group_by(collections, & &1.season_name)
   end
 
   @doc "Gets a collection by ID, raising if not found"
@@ -436,6 +484,55 @@ defmodule CaramelKitchen.Collections do
     do: from(c in query, where: c.is_premium == false)
 
   defp apply_premium_filter(query, _), do: query
+
+  defp apply_seasonal_filter(query, viewer, opts) do
+    is_seasonal_opt = Keyword.get(opts, :is_seasonal)
+    today = Keyword.get(opts, :current_date) || Date.utc_today()
+
+    active_only =
+      case Keyword.fetch(opts, :active_seasonal_only) do
+        {:ok, bool} -> bool
+        :error -> not is_admin_or_owner?(viewer, opts)
+      end
+
+    cond do
+      is_seasonal_opt in [true, "true", "1"] and active_only ->
+        from c in query,
+          where:
+            c.is_seasonal == true and
+              (is_nil(c.start_date) or c.start_date <= ^today) and
+              (is_nil(c.end_date) or c.end_date >= ^today)
+
+      is_seasonal_opt in [true, "true", "1"] and not active_only ->
+        from c in query, where: c.is_seasonal == true
+
+      is_seasonal_opt in [false, "false", "0"] ->
+        from c in query, where: c.is_seasonal == false
+
+      active_only ->
+        from c in query,
+          where:
+            c.is_seasonal == false or
+              ((is_nil(c.start_date) or c.start_date <= ^today) and
+                 (is_nil(c.end_date) or c.end_date >= ^today))
+
+      true ->
+        query
+    end
+  end
+
+  defp apply_season_name_filter(query, nil), do: query
+  defp apply_season_name_filter(query, ""), do: query
+
+  defp apply_season_name_filter(query, season_name) do
+    from c in query, where: ilike(c.season_name, ^season_name)
+  end
+
+  defp is_admin_or_owner?(%{role: "admin"}, _opts), do: true
+
+  defp is_admin_or_owner?(viewer, opts) do
+    Keyword.get(opts, :mine) == true and not is_nil(viewer)
+  end
 
   defp apply_search_filter(query, nil), do: query
   defp apply_search_filter(query, ""), do: query

@@ -163,6 +163,15 @@ interface CollectionCard {
   cover_image_url: string | null;  // Explicit cover or auto-derived from first item
   is_public: boolean;
   is_curated: boolean;
+  is_premium: boolean;
+  is_locked: boolean;
+  is_seasonal: boolean;
+  season_name: string | null;
+  start_date: string | null;       // YYYY-MM-DD
+  end_date: string | null;         // YYYY-MM-DD
+  is_in_season: boolean;
+  save_count: number;
+  is_saved: boolean;
   item_count: number;
   recipe_count: number;
   video_count: number;
@@ -1162,12 +1171,92 @@ Retrieves a paginated list of public collections matching query filters. If auth
 - `mine` (`true`): Returns only the authenticated user's collections (requires Bearer token).
 - `is_curated` (boolean): Filter for staff-curated collections (`true`) or community collections (`false`).
 - `is_premium` (boolean): Filter for premium collections (`true`) or free collections (`false`).
+- `is_seasonal` (boolean): Filter for seasonal collections (`true`) or standard non-seasonal collections (`false`).
+- `season_name` (string): Filter by specific season (e.g. `Christmas`, `Valentine's`, `Back to School`, `Ramadan`).
+- `active_seasonal_only` (boolean, default `true`): Excludes out-of-season collections for regular viewers.
 - `sort` (string): Sort order:
   - `newest` (default) - Most recently created
   - `oldest` - Earliest created
   - `name_asc` - Alphabetical by name
   - `name_desc` - Reverse alphabetical
   - `item_count` - Collections with the most items first
+
+#### Seasonal Collections (Premium → Collections → Seasonal)
+**GET** `/api/v1/collections/seasonal`  
+*Alias:* `GET /api/v1/premium/collections/seasonal`
+
+Fetches curated seasonal collections located under **Premium → Collections → Seasonal**.
+Automatically validates whether the current calendar date falls within each collection's `start_date` and `end_date` before returning it to the user. Out-of-season collections are automatically hidden from general users.
+
+Supported and seeded seasonal groups:
+- **Christmas**: Christmas Dinner, Christmas Baking, Christmas Desserts, Christmas Drinks
+- **Valentine's**: Date Night Dinner, Romantic Dinner, Valentine's Desserts, Valentine's Drinks
+- **Back to School**: Student Breakfasts, Student Lunches, Budget Dinners, Back-to-School Meal Plan
+- **Ramadan**: Iftar Collection, Suhoor Collection, Ramadan Drinks, Ramadan Desserts
+*(Additional seasonal collections can be added over time).*
+
+**Query Parameters:**
+- `season_name` (string, optional): Filter to a specific season (e.g., `Back to School`, `Christmas`).
+- `limit` (integer, default: 20, max: 50): Max items per page.
+- `offset` (integer, default: 0): Pagination offset.
+
+**Response (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "c1a23456-7890-4abc-def0-123456789abc",
+      "name": "Student Breakfasts",
+      "slug": "student_breakfasts",
+      "description": "Quick, energizing, grab-and-go morning meals for busy student schedules.",
+      "cover_image_url": "https://example.com/breakfast.jpg",
+      "is_public": true,
+      "is_curated": true,
+      "is_premium": true,
+      "is_locked": false,
+      "is_seasonal": true,
+      "season_name": "Back to School",
+      "start_date": "2026-08-15",
+      "end_date": "2026-10-15",
+      "is_in_season": true,
+      "save_count": 12,
+      "is_saved": false,
+      "recipe_count": 4,
+      "video_count": 1,
+      "total_items": 5,
+      "author": {
+        "id": "3b290df6-bce7-494f-a9cb-b66fe859d57a",
+        "name": "Caramel Kitchen",
+        "avatar_url": null,
+        "role": "admin"
+      },
+      "created_at": "2026-08-15T00:00:00Z",
+      "updated_at": "2026-08-15T00:00:00Z"
+    }
+  ],
+  "seasons": [
+    {
+      "season_name": "Back to School",
+      "collections": [
+        {
+          "id": "c1a23456-7890-4abc-def0-123456789abc",
+          "name": "Student Breakfasts",
+          "slug": "student_breakfasts",
+          "is_seasonal": true,
+          "season_name": "Back to School",
+          "is_in_season": true
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "current_date": "2026-09-08",
+    "limit": 20,
+    "offset": 0,
+    "total_count": 4
+  }
+}
+```
 
 **Response (200 OK):**
 ```json
@@ -1206,7 +1295,9 @@ Retrieves a paginated list of public collections matching query filters. If auth
 #### Get Collection Details
 **GET** `/api/v1/collections/:id`
 
-Retrieves a single collection by its UUID or unique slug. Private collections can only be viewed by their creator or an admin. If marked `is_premium: true`, full access is granted to the creator, admins, and subscribers (`premium`, `creator_pro`); unauthenticated visitors and free users receive `402 Payment Required`.
+Retrieves a single collection by its UUID or unique slug.
+- **Seasonal availability check**: If the collection is marked `is_seasonal: true`, the API validates that the current calendar date falls between `start_date` and `end_date`. Out-of-season collections return `404 Not Found` to regular users (only accessible to the owner or admins).
+- **Premium access gate**: If marked `is_premium: true`, full access is granted to the creator, admins, and subscribers (`premium`, `creator_pro`); unauthenticated visitors and free users receive `402 Payment Required`.
 
 **Response (200 OK):**
 ```json

@@ -31,11 +31,32 @@ defmodule CaramelKitchenWeb.CollectionJSON do
     %{data: status}
   end
 
+  def seasonal(%{collections: collections} = assigns) do
+    viewer = Map.get(assigns, :current_user)
+    meta = Map.get(assigns, :meta, %{})
+    grouped = Enum.group_by(collections, & &1.season_name)
+
+    seasons =
+      Enum.map(grouped, fn {season_name, cols} ->
+        %{
+          season_name: season_name,
+          collections: Enum.map(cols, &collection_card(&1, viewer))
+        }
+      end)
+
+    %{
+      data: Enum.map(collections, &collection_card(&1, viewer)),
+      seasons: seasons,
+      meta: meta
+    }
+  end
+
   def collection_card(collection, viewer \\ nil) do
     items = collection.items || []
     is_premium = collection.is_premium || false
     is_locked = is_premium and not CaramelKitchen.Collections.has_access?(collection, viewer)
     is_saved = CaramelKitchen.Collections.is_saved?(viewer, collection.id)
+    is_seasonal = collection.is_seasonal || false
 
     %{
       id: collection.id,
@@ -48,6 +69,11 @@ defmodule CaramelKitchenWeb.CollectionJSON do
       is_curated: collection.is_curated,
       is_premium: is_premium,
       is_locked: is_locked,
+      is_seasonal: is_seasonal,
+      season_name: collection.season_name,
+      start_date: collection.start_date,
+      end_date: collection.end_date,
+      is_in_season: CaramelKitchen.Collections.Collection.in_season?(collection),
       save_count: collection.save_count || 0,
       is_saved: is_saved,
       recipe_count: Enum.count(items, &(&1.item_type == "recipe")),

@@ -268,6 +268,165 @@ defmodule CaramelKitchen.CollectionsTest do
       assert Collections.has_access?(premium_col, premium_user) == true
       assert Collections.has_access?(premium_col, creator_pro_user) == true
     end
+
+    test "create_collection/2 with seasonal attributes and date range validation" do
+      user = insert(:user)
+
+      attrs = %{
+        "name" => "Christmas Dinner",
+        "is_seasonal" => true,
+        "season_name" => "Christmas",
+        "start_date" => ~D[2026-11-15],
+        "end_date" => ~D[2027-01-05],
+        "is_premium" => true
+      }
+
+      assert {:ok, %Collection{} = col} = Collections.create_collection(user, attrs)
+      assert col.is_seasonal == true
+      assert col.season_name == "Christmas"
+      assert col.start_date == ~D[2026-11-15]
+      assert col.end_date == ~D[2027-01-05]
+      assert col.is_premium == true
+
+      # Missing season_name when is_seasonal is true
+      invalid_attrs = %{
+        "name" => "Nameless Season",
+        "is_seasonal" => true
+      }
+
+      assert {:error, cs} = Collections.create_collection(user, invalid_attrs)
+      assert "can't be blank" in errors_on(cs).season_name
+
+      # End date before start date
+      invalid_dates = %{
+        "name" => "Invalid Dates",
+        "is_seasonal" => true,
+        "season_name" => "Summer",
+        "start_date" => ~D[2026-08-01],
+        "end_date" => ~D[2026-07-01]
+      }
+
+      assert {:error, cs2} = Collections.create_collection(user, invalid_dates)
+      assert "must be on or after start_date" in errors_on(cs2).end_date
+    end
+
+    test "Collection.in_season?/2 checks seasonal date range correctly" do
+      today = ~D[2026-09-08]
+
+      regular_col = %Collection{is_seasonal: false}
+      assert Collection.in_season?(regular_col, today) == true
+
+      active_col = %Collection{
+        is_seasonal: true,
+        season_name: "Back to School",
+        start_date: ~D[2026-08-15],
+        end_date: ~D[2026-10-15]
+      }
+      assert Collection.in_season?(active_col, today) == true
+
+      future_col = %Collection{
+        is_seasonal: true,
+        season_name: "Christmas",
+        start_date: ~D[2026-11-15],
+        end_date: ~D[2027-01-05]
+      }
+      assert Collection.in_season?(future_col, today) == false
+
+      past_col = %Collection{
+        is_seasonal: true,
+        season_name: "Valentine's",
+        start_date: ~D[2026-02-01],
+        end_date: ~D[2026-02-28]
+      }
+      assert Collection.in_season?(past_col, today) == false
+    end
+
+    test "list_collections/1 excludes out-of-season collections for regular viewers" do
+      user = insert(:user)
+      today = ~D[2026-09-08]
+
+      regular_col = insert(:collection, user_id: user.id, is_seasonal: false, name: "Regular Collection")
+
+      active_seasonal =
+        insert(:collection,
+          user_id: user.id,
+          name: "Active Back to School",
+          is_seasonal: true,
+          season_name: "Back to School",
+          start_date: ~D[2026-08-15],
+          end_date: ~D[2026-10-15]
+        )
+
+      future_seasonal =
+        insert(:collection,
+          user_id: user.id,
+          name: "Future Christmas",
+          is_seasonal: true,
+          season_name: "Christmas",
+          start_date: ~D[2026-11-15],
+          end_date: ~D[2027-01-05]
+        )
+
+      # For regular visitors with today = 2026-09-08
+      results = Collections.list_collections(current_date: today)
+      ids = Enum.map(results, & &1.id)
+
+      assert regular_col.id in ids
+      assert active_seasonal.id in ids
+      refute future_seasonal.id in ids
+
+      # Filter specifically by season_name
+      bts_results = Collections.list_collections(current_date: today, season_name: "Back to School")
+      assert length(bts_results) >= 1
+      assert Enum.all?(bts_results, &(&1.season_name == "Back to School"))
+
+      # Admin can see out of season collections with active_seasonal_only: false
+      admin = insert(:admin)
+      admin_results = Collections.list_collections(viewer: admin, active_seasonal_only: false)
+      admin_ids = Enum.map(admin_results, & &1.id)
+      assert future_seasonal.id in admin_ids
+    end
+
+    test "get_collection/2 returns 404 for out-of-season collections to regular users, allowed to admin and owner" do
+      owner = insert(:user)
+      other_user = insert(:user)
+      admin = insert(:admin)
+      today = ~D[2026-09-08]
+
+      future_col =
+        insert(:collection,
+          user_id: owner.id,
+          name: "Christmas Dinner",
+          is_seasonal: true,
+          season_name: "Christmas",
+          start_date: ~D[2026-11-15],
+          end_date: ~D[2027-01-05]
+        )
+
+      # Stranger / regular user gets not_found
+      assert {:error, :not_found} = Collections.get_collection(future_col.id, viewer: other_user, current_date: today)
+
+      # Owner can access their own seasonal collection
+      assert {:ok, col} = Collections.get_collection(future_col.id, viewer: owner, current_date: today)
+      assert col.id == future_col.id
+
+      # Admin can access
+      assert {:ok, admin_col} = Collections.get_collection(future_col.id, viewer: admin, current_date: today)
+      assert admin_col.id == future_col.id
+    end
+
+    test "SeasonalSeeds seeds Christmas, Valentine's, Back to School, and Ramadan collections" do
+      admin = insert(:admin)
+
+      collections = CaramelKitchen.Collections.SeasonalSeeds.seed_seasonal_collections(admin)
+      assert length(collections) == 16
+
+      seasons = Enum.map(collections, & &1.season_name) |> Enum.uniq() |> Enum.sort()
+      assert seasons == ["Back to School", "Christmas", "Ramadan", "Valentine's"]
+
+      assert Enum.all?(collections, &(&1.is_seasonal == true))
+      assert Enum.all?(collections, &(&1.is_premium == true))
+    end
   end
 
   defp errors_on(changeset) do
