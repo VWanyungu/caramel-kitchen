@@ -189,6 +189,31 @@ defmodule CaramelKitchenWeb.CollectionController do
     )
   end
 
+  # GET /api/v1/collections/seasonal
+  # GET /api/v1/premium/collections/seasonal
+  def seasonal(conn, params) do
+    viewer = conn.assigns[:current_user]
+
+    opts =
+      build_query_opts(params, viewer)
+      |> Keyword.put(:is_seasonal, true)
+      |> Keyword.put_new(:is_premium, true)
+
+    collections = Collections.list_collections(opts)
+    total = Collections.count_collections(opts)
+
+    render(conn, :seasonal,
+      collections: collections,
+      current_user: viewer,
+      meta: %{
+        total_count: total,
+        limit: Keyword.get(opts, :limit, 20),
+        offset: Keyword.get(opts, :offset, 0),
+        current_date: Date.utc_today()
+      }
+    )
+  end
+
   # ── Helpers ───────────────────────────────────────────────────
 
   defp build_query_opts(params, viewer) do
@@ -200,6 +225,9 @@ defmodule CaramelKitchenWeb.CollectionController do
     |> maybe_put(:is_curated, parse_boolean(params["is_curated"]))
     |> maybe_put(:is_public, parse_boolean(params["is_public"]))
     |> maybe_put(:is_premium, parse_boolean(params["is_premium"]))
+    |> maybe_put(:is_seasonal, parse_boolean(params["is_seasonal"]))
+    |> maybe_put(:season_name, params["season_name"])
+    |> maybe_put(:active_seasonal_only, parse_boolean(params["active_seasonal_only"]))
     |> maybe_put(:search, params["search"] || params["q"])
     |> maybe_put(:sort, params["sort"])
     |> maybe_put(:limit, parse_int(params["limit"]))

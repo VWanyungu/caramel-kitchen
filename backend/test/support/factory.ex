@@ -222,7 +222,12 @@ defmodule CaramelKitchen.Factory do
       cover_image_url: Map.get(attrs, :cover_image_url),
       is_public: Map.get(attrs, :is_public, true),
       is_curated: Map.get(attrs, :is_curated, false),
-      is_premium: Map.get(attrs, :is_premium, false)
+      is_premium: Map.get(attrs, :is_premium, false),
+      is_seasonal: Map.get(attrs, :is_seasonal, false),
+      season_name: Map.get(attrs, :season_name),
+      start_date: Map.get(attrs, :start_date),
+      end_date: Map.get(attrs, :end_date),
+      save_count: Map.get(attrs, :save_count, 0)
     }
 
     merge_attributes(collection, attrs)

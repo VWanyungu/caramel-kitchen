@@ -126,6 +126,8 @@ defmodule CaramelKitchenWeb.Router do
 
     # Collections browsing
     get "/collections", CollectionController, :index
+    get "/collections/seasonal", CollectionController, :seasonal
+    get "/premium/collections/seasonal", CollectionController, :seasonal
     get "/collections/:id", CollectionController, :show
     get "/collections/:id/status", CollectionController, :status
 

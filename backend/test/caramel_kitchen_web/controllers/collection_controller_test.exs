@@ -394,4 +394,108 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert json_response(conn_stat2, 200)["data"]["is_saved"] == false
     end
   end
+
+  describe "Seasonal Collections" do
+    test "GET /api/v1/collections/seasonal and /api/v1/premium/collections/seasonal returns active seasonal collections", %{conn: conn} do
+      user = insert(:user)
+      today = Date.utc_today()
+
+      active_col =
+        insert(:collection,
+          user_id: user.id,
+          name: "Active Season Treat",
+          is_seasonal: true,
+          season_name: "Back to School",
+          start_date: Date.add(today, -5),
+          end_date: Date.add(today, 10),
+          is_premium: true
+        )
+
+      future_col =
+        insert(:collection,
+          user_id: user.id,
+          name: "Future Season Roast",
+          is_seasonal: true,
+          season_name: "Christmas",
+          start_date: Date.add(today, 30),
+          end_date: Date.add(today, 60),
+          is_premium: true
+        )
+
+      # 1. /collections/seasonal
+      conn_resp1 = get(conn, "/api/v1/collections/seasonal")
+      assert conn_resp1.status == 200
+      body1 = json_response(conn_resp1, 200)
+      ids1 = Enum.map(body1["data"], & &1["id"])
+
+      assert active_col.id in ids1
+      refute future_col.id in ids1
+      assert is_list(body1["seasons"])
+      season_group = Enum.find(body1["seasons"], &(&1["season_name"] == "Back to School"))
+      assert season_group != nil
+
+      # 2. /premium/collections/seasonal
+      conn_resp2 = get(conn, "/api/v1/premium/collections/seasonal")
+      assert conn_resp2.status == 200
+      body2 = json_response(conn_resp2, 200)
+      ids2 = Enum.map(body2["data"], & &1["id"])
+      assert active_col.id in ids2
+      refute future_col.id in ids2
+
+      # 3. Filter by season_name
+      conn_filter = get(conn, "/api/v1/collections/seasonal?season_name=Back to School")
+      body_filter = json_response(conn_filter, 200)
+      assert length(body_filter["data"]) >= 1
+      assert Enum.all?(body_filter["data"], &(&1["season_name"] == "Back to School"))
+    end
+
+    test "GET /api/v1/collections?is_seasonal=true filters properly", %{conn: conn} do
+      user = insert(:user)
+      today = Date.utc_today()
+
+      regular_col = insert(:collection, user_id: user.id, is_seasonal: false)
+      seasonal_col =
+        insert(:collection,
+          user_id: user.id,
+          is_seasonal: true,
+          season_name: "Ramadan",
+          start_date: Date.add(today, -2),
+          end_date: Date.add(today, 20),
+          is_premium: true
+        )
+
+      conn_resp = get(conn, "/api/v1/collections?is_seasonal=true")
+      assert conn_resp.status == 200
+      ids = Enum.map(json_response(conn_resp, 200)["data"], & &1["id"])
+
+      assert seasonal_col.id in ids
+      refute regular_col.id in ids
+    end
+
+    test "GET /api/v1/collections/:id returns 404 for out-of-season collection to regular user, 200 to admin", %{conn: conn} do
+      owner = insert(:user)
+      regular_user = insert(:user)
+      admin = insert(:admin)
+      today = Date.utc_today()
+
+      out_of_season =
+        insert(:collection,
+          user_id: owner.id,
+          name: "Christmas Dinner",
+          is_seasonal: true,
+          season_name: "Christmas",
+          start_date: Date.add(today, 40),
+          end_date: Date.add(today, 80),
+          is_premium: false
+        )
+
+      # Regular user gets 404
+      conn_reg = conn |> authenticate_conn(regular_user) |> get("/api/v1/collections/#{out_of_season.id}")
+      assert json_response(conn_reg, 404)
+
+      # Admin gets 200
+      conn_admin = conn |> authenticate_conn(admin) |> get("/api/v1/collections/#{out_of_season.id}")
+      assert json_response(conn_admin, 200)["data"]["id"] == out_of_season.id
+    end
+  end
 end
