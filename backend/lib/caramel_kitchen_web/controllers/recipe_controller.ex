@@ -244,32 +244,63 @@ defmodule CaramelKitchenWeb.RecipeController do
   defp render_recipe_card(recipe, meta) do
     categories = recipe.dish_categories || []
     user = meta[:current_user]
-    is_special = Map.get(recipe, :is_special, false) || false
-    is_locked = is_special and not Recipes.has_recipe_access?(recipe, user)
+
+    is_premium =
+      Map.get(recipe, :is_premium, false) || Map.get(recipe, :is_special, false) || false
+
+    access_level = Map.get(recipe, :access_level) || if is_premium, do: "premium", else: "free"
+    is_locked = is_premium and not Recipes.has_recipe_access?(recipe, user)
+    cuisine_list = recipe.cuisine_origin || []
+    primary_cuisine = List.first(cuisine_list)
+    primary_category = recipe.dish_category || List.first(categories)
+    dietary_list = recipe.dietary_flags || []
 
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       thumbnail_url: recipe.thumbnail_url,
-      dish_category: recipe.dish_category || List.first(categories),
-      dish_categories: categories,
+      # Category
+      category: primary_category,
       categories: categories,
+      dish_category: primary_category,
+      dish_categories: categories,
+      # Classification
       course: recipe.course,
       meal: recipe.meal,
       primary_method: recipe.primary_method,
       difficulty: recipe.difficulty,
+      # Cuisine
+      cuisine: primary_cuisine,
+      cuisines: cuisine_list,
+      cuisine_origin: cuisine_list,
+      # Cost / Economics
+      cost: recipe.cost,
+      estimated_cost: recipe.cost,
+      # Servings
+      servings: recipe.serving_size,
+      serving_size: recipe.serving_size,
+      # Timing
+      cooking_time: recipe.cook_time_mins,
+      cooking_time_mins: recipe.cook_time_mins,
+      cook_time_mins: recipe.cook_time_mins,
+      prep_time_mins: recipe.prep_time_mins,
       total_time_mins: recipe.total_time_mins,
+      # Dietary & Taste
       taste_tags: recipe.taste_tags,
-      dietary_flags: recipe.dietary_flags,
+      dietary: dietary_list,
+      dietary_requirements: dietary_list,
+      dietary_flags: dietary_list,
+      # Nutrition & Rating
       calories: recipe.calories,
       avg_rating: recipe.avg_rating,
       rating_count: recipe.rating_count,
-      cuisine_origin: recipe.cuisine_origin,
       taste_score: meta[:taste_score],
       search_rank: meta[:search_rank],
-      is_special: is_special,
-      is_premium: is_special,
+      # Access & Tier
+      access_level: access_level,
+      is_special: is_premium,
+      is_premium: is_premium,
       is_locked: is_locked,
       created_at: recipe.inserted_at
     }
@@ -283,7 +314,10 @@ defmodule CaramelKitchenWeb.RecipeController do
       description: recipe.description,
       ingredients: recipe.ingredients,
       steps: recipe.steps,
+      servings: recipe.serving_size,
       serving_size: recipe.serving_size,
+      cooking_time: recipe.cook_time_mins,
+      cooking_time_mins: recipe.cook_time_mins,
       prep_time_mins: recipe.prep_time_mins,
       cook_time_mins: recipe.cook_time_mins,
       video_url: recipe.video_url || yt.video_url,
@@ -336,18 +370,38 @@ defmodule CaramelKitchenWeb.RecipeController do
   defp parse_filters(params) do
     %{}
     |> maybe_add(:cooking_method, params["cooking_method"])
-    |> maybe_add(:dietary, parse_list(params["dietary"]))
+    |> maybe_add(
+      :dietary,
+      parse_list(params["dietary"] || params["dietary_requirements"] || params["dietary_flags"])
+    )
     |> maybe_add(:taste, parse_list(params["taste"]))
     |> maybe_add(:max_time, parse_int(params["max_time"]))
     |> maybe_add(:min_time, parse_int(params["min_time"]))
+    |> maybe_add(
+      :cooking_time,
+      parse_int(params["cooking_time"] || params["max_cooking_time"] || params["cook_time"])
+    )
+    |> maybe_add(
+      :min_cooking_time,
+      parse_int(params["min_cooking_time"] || params["min_cook_time"])
+    )
+    |> maybe_add(:cost, parse_decimal(params["cost"] || params["budget"] || params["max_cost"]))
+    |> maybe_add(:min_cost, parse_decimal(params["min_cost"]))
+    |> maybe_add(:servings, parse_int(params["servings"] || params["serving_size"]))
+    |> maybe_add(:min_servings, parse_int(params["min_servings"]))
+    |> maybe_add(:max_servings, parse_int(params["max_servings"]))
+    |> maybe_add(:ingredient, params["ingredient"])
+    |> maybe_add(:ingredients, parse_list(params["ingredients"]))
+    |> maybe_add(:exclude_ingredients, parse_list(params["exclude_ingredients"]))
     |> maybe_add(:difficulty, params["difficulty"])
-    |> maybe_add(:cuisine, parse_list(params["cuisine"]))
+    |> maybe_add(:cuisine, parse_list(params["cuisine"] || params["cuisines"]))
     |> maybe_add(:course, params["course"])
     |> maybe_add(:meal, params["meal"])
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])
     |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
+    |> maybe_add(:access_level, params["access_level"])
     |> maybe_add(:is_special, parse_boolean(params["is_special"] || params["is_premium"]))
     |> maybe_add(
       :created_after,
@@ -375,6 +429,21 @@ defmodule CaramelKitchenWeb.RecipeController do
     |> maybe_apply_preset_filter(params["created_within"] || params["date_range"])
     |> maybe_add(:sort, params["sort"])
   end
+
+  defp parse_decimal(nil), do: nil
+  defp parse_decimal(""), do: nil
+
+  defp parse_decimal(val) when is_binary(val) do
+    case Decimal.parse(val) do
+      {dec, _} -> dec
+      :error -> nil
+    end
+  end
+
+  defp parse_decimal(%Decimal{} = d), do: d
+  defp parse_decimal(val) when is_integer(val), do: Decimal.new(val)
+  defp parse_decimal(val) when is_float(val), do: Decimal.from_float(val)
+  defp parse_decimal(_), do: nil
 
   defp maybe_add(map, _key, nil), do: map
   defp maybe_add(map, _key, []), do: map

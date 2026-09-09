@@ -56,6 +56,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :calories, :integer
     field :macros, :map, default: %{}
 
+    # Cost / Economics
+    field :cost, :decimal
+
     # Engagement
     field :view_count, :integer, default: 0
     field :save_count, :integer, default: 0
@@ -65,8 +68,9 @@ defmodule CaramelKitchen.Recipes.Recipe do
     field :engagement_score, :float, default: 0.0
 
     # Special / Premium Access
+    field :access_level, :string, default: "free"
     field :is_special, :boolean, default: false
-    field :is_premium, :boolean, virtual: true
+    field :is_premium, :boolean, default: false
 
     # Publishing
     field :status, :string, default: "draft"
@@ -83,7 +87,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
   # ── Changesets ────────────────────────────────────────────────
 
   def creation_changeset(recipe, attrs) do
-    attrs = normalize_category_attrs(attrs)
+    attrs = normalize_recipe_attrs(attrs)
 
     recipe
     |> cast(attrs, [
@@ -107,6 +111,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :allergens,
       :calories,
       :macros,
+      :cost,
+      :access_level,
       :thumbnail_url,
       :video_url,
       :video_key,
@@ -117,11 +123,12 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :scheduled_at,
       :creator_id
     ])
-    |> sync_special_and_premium()
+    |> sync_access_level_and_premium()
     |> validate_required([:title, :ingredients, :steps, :primary_method, :creator_id])
     |> validate_length(:title, min: 3, max: 255)
     |> validate_length(:description, max: 2000)
     |> validate_number(:serving_size, greater_than: 0, less_than_or_equal_to: 100)
+    |> validate_number(:cost, greater_than_or_equal_to: 0)
     |> validate_number(:prep_time_mins, greater_than_or_equal_to: 0)
     |> validate_number(:cook_time_mins, greater_than_or_equal_to: 0)
     |> validate_subset(:taste_tags, @valid_taste_tags)
@@ -131,6 +138,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
     |> validate_inclusion(:meal, @valid_meals)
     |> validate_inclusion(:course, @valid_courses)
     |> validate_inclusion(:primary_method, @valid_cooking_methods)
+    |> validate_inclusion(:difficulty, ~w(beginner intermediate advanced))
+    |> validate_inclusion(:access_level, ~w(free premium))
     |> validate_ingredients()
     |> validate_steps()
     |> normalize_youtube_video()
@@ -142,7 +151,7 @@ defmodule CaramelKitchen.Recipes.Recipe do
   end
 
   def update_changeset(recipe, attrs) do
-    attrs = normalize_category_attrs(attrs)
+    attrs = normalize_recipe_attrs(attrs)
 
     recipe
     |> cast(attrs, [
@@ -166,6 +175,8 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :allergens,
       :calories,
       :macros,
+      :cost,
+      :access_level,
       :thumbnail_url,
       :video_url,
       :video_key,
@@ -176,14 +187,17 @@ defmodule CaramelKitchen.Recipes.Recipe do
       :scheduled_at,
       :featured_until
     ])
-    |> sync_special_and_premium()
+    |> sync_access_level_and_premium()
     |> validate_required([:title, :ingredients, :steps])
+    |> validate_number(:cost, greater_than_or_equal_to: 0)
     |> validate_subset(:taste_tags, @valid_taste_tags)
     |> validate_subset(:dietary_flags, @valid_dietary_flags)
     |> validate_inclusion(:status, @valid_statuses)
     |> validate_inclusion(:meal, @valid_meals)
     |> validate_inclusion(:course, @valid_courses)
     |> validate_inclusion(:primary_method, @valid_cooking_methods)
+    |> validate_inclusion(:difficulty, ~w(beginner intermediate advanced))
+    |> validate_inclusion(:access_level, ~w(free premium))
     |> validate_ingredients()
     |> validate_steps()
     |> normalize_youtube_video()
@@ -395,6 +409,153 @@ defmodule CaramelKitchen.Recipes.Recipe do
   defp map_legacy_category(cat) when cat in ~w(vegetable_dishes legume_dishes), do: "vegetarian"
   defp map_legacy_category(_), do: nil
 
+  defp normalize_recipe_attrs(attrs) when is_map(attrs) do
+    string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
+
+    attrs = normalize_category_attrs(attrs)
+
+    # Cost aliases: estimated_cost -> cost
+    attrs =
+      cond do
+        (Map.has_key?(attrs, "estimated_cost") or Map.has_key?(attrs, :estimated_cost)) and
+          not Map.has_key?(attrs, "cost") and not Map.has_key?(attrs, :cost) ->
+          val = Map.get(attrs, "estimated_cost", Map.get(attrs, :estimated_cost))
+          if string_keys?, do: Map.put(attrs, "cost", val), else: Map.put(attrs, :cost, val)
+
+        true ->
+          attrs
+      end
+
+    # Servings aliases: servings -> serving_size
+    attrs =
+      cond do
+        (Map.has_key?(attrs, "servings") or Map.has_key?(attrs, :servings)) and
+          not Map.has_key?(attrs, "serving_size") and not Map.has_key?(attrs, :serving_size) ->
+          val = Map.get(attrs, "servings", Map.get(attrs, :servings))
+
+          if string_keys?,
+            do: Map.put(attrs, "serving_size", val),
+            else: Map.put(attrs, :serving_size, val)
+
+        true ->
+          attrs
+      end
+
+    # Cuisine aliases: cuisine / cuisines -> cuisine_origin
+    attrs =
+      cond do
+        not Map.has_key?(attrs, "cuisine_origin") and not Map.has_key?(attrs, :cuisine_origin) ->
+          cond do
+            Map.has_key?(attrs, "cuisines") or Map.has_key?(attrs, :cuisines) ->
+              val = Map.get(attrs, "cuisines", Map.get(attrs, :cuisines))
+              val = if is_list(val), do: val, else: wrap_in_list(val)
+
+              if string_keys?,
+                do: Map.put(attrs, "cuisine_origin", val),
+                else: Map.put(attrs, :cuisine_origin, val)
+
+            Map.has_key?(attrs, "cuisine") or Map.has_key?(attrs, :cuisine) ->
+              val = Map.get(attrs, "cuisine", Map.get(attrs, :cuisine))
+              val = wrap_in_list(val)
+
+              if string_keys?,
+                do: Map.put(attrs, "cuisine_origin", val),
+                else: Map.put(attrs, :cuisine_origin, val)
+
+            true ->
+              attrs
+          end
+
+        true ->
+          attrs
+      end
+
+    # Dietary aliases: dietary_requirements / dietary -> dietary_flags
+    attrs =
+      cond do
+        not Map.has_key?(attrs, "dietary_flags") and not Map.has_key?(attrs, :dietary_flags) ->
+          cond do
+            Map.has_key?(attrs, "dietary_requirements") or
+                Map.has_key?(attrs, :dietary_requirements) ->
+              val = Map.get(attrs, "dietary_requirements", Map.get(attrs, :dietary_requirements))
+              val = parse_dietary_list(val)
+
+              if string_keys?,
+                do: Map.put(attrs, "dietary_flags", val),
+                else: Map.put(attrs, :dietary_flags, val)
+
+            Map.has_key?(attrs, "dietary") or Map.has_key?(attrs, :dietary) ->
+              val = Map.get(attrs, "dietary", Map.get(attrs, :dietary))
+              val = parse_dietary_list(val)
+
+              if string_keys?,
+                do: Map.put(attrs, "dietary_flags", val),
+                else: Map.put(attrs, :dietary_flags, val)
+
+            true ->
+              attrs
+          end
+
+        true ->
+          attrs
+      end
+
+    # Cooking time aliases: cooking_time / cook_time -> cook_time_mins
+    attrs =
+      cond do
+        not Map.has_key?(attrs, "cook_time_mins") and not Map.has_key?(attrs, :cook_time_mins) ->
+          cond do
+            Map.has_key?(attrs, "cooking_time") or Map.has_key?(attrs, :cooking_time) ->
+              val = Map.get(attrs, "cooking_time", Map.get(attrs, :cooking_time))
+
+              if string_keys?,
+                do: Map.put(attrs, "cook_time_mins", val),
+                else: Map.put(attrs, :cook_time_mins, val)
+
+            Map.has_key?(attrs, "cook_time") or Map.has_key?(attrs, :cook_time) ->
+              val = Map.get(attrs, "cook_time", Map.get(attrs, :cook_time))
+
+              if string_keys?,
+                do: Map.put(attrs, "cook_time_mins", val),
+                else: Map.put(attrs, :cook_time_mins, val)
+
+            true ->
+              attrs
+          end
+
+        true ->
+          attrs
+      end
+
+    # Prep time aliases: prep_time -> prep_time_mins
+    attrs =
+      cond do
+        not Map.has_key?(attrs, "prep_time_mins") and not Map.has_key?(attrs, :prep_time_mins) ->
+          if Map.has_key?(attrs, "prep_time") or Map.has_key?(attrs, :prep_time) do
+            val = Map.get(attrs, "prep_time", Map.get(attrs, :prep_time))
+
+            if string_keys?,
+              do: Map.put(attrs, "prep_time_mins", val),
+              else: Map.put(attrs, :prep_time_mins, val)
+          else
+            attrs
+          end
+
+        true ->
+          attrs
+      end
+
+    attrs
+  end
+
+  defp normalize_recipe_attrs(attrs), do: attrs
+
+  defp parse_dietary_list(str) when is_binary(str),
+    do: String.split(str, ",", trim: true) |> Enum.map(&String.trim/1)
+
+  defp parse_dietary_list(list) when is_list(list), do: list
+  defp parse_dietary_list(_), do: []
+
   defp normalize_category_attrs(attrs) when is_map(attrs) do
     string_keys? = Enum.any?(Map.keys(attrs), &is_binary/1)
 
@@ -454,15 +615,45 @@ defmodule CaramelKitchen.Recipes.Recipe do
   defp wrap_in_list(val) when is_binary(val), do: [val]
   defp wrap_in_list(_), do: []
 
-  defp sync_special_and_premium(cs) do
-    case {get_change(cs, :is_special), get_change(cs, :is_premium)} do
-      {spec, nil} when not is_nil(spec) ->
+  defp sync_access_level_and_premium(cs) do
+    access_level = get_change(cs, :access_level)
+    is_premium = get_change(cs, :is_premium)
+    is_special = get_change(cs, :is_special)
+
+    cond do
+      not is_nil(access_level) ->
+        case String.downcase(to_string(access_level)) do
+          "premium" ->
+            cs
+            |> put_change(:access_level, "premium")
+            |> put_change(:is_premium, true)
+            |> put_change(:is_special, true)
+
+          "free" ->
+            cs
+            |> put_change(:access_level, "free")
+            |> put_change(:is_premium, false)
+            |> put_change(:is_special, false)
+
+          _ ->
+            cs
+        end
+
+      not is_nil(is_premium) ->
+        level = if is_premium, do: "premium", else: "free"
+
         cs
+        |> put_change(:access_level, level)
+        |> put_change(:is_special, is_premium)
 
-      {nil, prem} when not is_nil(prem) ->
-        put_change(cs, :is_special, prem)
+      not is_nil(is_special) ->
+        level = if is_special, do: "premium", else: "free"
 
-      _ ->
+        cs
+        |> put_change(:access_level, level)
+        |> put_change(:is_premium, is_special)
+
+      true ->
         cs
     end
   end

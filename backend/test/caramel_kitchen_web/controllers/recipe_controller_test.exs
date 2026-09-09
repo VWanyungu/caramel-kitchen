@@ -391,4 +391,139 @@ defmodule CaramelKitchenWeb.RecipeControllerTest do
       refute Enum.any?(data_preset, &(&1["id"] == ancient_r.id))
     end
   end
+
+  describe "structured fields for smart meal planner (Issue #124 & #97)" do
+    test "recipe card and detail return all 11 structured fields", %{conn: conn} do
+      recipe =
+        insert(:recipe,
+          status: "live",
+          title: "Complete Meal Planner Recipe",
+          cost: Decimal.new("12.50"),
+          serving_size: 4,
+          cook_time_mins: 25,
+          prep_time_mins: 15,
+          dish_category: "rice_dishes",
+          dish_categories: ["rice_dishes"],
+          meal: "lunch",
+          course: "main",
+          difficulty: "intermediate",
+          cuisine_origin: ["west_african"],
+          dietary_flags: ["gluten_free", "halal"],
+          access_level: "premium",
+          is_premium: true,
+          is_special: true,
+          ingredients: [%{"name" => "basmati rice", "quantity" => 500, "unit" => "g"}]
+        )
+
+      creator = CaramelKitchen.Repo.get!(CaramelKitchen.Accounts.User, recipe.creator_id)
+      authed_conn = authenticate_conn(conn, creator)
+
+      # 1. Card listing
+      conn_list = get(conn, "/api/v1/recipes")
+      card = Enum.find(json_response(conn_list, 200)["data"], &(&1["id"] == recipe.id))
+
+      assert card != nil
+      assert card["cost"] == "12.50" || card["cost"] == 12.5
+      assert card["estimated_cost"] == "12.50" || card["estimated_cost"] == 12.5
+      assert card["servings"] == 4
+      assert card["serving_size"] == 4
+      assert card["cooking_time"] == 25
+      assert card["cooking_time_mins"] == 25
+      assert card["prep_time_mins"] == 15
+      assert card["total_time_mins"] == 40
+      assert card["meal"] == "lunch"
+      assert card["course"] == "main"
+      assert card["category"] == "rice_dishes"
+      assert "rice_dishes" in card["categories"]
+      assert card["cuisine"] == "west_african"
+      assert "west_african" in card["cuisines"]
+      assert "gluten_free" in card["dietary_requirements"]
+      assert "gluten_free" in card["dietary"]
+      assert card["difficulty"] == "intermediate"
+      assert card["access_level"] == "premium"
+      assert card["is_premium"] == true
+      assert card["is_special"] == true
+
+      # 2. Detail view
+      conn_detail = get(authed_conn, "/api/v1/recipes/#{recipe.id}")
+      detail = json_response(conn_detail, 200)["data"]
+
+      assert detail["servings"] == 4
+      assert detail["cooking_time"] == 25
+      assert detail["meal"] == "lunch"
+      assert detail["access_level"] == "premium"
+      assert length(detail["ingredients"]) == 1
+    end
+
+    test "filters by cost / budget and servings", %{conn: conn} do
+      r1 = insert(:recipe, status: "live", cost: Decimal.new("6.00"), serving_size: 2)
+      r2 = insert(:recipe, status: "live", cost: Decimal.new("18.00"), serving_size: 6)
+
+      # Budget filter
+      conn_budget = get(conn, "/api/v1/recipes?cost=10.00")
+      ids_budget = Enum.map(json_response(conn_budget, 200)["data"], & &1["id"])
+      assert r1.id in ids_budget
+      refute r2.id in ids_budget
+
+      # Servings filter
+      conn_serv = get(conn, "/api/v1/recipes?servings=6")
+      ids_serv = Enum.map(json_response(conn_serv, 200)["data"], & &1["id"])
+      assert r2.id in ids_serv
+      refute r1.id in ids_serv
+    end
+
+    test "filters by cooking_time and access_level", %{conn: conn} do
+      r_fast_free =
+        insert(:recipe,
+          status: "live",
+          cook_time_mins: 15,
+          access_level: "free",
+          is_premium: false,
+          is_special: false
+        )
+
+      r_slow_prem =
+        insert(:recipe,
+          status: "live",
+          cook_time_mins: 60,
+          access_level: "premium",
+          is_premium: true,
+          is_special: true
+        )
+
+      conn_time = get(conn, "/api/v1/recipes?cooking_time=30")
+      ids_time = Enum.map(json_response(conn_time, 200)["data"], & &1["id"])
+      assert r_fast_free.id in ids_time
+      refute r_slow_prem.id in ids_time
+
+      conn_prem = get(conn, "/api/v1/recipes?access_level=premium")
+      ids_prem = Enum.map(json_response(conn_prem, 200)["data"], & &1["id"])
+      assert r_slow_prem.id in ids_prem
+      refute r_fast_free.id in ids_prem
+    end
+
+    test "filters by ingredient and exclude_ingredients", %{conn: conn} do
+      r_spinach =
+        insert(:recipe,
+          status: "live",
+          ingredients: [%{"name" => "fresh spinach", "quantity" => 100, "unit" => "g"}]
+        )
+
+      r_mushrooms =
+        insert(:recipe,
+          status: "live",
+          ingredients: [%{"name" => "button mushrooms", "quantity" => 150, "unit" => "g"}]
+        )
+
+      conn_spinach = get(conn, "/api/v1/recipes?ingredient=spinach")
+      ids_spinach = Enum.map(json_response(conn_spinach, 200)["data"], & &1["id"])
+      assert r_spinach.id in ids_spinach
+      refute r_mushrooms.id in ids_spinach
+
+      conn_no_spinach = get(conn, "/api/v1/recipes?exclude_ingredients=spinach")
+      ids_no_spinach = Enum.map(json_response(conn_no_spinach, 200)["data"], & &1["id"])
+      assert r_mushrooms.id in ids_no_spinach
+      refute r_spinach.id in ids_no_spinach
+    end
+  end
 end
