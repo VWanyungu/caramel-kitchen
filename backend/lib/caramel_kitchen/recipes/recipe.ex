@@ -608,8 +608,6 @@ defmodule CaramelKitchen.Recipes.Recipe do
     end
   end
 
-  defp normalize_category_attrs(attrs), do: attrs
-
   defp wrap_in_list(nil), do: []
   defp wrap_in_list(val) when is_list(val), do: val
   defp wrap_in_list(val) when is_binary(val), do: [val]

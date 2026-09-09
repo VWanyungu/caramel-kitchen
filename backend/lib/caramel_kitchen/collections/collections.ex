@@ -8,6 +8,9 @@ defmodule CaramelKitchen.Collections do
   alias CaramelKitchen.Accounts.User
   alias CaramelKitchen.Collections.{Collection, CollectionItem, UserCollectionInteraction}
 
+  # Suppress Dialyzer false positive with Ecto.Multi opaque types
+  @dialyzer {:nowarn_function, create_collection: 2}
+
   # ── Collections Querying ──────────────────────────────────────
 
   @doc """
