@@ -42,12 +42,22 @@ defmodule CaramelKitchen.AI.PromptBuilder do
   end
 
   @doc "Build a meal plan generation prompt."
-  def build_meal_plan_prompt(user, goal_config, available_recipes) do
+  def build_meal_plan_prompt(user, goal_config, available_recipes, opts \\ %{}) do
+    budget_str = format_budget(opts)
+    servings_str = format_servings(opts)
+    cuisine_pref = format_cuisine_preference(opts)
+
     recipe_summaries =
       available_recipes
-      |> Enum.take(30)
+      |> Enum.take(40)
       |> Enum.map(fn r ->
-        "- ID:#{r.id} | #{r.title} | Cal:#{r.calories} | #{Enum.join(r.taste_tags, ",")} | #{r.primary_method}"
+        cat = r.dish_category || List.first(r.dish_categories || []) || "general"
+        cuisines = (r.cuisine_origin || []) |> Enum.join(",")
+        cost_str = if r.cost, do: "$#{r.cost}", else: "N/A"
+        dietary_str = (r.dietary_flags || []) |> Enum.join(",")
+        access = r.access_level || if r.is_special || r.is_premium, do: "premium", else: "free"
+
+        "- ID:#{r.id} | Title:#{r.title} | Meal:#{r.meal || "any"} | Course:#{r.course || "main"} | Cat:#{cat} | Cuisine:#{cuisines} | Cost:#{cost_str} | Servings:#{r.serving_size || 1} | Time:#{r.cook_time_mins || 0}m | Diff:#{r.difficulty || "intermediate"} | Cal:#{r.calories || 0} | Dietary:#{dietary_str} | Access:#{access}"
       end)
       |> Enum.join("\n")
 
@@ -59,26 +69,28 @@ defmodule CaramelKitchen.AI.PromptBuilder do
     MACRO SPLIT: #{format_macros(goal_config.macro_split)}
     DIETARY FLAGS: #{format_dietary(user.dietary_flags)}
     TASTE PREFERENCES: #{top_taste_dims(user)}
-
-    AVAILABLE RECIPES:
+    #{budget_str}#{servings_str}#{cuisine_pref}
+    AVAILABLE RECIPES (STRICTLY RESTRICTED TO THIS DATABASE LIST):
     #{recipe_summaries}
 
-    INSTRUCTIONS:
-    - Plan 3 meals per day (breakfast, lunch, dinner) + 1-2 snacks where needed.
-    - Each day must hit calorie target ±10%.
-    - No recipe repeated within 3 days.
-    - Prefer recipes matching taste preferences.
-    - Respond ONLY with valid JSON, no preamble:
+    CRITICAL INSTRUCTIONS & RESTRICTIONS:
+    1. STRICT DATABASE RESTRICTION: You MUST ONLY select recipes from the AVAILABLE RECIPES list above using their EXACT "ID".
+       UNDER NO CIRCUMSTANCES should you fabricate, hallucinate, or use any ID that does not appear in the AVAILABLE RECIPES list.
+    2. MEAL SLOT MATCHING: Match the recipe's Meal tag (breakfast, lunch, dinner, snack) to the corresponding meal slot whenever possible.
+    3. BUDGET & COST RESPECT: If a budget is specified, select recipes whose costs align with the target.
+    4. VARIETY: No recipe may be repeated within 3 consecutive days.
+    5. CALORIE ACCURACY: Plan 3 meals per day (breakfast, lunch, dinner) + 1-2 snacks where needed. Each day must hit the daily calorie target ±10%.
+    6. Respond ONLY with valid JSON, no preamble, code fences, or explanations:
 
     {
       "days": [
         {
           "date_offset": 0,
           "meals": [
-            {"slot": "breakfast", "recipe_id": "<uuid>", "servings": 2},
-            {"slot": "lunch",     "recipe_id": "<uuid>", "servings": 1},
-            {"slot": "dinner",    "recipe_id": "<uuid>", "servings": 2},
-            {"slot": "snack",     "recipe_id": "<uuid>", "servings": 1}
+            {"slot": "breakfast", "recipe_id": "<exact_id_from_available_recipes>", "servings": 2},
+            {"slot": "lunch",     "recipe_id": "<exact_id_from_available_recipes>", "servings": 1},
+            {"slot": "dinner",    "recipe_id": "<exact_id_from_available_recipes>", "servings": 2},
+            {"slot": "snack",     "recipe_id": "<exact_id_from_available_recipes>", "servings": 1}
           ],
           "estimated_calories": 2100
         }
@@ -121,4 +133,34 @@ defmodule CaramelKitchen.AI.PromptBuilder do
   end
 
   defp format_macros(_), do: "balanced"
+
+  defp format_budget(opts) do
+    budget =
+      Map.get(opts, :budget) || Map.get(opts, "budget") || Map.get(opts, :max_cost) ||
+        Map.get(opts, "max_cost")
+
+    if budget, do: "    BUDGET TARGET: $#{budget}\n", else: ""
+  end
+
+  defp format_servings(opts) do
+    servings = Map.get(opts, :servings) || Map.get(opts, "servings")
+    if servings, do: "    TARGET SERVING SIZE: #{servings}\n", else: ""
+  end
+
+  defp format_cuisine_preference(opts) do
+    cuisine =
+      Map.get(opts, :cuisine) || Map.get(opts, "cuisine") || Map.get(opts, :cuisines) ||
+        Map.get(opts, "cuisines")
+
+    case cuisine do
+      list when is_list(list) and list != [] ->
+        "    PREFERRED CUISINE: #{Enum.join(list, ", ")}\n"
+
+      str when is_binary(str) and str != "" ->
+        "    PREFERRED CUISINE: #{str}\n"
+
+      _ ->
+        ""
+    end
+  end
 end

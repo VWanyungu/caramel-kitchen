@@ -150,7 +150,8 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert json_response(conn_owner, 200)["data"]["id"] == private_col.id
     end
 
-    test "premium collection access gating: 402 for free/guest, 200 for owner, premium, and admin", %{conn: conn} do
+    test "premium collection access gating: 402 for free/guest, 200 for owner, premium, and admin",
+         %{conn: conn} do
       owner = insert(:user)
       free_user = insert(:user, subscription_tier: "free")
       premium_user = insert(:premium_user)
@@ -384,7 +385,9 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       assert hd(body_list["data"])["is_saved"] == true
 
       # 4. Unsave
-      conn_unsave = conn |> authenticate_conn(user) |> delete("/api/v1/collections/#{col.id}/save")
+      conn_unsave =
+        conn |> authenticate_conn(user) |> delete("/api/v1/collections/#{col.id}/save")
+
       body_unsave = json_response(conn_unsave, 200)["data"]
       assert body_unsave["is_saved"] == false
       assert body_unsave["save_count"] == 0
@@ -396,7 +399,8 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
   end
 
   describe "Seasonal Collections" do
-    test "GET /api/v1/collections/seasonal and /api/v1/premium/collections/seasonal returns active seasonal collections", %{conn: conn} do
+    test "GET /api/v1/collections/seasonal and /api/v1/premium/collections/seasonal returns active seasonal collections",
+         %{conn: conn} do
       user = insert(:user)
       today = Date.utc_today()
 
@@ -454,6 +458,7 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       today = Date.utc_today()
 
       regular_col = insert(:collection, user_id: user.id, is_seasonal: false)
+
       seasonal_col =
         insert(:collection,
           user_id: user.id,
@@ -472,7 +477,8 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
       refute regular_col.id in ids
     end
 
-    test "GET /api/v1/collections/:id returns 404 for out-of-season collection to regular user, 200 to admin", %{conn: conn} do
+    test "GET /api/v1/collections/:id returns 404 for out-of-season collection to regular user, 200 to admin",
+         %{conn: conn} do
       owner = insert(:user)
       regular_user = insert(:user)
       admin = insert(:admin)
@@ -490,11 +496,15 @@ defmodule CaramelKitchenWeb.CollectionControllerTest do
         )
 
       # Regular user gets 404
-      conn_reg = conn |> authenticate_conn(regular_user) |> get("/api/v1/collections/#{out_of_season.id}")
+      conn_reg =
+        conn |> authenticate_conn(regular_user) |> get("/api/v1/collections/#{out_of_season.id}")
+
       assert json_response(conn_reg, 404)
 
       # Admin gets 200
-      conn_admin = conn |> authenticate_conn(admin) |> get("/api/v1/collections/#{out_of_season.id}")
+      conn_admin =
+        conn |> authenticate_conn(admin) |> get("/api/v1/collections/#{out_of_season.id}")
+
       assert json_response(conn_admin, 200)["data"]["id"] == out_of_season.id
     end
   end

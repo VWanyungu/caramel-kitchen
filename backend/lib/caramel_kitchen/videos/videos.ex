@@ -155,7 +155,11 @@ defmodule CaramelKitchen.Videos do
   """
   def favorite_video(%User{} = user, video_id, metadata \\ %{}) do
     with {:ok, video} <- get_video(video_id) do
-      case Repo.get_by(UserVideoInteraction, user_id: user.id, video_id: video.id, action: "favorite") do
+      case Repo.get_by(UserVideoInteraction,
+             user_id: user.id,
+             video_id: video.id,
+             action: "favorite"
+           ) do
         nil ->
           %UserVideoInteraction{}
           |> UserVideoInteraction.changeset(%{
@@ -210,7 +214,11 @@ defmodule CaramelKitchen.Videos do
   """
   def unfavorite_video(%User{} = user, video_id) do
     with {:ok, video} <- get_video(video_id) do
-      case Repo.get_by(UserVideoInteraction, user_id: user.id, video_id: video.id, action: "favorite") do
+      case Repo.get_by(UserVideoInteraction,
+             user_id: user.id,
+             video_id: video.id,
+             action: "favorite"
+           ) do
         nil ->
           {:ok,
            %{
@@ -256,7 +264,11 @@ defmodule CaramelKitchen.Videos do
   """
   def save_video(%User{} = user, video_id, metadata \\ %{}) do
     with {:ok, video} <- get_video(video_id) do
-      case Repo.get_by(UserVideoInteraction, user_id: user.id, video_id: video.id, action: "saved") do
+      case Repo.get_by(UserVideoInteraction,
+             user_id: user.id,
+             video_id: video.id,
+             action: "saved"
+           ) do
         nil ->
           %UserVideoInteraction{}
           |> UserVideoInteraction.changeset(%{
@@ -311,7 +323,11 @@ defmodule CaramelKitchen.Videos do
   """
   def unsave_video(%User{} = user, video_id) do
     with {:ok, video} <- get_video(video_id) do
-      case Repo.get_by(UserVideoInteraction, user_id: user.id, video_id: video.id, action: "saved") do
+      case Repo.get_by(UserVideoInteraction,
+             user_id: user.id,
+             video_id: video.id,
+             action: "saved"
+           ) do
         nil ->
           {:ok,
            %{

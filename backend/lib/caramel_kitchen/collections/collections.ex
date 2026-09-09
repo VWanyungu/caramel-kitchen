@@ -8,6 +8,9 @@ defmodule CaramelKitchen.Collections do
   alias CaramelKitchen.Accounts.User
   alias CaramelKitchen.Collections.{Collection, CollectionItem, UserCollectionInteraction}
 
+  # Suppress Dialyzer false positive with Ecto.Multi opaque types
+  @dialyzer {:nowarn_function, create_collection: 2}
+
   # ── Collections Querying ──────────────────────────────────────
 
   @doc """
@@ -225,7 +228,11 @@ defmodule CaramelKitchen.Collections do
   """
   def save_collection(%User{} = user, collection_id, metadata \\ %{}) do
     with {:ok, collection} <- get_collection(collection_id, viewer: user) do
-      case Repo.get_by(UserCollectionInteraction, user_id: user.id, collection_id: collection.id, action: "saved") do
+      case Repo.get_by(UserCollectionInteraction,
+             user_id: user.id,
+             collection_id: collection.id,
+             action: "saved"
+           ) do
         nil ->
           %UserCollectionInteraction{}
           |> UserCollectionInteraction.changeset(%{
@@ -276,7 +283,11 @@ defmodule CaramelKitchen.Collections do
   """
   def unsave_collection(%User{} = user, collection_id) do
     with {:ok, collection} <- get_collection(collection_id, viewer: user) do
-      case Repo.get_by(UserCollectionInteraction, user_id: user.id, collection_id: collection.id, action: "saved") do
+      case Repo.get_by(UserCollectionInteraction,
+             user_id: user.id,
+             collection_id: collection.id,
+             action: "saved"
+           ) do
         nil ->
           {:ok,
            %{

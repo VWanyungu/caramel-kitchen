@@ -11,7 +11,9 @@ defmodule CaramelKitchen.Collections.Collection do
   schema "collections" do
     belongs_to :user, CaramelKitchen.Accounts.User
     has_many :items, CaramelKitchen.Collections.CollectionItem, on_delete: :delete_all
-    has_many :interactions, CaramelKitchen.Collections.UserCollectionInteraction, on_delete: :delete_all
+
+    has_many :interactions, CaramelKitchen.Collections.UserCollectionInteraction,
+      on_delete: :delete_all
 
     field :name, :string
     field :slug, :string

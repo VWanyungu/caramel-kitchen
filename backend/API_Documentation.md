@@ -1630,9 +1630,160 @@ Removes a meal plan from user's saved library. Decrements `save_count`.
 Returns interaction status (`is_saved` and `save_count`) for the given meal plan.
 
 #### List User's Saved Meal Plans
-**GET** `/api/v1/me/meal-plans/saved`  
-*Alias:* `GET /api/v1/me/saved/meal-plans`
+### 10.2 Generation & Management Endpoints
+*All requests require `Authorization: Bearer <jwt_token>`.*
 
-Retrieves a paginated list of meal plans saved by the authenticated user.
+#### Generate a 7-Day Meal Plan
+**POST** `/api/v1/meal-plans/generate`
+
+AI-generates a personalized 7-day meal plan strictly restricted to real recipe database entries, factoring in user taste preferences, dietary requirements, allergen exclusions, budget, and subscription tier.
+
+**Request Body:**
+```json
+{
+  "goal_type": "balanced",
+  "budget": 50.00,
+  "servings": 2,
+  "cuisine": "west_african",
+  "dietary": ["halal"],
+  "max_cooking_time": 45,
+  "difficulty": "intermediate",
+  "exclude_ingredients": ["shellfish"]
+}
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `goal_type` | string | Yes | One of `gym_muscle`, `weight_loss`, `weight_gain`, `balanced`, `keto` |
+| `budget` / `max_cost` | number | No | Target weekly budget or maximum cost for recipes |
+| `servings` | integer | No | Target serving size per meal (defaults to recipe serving size) |
+| `cuisine` / `cuisines` | string \| string[] | No | Preferred cuisine filter |
+| `dietary` / `dietary_requirements` | string[] | No | Dietary flags override (e.g. `["vegan", "halal"]`) |
+| `max_cooking_time` | integer | No | Maximum cooking time in minutes |
+| `difficulty` | string | No | `beginner`, `intermediate`, or `advanced` |
+| `exclude_ingredients` | string[] | No | Specific ingredients to exclude from candidate recipes |
+
+**AI Database Restriction & Safety Guarantees:**
+1. **Strict Candidate Set**: The AI prompt is populated strictly with matching candidate recipes from the database. Free users only receive recipes with `access_level: "free"`, `is_premium: false`.
+2. **Auto-Repair & Hallucination Guard**: Every single `recipe_id` in the returned plan is validated against the database candidate pool. If an LLM hallucinates an invalid ID or violates tier gating, the backend auto-repairs the meal slot using the best compatible recipe from the slot pool.
+3. **Structured Recipe Enrichment**: Each meal slot in the response is automatically enriched with structured recipe metadata (`recipe_title`, `cost`, `thumbnail_url`, `cooking_time`, `calories`, `meal`, `cuisine`, `difficulty`, `access_level`).
+
+**Response (201 Created):**
+```json
+{
+  "data": {
+    "id": "7b2a9d81-8e31-4190-8cb2-e3a19fc29b71",
+    "name": "Balanced Plan — 2026-09-10",
+    "goal_type": "balanced",
+    "calorie_target": 2000,
+    "total_cost": "42.50",
+    "estimated_total_cost": "42.50",
+    "budget": "50.00",
+    "is_active": true,
+    "is_premium": false,
+    "is_ai_generated": true,
+    "save_count": 0,
+    "week_start": "2026-09-10",
+    "week_end": "2026-09-16",
+    "macro_split": {
+      "protein_pct": 30,
+      "carbs_pct": 40,
+      "fat_pct": 30,
+      "estimated_total_cost": "42.50",
+      "average_daily_cost": "6.07",
+      "budget": "50.00"
+    },
+    "days": [
+      {
+        "date_offset": 0,
+        "estimated_calories": 1980,
+        "estimated_cost": "6.10",
+        "meals": [
+          {
+            "slot": "breakfast",
+            "recipe_id": "a1b2c3d4-0000-0000-0000-000000000001",
+            "recipe_title": "Spiced Millet Porridge",
+            "servings": 2,
+            "cost": "1.50",
+            "estimated_cost": "1.50",
+            "calories": 420,
+            "meal": "breakfast",
+            "course": "breakfast",
+            "cuisine": "west_african",
+            "cooking_time": 20,
+            "difficulty": "beginner",
+            "access_level": "free",
+            "thumbnail_url": "https://images.caramelkitchen.com/porridge.jpg"
+          },
+          {
+            "slot": "lunch",
+            "recipe_id": "a1b2c3d4-0000-0000-0000-000000000002",
+            "recipe_title": "Grilled Chicken & Jollof",
+            "servings": 2,
+            "cost": "2.80",
+            "estimated_cost": "2.80",
+            "calories": 650,
+            "meal": "lunch",
+            "course": "main",
+            "cuisine": "west_african",
+            "cooking_time": 35,
+            "difficulty": "intermediate",
+            "access_level": "free",
+            "thumbnail_url": "https://images.caramelkitchen.com/jollof.jpg"
+          },
+          {
+            "slot": "dinner",
+            "recipe_id": "a1b2c3d4-0000-0000-0000-000000000003",
+            "recipe_title": "Egusi Soup with Fish",
+            "servings": 2,
+            "cost": "1.80",
+            "estimated_cost": "1.80",
+            "calories": 710,
+            "meal": "dinner",
+            "course": "main",
+            "cuisine": "west_african",
+            "cooking_time": 40,
+            "difficulty": "intermediate",
+            "access_level": "free",
+            "thumbnail_url": "https://images.caramelkitchen.com/egusi.jpg"
+          },
+          {
+            "slot": "snack",
+            "recipe_id": "a1b2c3d4-0000-0000-0000-000000000004",
+            "recipe_title": "Roasted Spiced Plantain Chips",
+            "servings": 1,
+            "cost": "0.50",
+            "estimated_cost": "0.50",
+            "calories": 200,
+            "meal": "snack",
+            "course": "snack",
+            "cuisine": "west_african",
+            "cooking_time": 15,
+            "difficulty": "beginner",
+            "access_level": "free",
+            "thumbnail_url": "https://images.caramelkitchen.com/chips.jpg"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Swap a Meal Slot
+**PATCH** `/api/v1/meal-plans/:id/swap`
+
+Swaps a single meal slot with an alternative recipe strictly restricted to available recipes matching the meal slot, user tier, and user preferences.
+
+**Request Body:**
+```json
+{
+  "day_offset": 0,
+  "slot": "lunch"
+}
+```
+
+**Response (200 OK):**
+Returns the full meal plan with the slot swapped and updated daily/weekly costs and calories.
 
 

@@ -207,7 +207,9 @@ defmodule CaramelKitchenWeb.MealPlanControllerTest do
       assert hd(body_list["data"])["id"] == plan.id
 
       # 4. Unsave
-      conn_unsave = conn |> authenticate_conn(user) |> delete("/api/v1/meal-plans/#{plan.id}/save")
+      conn_unsave =
+        conn |> authenticate_conn(user) |> delete("/api/v1/meal-plans/#{plan.id}/save")
+
       body_unsave = json_response(conn_unsave, 200)["data"]
       assert body_unsave["is_saved"] == false
       assert body_unsave["save_count"] == 0
