@@ -44,19 +44,36 @@ interface RecipeCard {
   slug: string;
   title: string;
   thumbnail_url: string | null;
+  category: string;
+  categories: string[];
   dish_category: string;
+  dish_categories: string[];
   course: string;
+  meal: string | null;
   primary_method: string;
   difficulty: "beginner" | "intermediate" | "advanced";
+  cuisine: string | null;
+  cuisines: string[];
+  cuisine_origin: string[];
+  cost: number | null;      // Estimated cost
+  estimated_cost: number | null;
+  servings: number;
+  serving_size: number;
+  cooking_time: number;     // minutes
+  cooking_time_mins: number;
+  cook_time_mins: number;
+  prep_time_mins: number;
   total_time_mins: number;
   taste_tags: string[];
+  dietary: string[];
+  dietary_requirements: string[];
   dietary_flags: string[];
   calories: number | null;
   avg_rating: number;
   rating_count: number;
-  cuisine_origin: string[];
   taste_score?: number;
   search_rank?: number;
+  access_level: "free" | "premium";
   is_special: boolean;
   is_premium: boolean;
   is_locked: boolean;
@@ -75,16 +92,30 @@ interface RecipeDetail {
   thumbnail_url: string | null;
   video_url: string | null;
   video_duration_secs: number | null;
+  category: string;
+  categories: string[];
   dish_category: string;
+  dish_categories: string[];
   course: string;
+  meal: string | null;
   primary_method: string;
   secondary_method: string | null;
   difficulty: "beginner" | "intermediate" | "advanced";
+  cuisine: string | null;
+  cuisines: string[];
+  cuisine_origin: string[];
+  cost: number | null;      // Estimated cost
+  estimated_cost: number | null;
+  servings: number;
+  serving_size: number;
+  cooking_time: number;     // minutes
+  cooking_time_mins: number;
   prep_time_mins: number;
   cook_time_mins: number;
   total_time_mins: number;
-  serving_size: number;
   taste_tags: string[];
+  dietary: string[];
+  dietary_requirements: string[];
   dietary_flags: string[];
   allergens: string[];
   allergy_alerts?: string[];
@@ -92,10 +123,14 @@ interface RecipeDetail {
   macros: Record<string, any>;
   avg_rating: number;
   rating_count: number;
-  cuisine_origin: string[];
   creator_id: string;
+  access_level: "free" | "premium";
+  is_special: boolean;
+  is_premium: boolean;
+  is_locked: boolean;
   published_at: string | null;
   featured_until: string | null;
+  created_at: string;       // ISO8601 UTC
   view_count: number;
   save_count: number;
   cook_count: number;
@@ -111,10 +146,6 @@ interface RecipeDetail {
     duration_minutes: number | null;
     tip: string | null;
   }[];
-  is_special: boolean;
-  is_premium: boolean;
-  is_locked: boolean;
-  created_at: string;       // ISO8601 UTC
 }
 ```
 
@@ -244,14 +275,26 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 - `after_id` (string): Pagination cursor.
 - `category` (string): Filter by dish category (e.g., `rice_dishes`, `baked_goods`).
 - `course` (string): Filter by dish type/course (e.g., `main`, `starter`, `dessert`).
+- `meal` (string): Filter by meal type (`breakfast`, `lunch`, `dinner`, `snack`, `brunch`, `dessert`, `beverage`).
 - `cooking_method` (string): Filter by primary or secondary cooking method (e.g., `baking`, `frying`).
-- `dietary` (string): Comma-separated list of dietary flags (e.g., `vegan,gluten_free`). Returns recipes matching ALL provided flags.
-- `taste` (string): Comma-separated list of taste tags (e.g., `savory,spicy`). Returns recipes matching ALL provided tags.
+- `dietary` (string): Comma-separated list of dietary flags (e.g., `vegan,gluten_free`). (Also accepts `dietary_requirements`).
+- `taste` (string): Comma-separated list of taste tags (e.g., `savory,spicy`).
 - `max_time` (integer): Maximum total time in minutes.
 - `min_time` (integer): Minimum total time in minutes.
+- `cooking_time` (integer): Maximum cooking time in minutes. (Also accepts `max_cooking_time`, `cook_time`).
+- `min_cooking_time` (integer): Minimum cooking time in minutes.
+- `cost` (number): Maximum estimated cost / budget limit. (Also accepts `budget`, `max_cost`).
+- `min_cost` (number): Minimum cost.
+- `servings` (integer): Filter by serving size. (Also accepts `serving_size`).
+- `min_servings` (integer): Minimum servings.
+- `max_servings` (integer): Maximum servings.
+- `ingredient` (string): Search recipes containing ingredient matching name.
+- `ingredients` (string): Comma-separated ingredient names that recipe must contain.
+- `exclude_ingredients` (string): Comma-separated ingredient names to exclude.
 - `difficulty` (string): Filter by difficulty level (`beginner`, `intermediate`, `advanced`).
-- `cuisine` (string): Comma-separated list of cuisine origins.
+- `cuisine` (string): Comma-separated list of cuisine origins (e.g., `west_african`, `italian`).
 - `max_calories` (integer): Filter for recipes with calories <= X.
+- `access_level` (string): Filter by access level: `"free"` or `"premium"`.
 - `is_special` (boolean, optional): Filter for special premium recipes (`true`) or free standard recipes (`false`). Also accepts `is_premium`.
 - `created_after` (ISO8601 / YYYY-MM-DD): Filter recipes created on or after this date. (Also accepts `created_from`, `from_date`, `start_date`).
 - `created_before` (ISO8601 / YYYY-MM-DD): Filter recipes created on or before this date. (Also accepts `created_to`, `to_date`, `end_date`).
@@ -259,7 +302,7 @@ List recipes. If the request is authenticated via Bearer token, it returns a per
 - `created_within` (string): Preset time window filter: `today`, `yesterday`, `this_week`, `last_7_days`, `this_month`, `last_30_days`, `this_year`. (Also accepts `date_range`).
 - `sort` (string, optional): Order recipes by creation timestamp: `newest` (`created_at_desc`) or `oldest` (`created_at_asc`).
 
-> **Access Gating (Issue #58 - Premium Recipes)**: Recipes marked with `is_special: true` are restricted to premium subscribers. While special recipes appear in list and search feeds with `is_special: true` and `is_locked: true`, accessing their full details via `GET /api/v1/recipes/:id` or `GET /api/v1/recipes/slug/:slug` by unauthenticated guests or free-tier users will return `402 Payment Required` with `error: "premium_required"`. Users with `premium`, `creator_pro`, or `admin` roles receive full access.
+> **Access Gating (Issue #58 - Premium Recipes)**: Recipes marked with `is_special: true` (or `access_level: "premium"`) are restricted to premium subscribers. While premium recipes appear in list and search feeds with `access_level: "premium"`, `is_special: true`, `is_premium: true` and `is_locked: true`, accessing their full details via `GET /api/v1/recipes/:id` or `GET /api/v1/recipes/slug/:slug` by unauthenticated guests or free-tier users will return `402 Payment Required` with `error: "premium_required"`. Users with `premium`, `creator_pro`, or `admin` roles receive full access.
 - `context` (string): Special UI context filters. Maps to multiple parameters under the hood:
   - `quick`: Total time <= 30 mins
   - `family`: Serving size >= 4

@@ -323,6 +323,196 @@ defmodule CaramelKitchen.RecipesTest do
     end
   end
 
+  describe "structured fields for smart meal planner (Issue #124 & #97)" do
+    setup do
+      {:ok, creator: insert(:creator)}
+    end
+
+    test "creates recipe with all 11 structured fields and alias normalization", %{
+      creator: creator
+    } do
+      attrs = %{
+        "title" => "Budget Pasta Bowl",
+        "description" => "Cheap, nutritious, and delicious",
+        "cost" => "8.50",
+        "servings" => 4,
+        "ingredients" => [
+          %{"name" => "penne pasta", "quantity" => 300, "unit" => "g"},
+          %{"name" => "garlic", "quantity" => 2, "unit" => "cloves"}
+        ],
+        "steps" => [
+          %{"order" => 1, "instruction" => "Boil pasta"},
+          %{"order" => 2, "instruction" => "Saute garlic and toss"}
+        ],
+        "meal" => "dinner",
+        "course" => "main",
+        "cuisine" => "italian",
+        "dietary_requirements" => ["vegetarian"],
+        "cooking_time" => 20,
+        "prep_time" => 10,
+        "difficulty" => "intermediate",
+        "category" => "pasta_noodles",
+        "access_level" => "premium",
+        "primary_method" => "boiling",
+        "taste_tags" => ["savory", "mild"]
+      }
+
+      assert {:ok, %Recipe{} = recipe} = Recipes.create_recipe(creator, attrs)
+      assert Decimal.equal?(recipe.cost, Decimal.new("8.50"))
+      assert recipe.serving_size == 4
+      assert recipe.meal == "dinner"
+      assert recipe.course == "main"
+      assert recipe.cuisine_origin == ["italian"]
+      assert "vegetarian" in recipe.dietary_flags
+      assert recipe.cook_time_mins == 20
+      assert recipe.prep_time_mins == 10
+      assert recipe.total_time_mins == 30
+      assert recipe.difficulty == "intermediate"
+      assert "pasta_noodles" in recipe.dish_categories
+      assert recipe.access_level == "premium"
+      assert recipe.is_premium == true
+      assert recipe.is_special == true
+    end
+
+    test "syncs access_level, is_premium, and is_special in updates", %{creator: creator} do
+      recipe =
+        insert(:recipe,
+          creator_id: creator.id,
+          access_level: "free",
+          is_premium: false,
+          is_special: false
+        )
+
+      assert {:ok, updated} = Recipes.update_recipe(recipe, %{"access_level" => "premium"})
+      assert updated.access_level == "premium"
+      assert updated.is_premium == true
+      assert updated.is_special == true
+
+      assert {:ok, demoted} = Recipes.update_recipe(updated, %{"is_premium" => false})
+      assert demoted.access_level == "free"
+      assert demoted.is_premium == false
+      assert demoted.is_special == false
+    end
+
+    test "filters recipes by budget / max_cost and min_cost" do
+      cheap = insert(:recipe, status: "live", cost: Decimal.new("5.00"))
+      expensive = insert(:recipe, status: "live", cost: Decimal.new("25.00"))
+
+      filtered_budget = Recipes.list_by_category("all", filters: %{budget: Decimal.new("10.00")})
+      ids_budget = Enum.map(filtered_budget, & &1.id)
+      assert cheap.id in ids_budget
+      refute expensive.id in ids_budget
+
+      filtered_min = Recipes.list_by_category("all", filters: %{min_cost: Decimal.new("15.00")})
+      ids_min = Enum.map(filtered_min, & &1.id)
+      assert expensive.id in ids_min
+      refute cheap.id in ids_min
+    end
+
+    test "filters recipes by servings / serving_size" do
+      single = insert(:recipe, status: "live", serving_size: 1)
+      family = insert(:recipe, status: "live", serving_size: 6)
+
+      res_exact = Recipes.list_by_category("all", filters: %{servings: 6})
+      ids_exact = Enum.map(res_exact, & &1.id)
+      assert family.id in ids_exact
+      refute single.id in ids_exact
+
+      res_min = Recipes.list_by_category("all", filters: %{min_servings: 4})
+      ids_min = Enum.map(res_min, & &1.id)
+      assert family.id in ids_min
+      refute single.id in ids_min
+    end
+
+    test "filters recipes by ingredient and exclude_ingredients" do
+      with_chicken =
+        insert(:recipe,
+          status: "live",
+          ingredients: [%{"name" => "chicken breast", "quantity" => 200, "unit" => "g"}]
+        )
+
+      with_tofu =
+        insert(:recipe,
+          status: "live",
+          ingredients: [%{"name" => "firm tofu", "quantity" => 250, "unit" => "g"}]
+        )
+
+      res_inc = Recipes.list_by_category("all", filters: %{ingredient: "chicken"})
+      ids_inc = Enum.map(res_inc, & &1.id)
+      assert with_chicken.id in ids_inc
+      refute with_tofu.id in ids_inc
+
+      res_exc = Recipes.list_by_category("all", filters: %{exclude_ingredients: ["chicken"]})
+      ids_exc = Enum.map(res_exc, & &1.id)
+      assert with_tofu.id in ids_exc
+      refute with_chicken.id in ids_exc
+    end
+
+    test "filters recipes by cooking_time / cook_time_mins" do
+      fast = insert(:recipe, status: "live", cook_time_mins: 15)
+      slow = insert(:recipe, status: "live", cook_time_mins: 60)
+
+      res = Recipes.list_by_category("all", filters: %{cooking_time: 30})
+      ids = Enum.map(res, & &1.id)
+      assert fast.id in ids
+      refute slow.id in ids
+    end
+
+    test "filters recipes by access_level" do
+      free_r =
+        insert(:recipe,
+          status: "live",
+          access_level: "free",
+          is_premium: false,
+          is_special: false
+        )
+
+      prem_r =
+        insert(:recipe,
+          status: "live",
+          access_level: "premium",
+          is_premium: true,
+          is_special: true
+        )
+
+      res_free = Recipes.list_by_category("all", filters: %{access_level: "free"})
+      ids_free = Enum.map(res_free, & &1.id)
+      assert free_r.id in ids_free
+      refute prem_r.id in ids_free
+
+      res_prem = Recipes.list_by_category("all", filters: %{access_level: "premium"})
+      ids_prem = Enum.map(res_prem, & &1.id)
+      assert prem_r.id in ids_prem
+      refute free_r.id in ids_prem
+    end
+
+    test "has_recipe_access?/2 respects free vs premium access" do
+      creator = insert(:creator)
+      user = insert(:user, role: "user")
+      premium_user = insert(:user, role: "user", subscription_tier: "premium")
+      admin_user = insert(:admin)
+
+      free_recipe = insert(:recipe, access_level: "free", is_premium: false, is_special: false)
+
+      prem_recipe =
+        insert(:recipe,
+          creator_id: creator.id,
+          access_level: "premium",
+          is_premium: true,
+          is_special: true
+        )
+
+      assert Recipes.has_recipe_access?(free_recipe, nil) == true
+      assert Recipes.has_recipe_access?(free_recipe, user) == true
+
+      assert Recipes.has_recipe_access?(prem_recipe, nil) == false
+      assert Recipes.has_recipe_access?(prem_recipe, user) == false
+      assert Recipes.has_recipe_access?(prem_recipe, premium_user) == true
+      assert Recipes.has_recipe_access?(prem_recipe, admin_user) == true
+      assert Recipes.has_recipe_access?(prem_recipe, creator) == true
+    end
+  end
+
   # ── Helpers ───────────────────────────────────────────────────
 
   defp base_recipe_attrs do

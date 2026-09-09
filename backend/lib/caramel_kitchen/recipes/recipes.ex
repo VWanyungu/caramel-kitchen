@@ -173,16 +173,18 @@ defmodule CaramelKitchen.Recipes do
   end
 
   @doc "Checks whether a user has access to view a recipe's full details"
-  def has_recipe_access?(%Recipe{is_special: false}, _user), do: true
-  def has_recipe_access?(%Recipe{is_special: true}, nil), do: false
-
-  def has_recipe_access?(
-        %Recipe{is_special: true} = recipe,
-        %CaramelKitchen.Accounts.User{} = user
-      ) do
-    user.id == recipe.creator_id ||
-      CaramelKitchen.Accounts.User.admin?(user) ||
-      CaramelKitchen.Accounts.User.premium?(user)
+  def has_recipe_access?(%Recipe{} = recipe, user) do
+    if recipe.is_special || recipe.is_premium || recipe.access_level == "premium" do
+      cond do
+        is_nil(user) -> false
+        user.id == recipe.creator_id -> true
+        CaramelKitchen.Accounts.User.admin?(user) -> true
+        CaramelKitchen.Accounts.User.premium?(user) -> true
+        true -> false
+      end
+    else
+      true
+    end
   end
 
   def has_recipe_access?(_, _), do: false
@@ -306,6 +308,9 @@ defmodule CaramelKitchen.Recipes do
       {:dietary, flags}, q when is_list(flags) and length(flags) > 0 ->
         where(q, [r], fragment("? @> ?", r.dietary_flags, ^flags))
 
+      {:dietary_requirements, flags}, q when is_list(flags) and length(flags) > 0 ->
+        where(q, [r], fragment("? @> ?", r.dietary_flags, ^flags))
+
       {:taste, tags}, q when is_list(tags) and length(tags) > 0 ->
         where(q, [r], fragment("? && ?", r.taste_tags, ^tags))
 
@@ -315,11 +320,90 @@ defmodule CaramelKitchen.Recipes do
       {:min_time, minutes}, q when is_integer(minutes) ->
         where(q, [r], r.total_time_mins >= ^minutes)
 
+      {:cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins <= ^minutes)
+
+      {:max_cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins <= ^minutes)
+
+      {:min_cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins >= ^minutes)
+
+      {:cost, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:max_cost, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:min_cost, min_cost}, q when not is_nil(min_cost) ->
+        where(q, [r], r.cost >= ^min_cost)
+
+      {:budget, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size == ^n)
+
+      {:serving_size, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size == ^n)
+
+      {:min_servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size >= ^n)
+
+      {:max_servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size <= ^n)
+
+      {:ingredient, ing}, q when is_binary(ing) and ing != "" ->
+        pattern = "%#{ing}%"
+
+        where(
+          q,
+          [r],
+          fragment(
+            "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+            r.ingredients,
+            ^pattern
+          )
+        )
+
+      {:ingredients, ings}, q when is_list(ings) and length(ings) > 0 ->
+        Enum.reduce(ings, q, fn ing, sub_q ->
+          pattern = "%#{ing}%"
+
+          where(
+            sub_q,
+            [r],
+            fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+              r.ingredients,
+              ^pattern
+            )
+          )
+        end)
+
+      {:exclude_ingredients, ings}, q when is_list(ings) and length(ings) > 0 ->
+        Enum.reduce(ings, q, fn ing, sub_q ->
+          pattern = "%#{ing}%"
+
+          where(
+            sub_q,
+            [r],
+            not fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+              r.ingredients,
+              ^pattern
+            )
+          )
+        end)
+
       {:difficulty, level}, q when is_binary(level) ->
         where(q, [r], r.difficulty == ^level)
 
       {:cuisine, origins}, q when is_list(origins) and length(origins) > 0 ->
         where(q, [r], fragment("? && ?", r.cuisine_origin, ^origins))
+
+      {:cuisine, origin}, q when is_binary(origin) and origin != "" ->
+        where(q, [r], fragment("? && ?", r.cuisine_origin, ^[origin]))
 
       {:course, course}, q when is_binary(course) ->
         where(q, [r], r.course == ^course)
@@ -352,17 +436,28 @@ defmodule CaramelKitchen.Recipes do
       {:max_calories, cal}, q when is_integer(cal) ->
         where(q, [r], r.calories <= ^cal)
 
+      {:access_level, level}, q when is_binary(level) ->
+        where(q, [r], r.access_level == ^level)
+
       {:is_special, val}, q when val in [true, "true"] ->
-        where(q, [r], r.is_special == true)
+        where(q, [r], r.is_special == true or r.is_premium == true or r.access_level == "premium")
 
       {:is_special, val}, q when val in [false, "false"] ->
-        where(q, [r], r.is_special == false)
+        where(
+          q,
+          [r],
+          r.is_special == false and r.is_premium == false and r.access_level == "free"
+        )
 
       {:is_premium, val}, q when val in [true, "true"] ->
-        where(q, [r], r.is_special == true)
+        where(q, [r], r.is_premium == true or r.is_special == true or r.access_level == "premium")
 
       {:is_premium, val}, q when val in [false, "false"] ->
-        where(q, [r], r.is_special == false)
+        where(
+          q,
+          [r],
+          r.is_premium == false and r.is_special == false and r.access_level == "free"
+        )
 
       {:created_after, dt}, q when not is_nil(dt) ->
         where(q, [r], r.inserted_at >= ^dt)
