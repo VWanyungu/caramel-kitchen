@@ -95,19 +95,39 @@ defmodule CaramelKitchen.AI.Orchestrator do
 
   @impl true
   def handle_call({:complete, prompt, opts}, _from, state) do
-    format = Keyword.get(opts, :format, :text)
+    completion_fn =
+      Keyword.get(opts, :completion_fn) ||
+        Application.get_env(:caramel_kitchen, :ai_completion_fn)
 
-    messages = [
-      %{
-        role: "system",
-        content: "You are a helpful cooking assistant. Always respond with valid JSON when asked."
-      },
-      %{role: "user", content: prompt}
-    ]
+    case completion_fn do
+      fun when is_function(fun, 1) ->
+        case fun.(prompt) do
+          {:ok, text} -> {:reply, {:ok, text}, state}
+          {:error, _} = err -> {:reply, err, state}
+        end
 
-    case call_openai_direct(messages, format) do
-      {:ok, text, _tokens} -> {:reply, {:ok, text}, state}
-      {:error, _} = err -> {:reply, err, state}
+      fun when is_function(fun, 2) ->
+        case fun.(prompt, opts) do
+          {:ok, text} -> {:reply, {:ok, text}, state}
+          {:error, _} = err -> {:reply, err, state}
+        end
+
+      _ ->
+        format = Keyword.get(opts, :format, :text)
+
+        messages = [
+          %{
+            role: "system",
+            content:
+              "You are a helpful cooking assistant. Always respond with valid JSON when asked."
+          },
+          %{role: "user", content: prompt}
+        ]
+
+        case call_openai_direct(messages, format) do
+          {:ok, text, _tokens} -> {:reply, {:ok, text}, state}
+          {:error, _} = err -> {:reply, err, state}
+        end
     end
   end
 

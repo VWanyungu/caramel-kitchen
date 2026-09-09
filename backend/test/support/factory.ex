@@ -303,10 +303,14 @@ defmodule CaramelKitchenWeb.ConnCase do
 
   setup tags do
     CaramelKitchen.DataCase.setup_sandbox(tags)
+
     conn = %{
       Phoenix.ConnTest.build_conn()
-      | remote_ip: {127, 0, rem(System.unique_integer([:positive]), 250) + 1, rem(System.unique_integer([:positive]), 250) + 1}
+      | remote_ip:
+          {127, 0, rem(System.unique_integer([:positive]), 250) + 1,
+           rem(System.unique_integer([:positive]), 250) + 1}
     }
+
     {:ok, conn: conn}
   end
 

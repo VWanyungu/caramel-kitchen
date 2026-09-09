@@ -81,7 +81,9 @@ defmodule CaramelKitchenWeb.VideoInteractionControllerTest do
   end
 
   describe "POST and DELETE /api/v1/videos/:id/save" do
-    test "authenticates user, saves video to watch later, and increments save count", %{conn: conn} do
+    test "authenticates user, saves video to watch later, and increments save count", %{
+      conn: conn
+    } do
       user = insert(:user)
       video = insert(:video, save_count: 0)
 

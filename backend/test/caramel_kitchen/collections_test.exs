@@ -230,7 +230,10 @@ defmodule CaramelKitchen.CollectionsTest do
 
     test "list_collections/1 and count_collections/1 filter by is_premium" do
       user = insert(:user)
-      premium_col = insert(:collection, user_id: user.id, name: "Premium Collection", is_premium: true)
+
+      premium_col =
+        insert(:collection, user_id: user.id, name: "Premium Collection", is_premium: true)
+
       free_col = insert(:collection, user_id: user.id, name: "Free Collection", is_premium: false)
 
       prem_results = Collections.list_collections(is_premium: true)
@@ -322,6 +325,7 @@ defmodule CaramelKitchen.CollectionsTest do
         start_date: ~D[2026-08-15],
         end_date: ~D[2026-10-15]
       }
+
       assert Collection.in_season?(active_col, today) == true
 
       future_col = %Collection{
@@ -330,6 +334,7 @@ defmodule CaramelKitchen.CollectionsTest do
         start_date: ~D[2026-11-15],
         end_date: ~D[2027-01-05]
       }
+
       assert Collection.in_season?(future_col, today) == false
 
       past_col = %Collection{
@@ -338,6 +343,7 @@ defmodule CaramelKitchen.CollectionsTest do
         start_date: ~D[2026-02-01],
         end_date: ~D[2026-02-28]
       }
+
       assert Collection.in_season?(past_col, today) == false
     end
 
@@ -345,7 +351,8 @@ defmodule CaramelKitchen.CollectionsTest do
       user = insert(:user)
       today = ~D[2026-09-08]
 
-      regular_col = insert(:collection, user_id: user.id, is_seasonal: false, name: "Regular Collection")
+      regular_col =
+        insert(:collection, user_id: user.id, is_seasonal: false, name: "Regular Collection")
 
       active_seasonal =
         insert(:collection,
@@ -376,7 +383,9 @@ defmodule CaramelKitchen.CollectionsTest do
       refute future_seasonal.id in ids
 
       # Filter specifically by season_name
-      bts_results = Collections.list_collections(current_date: today, season_name: "Back to School")
+      bts_results =
+        Collections.list_collections(current_date: today, season_name: "Back to School")
+
       assert length(bts_results) >= 1
       assert Enum.all?(bts_results, &(&1.season_name == "Back to School"))
 
@@ -404,14 +413,19 @@ defmodule CaramelKitchen.CollectionsTest do
         )
 
       # Stranger / regular user gets not_found
-      assert {:error, :not_found} = Collections.get_collection(future_col.id, viewer: other_user, current_date: today)
+      assert {:error, :not_found} =
+               Collections.get_collection(future_col.id, viewer: other_user, current_date: today)
 
       # Owner can access their own seasonal collection
-      assert {:ok, col} = Collections.get_collection(future_col.id, viewer: owner, current_date: today)
+      assert {:ok, col} =
+               Collections.get_collection(future_col.id, viewer: owner, current_date: today)
+
       assert col.id == future_col.id
 
       # Admin can access
-      assert {:ok, admin_col} = Collections.get_collection(future_col.id, viewer: admin, current_date: today)
+      assert {:ok, admin_col} =
+               Collections.get_collection(future_col.id, viewer: admin, current_date: today)
+
       assert admin_col.id == future_col.id
     end
 

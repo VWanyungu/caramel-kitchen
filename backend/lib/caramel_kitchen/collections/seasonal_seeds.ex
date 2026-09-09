@@ -17,19 +17,23 @@ defmodule CaramelKitchen.Collections.SeasonalSeeds do
       collections: [
         %{
           name: "Christmas Dinner",
-          description: "Festive roasts, savory mains, and celebratory holiday centerpieces for Christmas dinner."
+          description:
+            "Festive roasts, savory mains, and celebratory holiday centerpieces for Christmas dinner."
         },
         %{
           name: "Christmas Baking",
-          description: "Holiday cookies, spiced cakes, gingerbread, and classic sweet festive bakes."
+          description:
+            "Holiday cookies, spiced cakes, gingerbread, and classic sweet festive bakes."
         },
         %{
           name: "Christmas Desserts",
-          description: "Decadent seasonal puddings, trifles, yule logs, and festive dessert treats."
+          description:
+            "Decadent seasonal puddings, trifles, yule logs, and festive dessert treats."
         },
         %{
           name: "Christmas Drinks",
-          description: "Warm spiced ciders, hot chocolate, festive eggnogs, and holiday mocktails."
+          description:
+            "Warm spiced ciders, hot chocolate, festive eggnogs, and holiday mocktails."
         }
       ]
     },
@@ -44,7 +48,8 @@ defmodule CaramelKitchen.Collections.SeasonalSeeds do
         },
         %{
           name: "Romantic Dinner",
-          description: "Candlelit meals, steak, pasta, and elevated dinners to impress your valentine."
+          description:
+            "Candlelit meals, steak, pasta, and elevated dinners to impress your valentine."
         },
         %{
           name: "Valentine's Desserts",
@@ -87,15 +92,18 @@ defmodule CaramelKitchen.Collections.SeasonalSeeds do
       collections: [
         %{
           name: "Iftar Collection",
-          description: "Hearty, comforting meals, soups, and traditional dishes to break the fast."
+          description:
+            "Hearty, comforting meals, soups, and traditional dishes to break the fast."
         },
         %{
           name: "Suhoor Collection",
-          description: "Nourishing, slow-burning, hydrating breakfast recipes for early morning pre-dawn meals."
+          description:
+            "Nourishing, slow-burning, hydrating breakfast recipes for early morning pre-dawn meals."
         },
         %{
           name: "Ramadan Drinks",
-          description: "Refreshing juices, hibiscus drinks, date smoothies, and hydrating infusions."
+          description:
+            "Refreshing juices, hibiscus drinks, date smoothies, and hydrating infusions."
         },
         %{
           name: "Ramadan Desserts",
@@ -146,14 +154,18 @@ defmodule CaramelKitchen.Collections.SeasonalSeeds do
     case Repo.get_by(Collection, user_id: user.id, slug: slug) do
       nil ->
         case Collections.create_collection(user, attrs) do
-          {:ok, col} -> col
+          {:ok, col} ->
+            col
+
           {:error, cs} ->
             raise "Failed to seed seasonal collection #{col_info.name}: #{inspect(cs.errors)}"
         end
 
       existing ->
         case Collections.update_collection(existing, attrs) do
-          {:ok, updated} -> updated
+          {:ok, updated} ->
+            updated
+
           {:error, cs} ->
             raise "Failed to update seasonal collection #{col_info.name}: #{inspect(cs.errors)}"
         end
