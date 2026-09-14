@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { PremiumModal } from "../components/PremiumModal";
-import { useAuth } from "../auth/useAuth";
+// import { useAuth } from "../auth/useAuth";
 
 interface PremiumModalOptions {
   featureName?: string;
@@ -16,7 +16,7 @@ interface PremiumModalContextType {
 const PremiumModalContext = createContext<PremiumModalContextType | undefined>(undefined);
 
 export function PremiumModalProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [modalOptions, setModalOptions] = useState<PremiumModalOptions>({});
 

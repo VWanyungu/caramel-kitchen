@@ -99,11 +99,9 @@ export function BrowsePage() {
   };
 
   return (
-    <div className="min-h-screen ">
-      {/* <Navbar /> */}
+    <div className="min-h-screen w-screen md:w-full overflow-hidden">
 
       <div className="lg:px-52">
-        {/* <Hero /> */}
 
         <SearchFilterBar
           query={filters.q}
@@ -123,8 +121,7 @@ export function BrowsePage() {
           onApply={(next) => setFilters(next)}
         />
 
-        <main className="px-3 lg:px-24 relative overflow-hidden min-h-125">
-          {/* Recipes view */}
+        <main className="px-3 pb-8 lg:px-24 relative overflow-hidden min-h-125">
           <div
             className={`transition-all duration-500 ease-in-out ${activeTab === "recipes"
               ? "opacity-100 translate-y-0 scale-100"
@@ -139,7 +136,6 @@ export function BrowsePage() {
             />
           </div>
 
-          {/* Categories view */}
           <div
             className={`transition-all duration-500 ease-in-out ${activeTab === "categories"
               ? "opacity-100 translate-y-0 scale-100"

@@ -172,7 +172,7 @@ export function FiltersModal({
           <div>
             <DurationPicker
               title="Total time"
-              options={[30, 60, 90, 120]}
+              options={[15, 30, 60]}
               value={draft.maxTime}
               onChange={(val) => setDraft((d) => ({ ...d, maxTime: val }))}
               caption=""
