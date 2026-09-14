@@ -9,7 +9,7 @@ import { EMPTY_FILTERS, type RecipeFilters } from "../features/browse/types";
 import { useRecipes } from "../features/browse/useRecipes";
 import { PLACEHOLDER_RECIPES } from "../features/browse/placeholderRecipes";
 
-type ActiveTab = "recipes" | "categories" | "trending" | "new" | "for_you";
+type ActiveTab = "recipes" | "categories" | "trending" | "new" | "for_you" | "saved";
 
 export function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams();

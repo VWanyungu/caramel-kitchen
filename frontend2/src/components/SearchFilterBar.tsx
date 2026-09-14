@@ -6,6 +6,7 @@ import {
   Search,
   SlidersHorizontal,
   UserStar,
+  Heart,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -18,9 +19,9 @@ interface SearchFilterBarProps {
   onOpenFilters: () => void;
   filters: RecipeFilters;
   onFiltersChange: (next: RecipeFilters) => void;
-  activeTab: "recipes" | "categories" | "trending" | "new" | "for_you";
+  activeTab: "recipes" | "categories" | "trending" | "new" | "for_you" | "saved";
   onActiveTabChange: (
-    tab: "recipes" | "categories" | "trending" | "new" | "for_you",
+    tab: "recipes" | "categories" | "trending" | "new" | "for_you" | "saved",
   ) => void;
 }
 
@@ -133,6 +134,20 @@ export function SearchFilterBar({
           onClick={() => onActiveTabChange("recipes")}
         >
           Recipes
+        </Button>
+
+        <Button
+          variant={activeTab === "saved" ? "outline" : "ghost"}
+          size="md"
+          icon={<Heart size={16} />}
+          className={
+            activeTab === "saved"
+              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+          }
+          onClick={() => onActiveTabChange("saved")}
+        >
+          Saved recipes
         </Button>
 
         <Button
@@ -255,6 +270,22 @@ export function SearchFilterBar({
             <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1 mr-1 select-none">
               Popular:
             </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                onFiltersChange({
+                  ...filters,
+                  dietary: filters.dietary.includes("budget_friendly")
+                    ? filters.dietary
+                    : [...filters.dietary, "budget_friendly"],
+                })
+              }
+              className="shrink-0  inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+            >
+              {/* <Tag className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" /> */}
+              <span>Free recipes</span>
+            </button>
 
             <button
               type="button"
