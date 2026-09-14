@@ -15,7 +15,7 @@ import {
   Menu,
   LogOut,
   LogIn,
-  UserPlus,
+  UserPlus, Book, BookOpen
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -271,6 +271,56 @@ export function Navbar() {
             </Link>
 
             <Link
+              to="/meal-plans"
+              onClick={(e) => {
+                if (!isPremium) {
+                  e.preventDefault();
+                  openPremiumModal({
+                    featureName: "Weekly Meal Planner",
+                    featureDescription:
+                      "Meal planning, macro balancing, and automated schedule generation are available exclusively on Caramel Bronze and Silver plans.",
+                  });
+                }
+              }}
+              className={`relative flex items-center gap-2 px-3.5 xl:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isMealPlansActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+                }`}
+            >
+              <BookOpen size={15} />
+              <span>Collections</span>
+              <Diamond
+                size={8}
+                className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500"
+              />
+            </Link>
+
+            <Link
+              to="/meal-plans"
+              onClick={(e) => {
+                if (!isPremium) {
+                  e.preventDefault();
+                  openPremiumModal({
+                    featureName: "Weekly Meal Planner",
+                    featureDescription:
+                      "Meal planning, macro balancing, and automated schedule generation are available exclusively on Caramel Bronze and Silver plans.",
+                  });
+                }
+              }}
+              className={`relative flex items-center gap-2 px-3.5 xl:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isMealPlansActive
+                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
+                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
+                }`}
+            >
+              <Book size={15} />
+              <span>Learn with Sofia</span>
+              <Diamond
+                size={8}
+                className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500"
+              />
+            </Link>
+
+            <Link
               to="/ai"
               onClick={(e) => {
                 if (!isPremium) {
@@ -288,7 +338,7 @@ export function Navbar() {
                 }`}
             >
               <Sparkles size={15} />
-              <span>AI</span>
+              <span>Smart Kitchen</span>
               <Diamond
                 size={8}
                 className="absolute top-0.5 right-1.5 text-amber-500 fill-amber-500"
