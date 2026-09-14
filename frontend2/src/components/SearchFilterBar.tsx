@@ -5,11 +5,8 @@ import {
   Scroll,
   Search,
   SlidersHorizontal,
-  Sparkles,
-  Tag,
   UserStar,
   X,
-  Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./ui";
@@ -184,11 +181,10 @@ export function SearchFilterBar({
           variant={activeTab === "for_you" ? "outline" : "ghost"}
           size="md"
           icon={<UserStar size={16} />}
-          className={
-            activeTab === "for_you"
-              ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
-              : "text-gray-400 hover:text-ink dark:hover:text-parchment"
-          }
+          className={`${activeTab === "for_you"
+            ? "bg-gray-100! dark:bg-[#1d120a]! border-transparent! hover:bg-gray-200! dark:hover:bg-[#251810]! text-ink dark:text-caramel!"
+            : "text-gray-400 hover:text-ink dark:hover:text-parchment"
+            } shrink-0`}
           onClick={() => onActiveTabChange("for_you")}
         >
           For you
@@ -215,10 +211,10 @@ export function SearchFilterBar({
         </Button> */}
       </div>
 
-      <div className="flex justify-between gap-1 items-center mt-4">
+      <div className="flex justify-between gap-1 items-center mt-2 md:mt-4">
         <form
           onSubmit={(e) => e.preventDefault()}
-          className="border-2 border-white dark:border-[#120905] flex gap-2 items-center justify-between w-full py-2 px-2 hover:bg-white dark:hover:bg-[#1d120a] hover:border-2 hover:border-butter/30 dark:hover:border-butter/30 focus-within:border-2 focus-within:border-butter/30 focus-within:bg-white dark:focus-within:bg-[#1d120a] bg-gray-100/50 dark:bg-[#1d120a]/40 rounded-full transition-all duration-300"
+          className="border-2 border-white dark:border-[#120905] flex-1 min-w-0 flex gap-2 items-center justify-between py-1 md:py-2 px-2 hover:bg-white dark:hover:bg-[#1d120a] hover:border-2 hover:border-butter/30 dark:hover:border-butter/30 focus-within:border-2 focus-within:border-butter/30 focus-within:bg-white dark:focus-within:bg-[#1d120a] bg-gray-100/50 dark:bg-[#1d120a]/40 rounded-full transition-all duration-300"
         >
           <input
             value={draft}
@@ -226,26 +222,26 @@ export function SearchFilterBar({
             placeholder="What recipe are you looking for?"
             type="search"
             aria-label="Search recipes"
-            className="flex-1 focus:outline-none ml-6 h-full bg-transparent text-sm text-ink dark:text-caramel placeholder:text-gray-400"
+            className="flex-1 min-w-0 focus:outline-none ml-4 md:ml-6 h-full bg-transparent text-sm text-ink dark:text-caramel placeholder:text-gray-400"
           />
 
           <Button
             type="submit"
             variant="primary"
             size="sm"
-            className="p-3! 1rounded-full!"
+            className="p-1.5! md:p-3! shrink-0 rounded-full!"
             aria-label="Search"
           >
             <Search size={18} />
           </Button>
         </form>
 
-        <div className="border-2 border-white dark:border-[#120905] flex gap-2 items-center justify-between py-2 px-2 hover:bg-white dark:hover:bg-[#1d120a] hover:border-2 hover:border-butter/30 dark:hover:border-butter/30 focus-within:border-2 focus-within:border-butter/30 focus-within:bg-white dark:focus-within:bg-[#1d120a] bg-gray-100/50 dark:bg-[#1d120a]/40 rounded-full transition-all duration-300">
+        <div className="shrink-0 border-2 border-white dark:border-[#120905] flex gap-2 items-center justify-between py-1 md:py-2 px-1.5 md:px-2 hover:bg-white dark:hover:bg-[#1d120a] hover:border-2 hover:border-butter/30 dark:hover:border-butter/30 focus-within:border-2 focus-within:border-butter/30 focus-within:bg-white dark:focus-within:bg-[#1d120a] bg-gray-100/50 dark:bg-[#1d120a]/40 rounded-full transition-all duration-300">
           <Button
             variant="primary"
             size="md"
             onClick={onOpenFilters}
-            className="p-3! rounded-full! h-max!"
+            className="p-1.5! md:p-3! rounded-full!"
           >
             <SlidersHorizontal size={18} />
           </Button>
@@ -255,7 +251,7 @@ export function SearchFilterBar({
 
       <div className="mt-4 flex flex-col gap-2 md:gap-4 sm:flex-row sm:items-center sm:justify-between flex-wrap">
         <div className="flex flex-col gap-3 items-start">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="w-[51%] md:w-full flex items-center gap-2 overflow-x-scroll scrollbar-none">
             <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1 mr-1 select-none">
               Popular:
             </span>
@@ -270,9 +266,9 @@ export function SearchFilterBar({
                     : [...filters.dietary, "budget_friendly"],
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0  inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Tag className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+              {/* <Tag className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" /> */}
               <span>budget friendly</span>
             </button>
 
@@ -286,9 +282,9 @@ export function SearchFilterBar({
                   ),
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Flame className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" />
+              {/* <Flame className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform" /> */}
               <span>Kenyand and East African</span>
             </button>
 
@@ -301,9 +297,9 @@ export function SearchFilterBar({
                   difficulty: "beginner",
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" />
+              {/* <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" /> */}
               <span>Quick and easy</span>
             </button>
 
@@ -316,9 +312,9 @@ export function SearchFilterBar({
                   difficulty: "beginner",
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" />
+              {/* <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" /> */}
               <span>International</span>
             </button>
 
@@ -331,9 +327,9 @@ export function SearchFilterBar({
                   difficulty: "beginner",
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" />
+              {/* <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" /> */}
               <span>Breakfast Ideas</span>
             </button>
 
@@ -346,19 +342,19 @@ export function SearchFilterBar({
                   difficulty: "beginner",
                 })
               }
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-stone-800 bg-gray-50 dark:bg-[#1d120a] px-3.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-[#251810] dark:hover:border-amber-900/50 hover:text-caramel transition-all duration-200 cursor-pointer shadow-2xs group"
             >
-              <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" />
+              {/* <Zap className="w-3.5 h-3.5 text-yellow-500 group-hover:scale-110 transition-transform" /> */}
               <span>Seasonal</span>
             </button>
           </div>
 
           {activeChips.length > 0 ? (
-            <div className="flex justify-start items-center gap-3">
+            <div className="flex justify-start items-center gap-3 flex-wrap">
               {activeChips.map((chip) => (
                 <div
                   key={chip.key}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-stone-800 bg-white dark:bg-[#1d120a] px-3 py-1 text-xs text-gray-600 dark:text-gray-300 shadow-2xs hover:bg-gray-50 dark:hover:bg-[#120905] transition-colors font-sans select-none"
+                  className="shrink-0 scrollbar-none inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-stone-800 bg-white dark:bg-[#1d120a] px-3 py-1 text-xs text-gray-600 dark:text-gray-300 shadow-2xs hover:bg-gray-50 dark:hover:bg-[#120905] transition-colors font-sans select-none"
                 >
                   <span className="capitalize">{chip.label}</span>
                   <button
