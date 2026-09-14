@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { apiGet } from "../lib/api";
+// import { apiGet } from "../lib/api";
 import { FiltersModal } from "../components/FiltersModal";
 import { RecipeGrid } from "../components/RecipeGrid";
 import { SearchFilterBar } from "../components/SearchFilterBar";
@@ -20,7 +20,28 @@ export function BrowsePage() {
     q: qParam,
   }));
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories] = useState<string[]>([
+    "Main Food Categories",
+    "Rice Dishes",
+    "Chicken",
+    "Beef",
+    "Fish & Seafood",
+    "Vegetables",
+    "Legumes",
+    "Pasta",
+    "Breakfast",
+    "Breads & Pastries",
+    "Snacks",
+    "Baking",
+    "Desserts",
+    "Drinks",
+    "Lifestyle/Content Categories",
+    "Budget Friendly",
+    "Homemade",
+    "Kenyan",
+    "African",
+    "International",
+  ]);
   const [activeTab, setActiveTab] = useState<ActiveTab>("recipes");
   const navigate = useNavigate();
 
@@ -60,13 +81,13 @@ export function BrowsePage() {
     );
   };
 
-  useEffect(() => {
-    apiGet<{ data: Record<string, number> }>("/categories", undefined, {
-      auth: false,
-    })
-      .then(({ data }) => setCategories(Object.keys(data)))
-      .catch(() => setCategories([]));
-  }, []);
+  // useEffect(() => {
+  //   apiGet<{ data: Record<string, number> }>("/categories", undefined, {
+  //     auth: false,
+  //   })
+  //     .then(({ data }) => setCategories(Object.keys(data)))
+  //     .catch(() => setCategories([]));
+  // }, []);
 
   const { recipes, status, hasMore, loadMore } = useRecipes(filters);
 
