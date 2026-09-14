@@ -63,7 +63,7 @@ export function StepImageCarousel({
     <>
       <div className="mt-4 w-full overflow-hidden rounded-xl">
         <div
-          className="flex gap-3 overflow-x-auto p-3 scroll-smooth"
+          className="flex gap-3 overflow-x-auto md:p-3 scroll-smooth"
           aria-label={`${stepTitle} images`}
         >
           {images.map((image, index) => (

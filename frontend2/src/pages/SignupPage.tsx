@@ -169,9 +169,9 @@ export function SignupPage() {
 
         {/* Header navigation */}
         <div className="flex justify-between items-center w-full">
-          <Link to="/" className="lg:hidden font-display text-xl italic text-caramel">
+          {/* <Link to="/" className="lg:hidden font-display text-xl italic text-caramel">
             Caramel Kitchen
-          </Link>
+          </Link> */}
           <div className="ml-auto text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             Already have an account?{' '}
             <Link

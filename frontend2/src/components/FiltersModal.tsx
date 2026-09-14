@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button, Dropdown, DurationPicker } from "./ui";
+import { Button, Dropdown, MultiSelectDropdown, DurationPicker } from "./ui";
 import {
   EMPTY_FILTERS,
   type Difficulty,
@@ -18,6 +18,7 @@ const CUISINES = [
   "Mediterranean",
   "American",
   "Kenyan",
+  "East African",
 ];
 
 const DIETARY_FLAGS = [
@@ -29,6 +30,7 @@ const DIETARY_FLAGS = [
   "keto",
   "low_carb",
   "halal",
+  "budget_friendly",
 ];
 
 const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"];
@@ -41,11 +43,7 @@ interface FiltersModalProps {
   onApply: (filters: RecipeFilters) => void;
 }
 
-function toggleValue(list: string[], value: string): string[] {
-  return list.includes(value)
-    ? list.filter((v) => v !== value)
-    : [...list, value];
-}
+
 
 export function FiltersModal({
   open,
@@ -150,58 +148,25 @@ export function FiltersModal({
           </div>
 
           <div>
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Cuisine
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {CUISINES.map((cuisine) => {
-                const isSelected = draft.cuisine.includes(cuisine);
-                return (
-                  <Button
-                    key={cuisine}
-                    variant="chip"
-                    size="sm"
-                    isActive={isSelected}
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        cuisine: toggleValue(d.cuisine, cuisine),
-                      }))
-                    }
-                  >
-                    {cuisine}
-                  </Button>
-                );
-              })}
-            </div>
+            <MultiSelectDropdown
+              label="Cuisine"
+              options={CUISINES.map((c) => ({ label: c, value: c }))}
+              value={draft.cuisine}
+              placeholder="Any cuisine"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, cuisine: val }))}
+            />
           </div>
 
           <div>
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Dietary
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {DIETARY_FLAGS.map((flag) => {
-                const isSelected = draft.dietary.includes(flag);
-                return (
-                  <Button
-                    key={flag}
-                    variant="chip"
-                    size="sm"
-                    isActive={isSelected}
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        dietary: toggleValue(d.dietary, flag),
-                      }))
-                    }
-                    className="capitalize"
-                  >
-                    {flag.replace("_", " ")}
-                  </Button>
-                );
-              })}
-            </div>
+            <MultiSelectDropdown
+              label="Dietary"
+              options={DIETARY_FLAGS.map((d) => ({ label: d.replace("_", " "), value: d }))}
+              value={draft.dietary}
+              placeholder="Any dietary"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, dietary: val }))}
+            />
           </div>
 
           <div>

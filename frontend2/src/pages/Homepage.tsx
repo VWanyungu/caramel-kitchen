@@ -9,11 +9,11 @@ export function HomePage() {
       <div className="lg:px-52">
         <Hero />
 
-        <div className="mt-8">
+        <div className="mt-0 md:mt-8">
           <Features />
         </div>
 
-        <div className="mt-8">
+        <div className="mt-3 md:mt-8">
           <PricingPage />
         </div>
 

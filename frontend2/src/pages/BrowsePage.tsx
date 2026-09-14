@@ -123,14 +123,13 @@ export function BrowsePage() {
           onApply={(next) => setFilters(next)}
         />
 
-        <main className=" px-8 lg:px-24 relative overflow-hidden min-h-125">
+        <main className="px-3 lg:px-24 relative overflow-hidden min-h-125">
           {/* Recipes view */}
           <div
-            className={`transition-all duration-500 ease-in-out ${
-              activeTab === "recipes"
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
-            }`}
+            className={`transition-all duration-500 ease-in-out ${activeTab === "recipes"
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
+              }`}
           >
             <RecipeGrid
               recipes={recipes}
@@ -142,11 +141,10 @@ export function BrowsePage() {
 
           {/* Categories view */}
           <div
-            className={`transition-all duration-500 ease-in-out ${
-              activeTab === "categories"
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 -translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
-            }`}
+            className={`transition-all duration-500 ease-in-out ${activeTab === "categories"
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 -translate-y-4 scale-95 pointer-events-none absolute inset-x-8 lg:inset-x-24 top-6"
+              }`}
           >
             <CategoriesGrid
               onSelectCategory={handleSelectCategory}

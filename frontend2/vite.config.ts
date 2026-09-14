@@ -8,7 +8,8 @@ export default defineConfig({
   server: {
     allowedHosts: [
       '.trycloudflare.com',
-      '0711-154-159-252-83.ngrok-free.app'
+      '0711-154-159-252-83.ngrok-free.app',
+      "4632-2a00-7c80-0-3af-00-11.ngrok-free.app",
     ]
   }
 })

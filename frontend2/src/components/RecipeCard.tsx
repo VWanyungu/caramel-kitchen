@@ -58,7 +58,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeCardData }) {
       onClick={handleCardClick}
       className="group block cursor-pointer"
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-taupe/20 shadow-lg">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-taupe/20 shadow-lg">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 shadow-lg"
           style={

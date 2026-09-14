@@ -18,6 +18,7 @@ import { StepImageCarousel } from "../components/StepImageCarousel";
 import { AllergenAlert } from "../components/AllergenAlert";
 import { RecipeComments } from "../components/RecipeComments";
 import { RecipeRatingModule } from "../components/RecipeRatingModule";
+import { RecipeMobileInfoDropdown } from "../components/RecipeMobileInfoDropdown";
 import { apiGet } from "../lib/api";
 
 export function RecipeDetailPage() {
@@ -320,10 +321,11 @@ export function RecipeDetailPage() {
   // const totalTime = recipe.total_time_mins || (prepTime + cookTime);
 
   return (
-    <div className="bg-gray-50/50 dark:bg-[#120905] pb-20 px-8 lg:px-52 text-ink dark:text-parchment transition-colors duration-300">
-      <main className="mx-auto px-4 sm:px-6 lg:px-24 pt-6">
+    <div className="bg-gray-50/50 dark:bg-[#120905] pb-12 md:pb-20 lg:px-52 text-ink dark:text-parchment transition-colors duration-300">
+      <main className="mx-auto sm:px-6 lg:px-24 md:pt-6">
+
         {/* Hero Image Banner */}
-        <div className="relative aspect-[21/9] min-h-[360px] sm:min-h-[440px] w-full overflow-hidden rounded-3xl shadow-xl">
+        <div className="relative aspect-[21/9] min-h-[360px] sm:min-h-[440px] w-full overflow-hidden md:rounded-3xl shadow-xl">
           <img
             src={recipe.thumbnail_url || "/tuscan-pasta-hero.jpg"}
             alt={recipe.title}
@@ -333,26 +335,43 @@ export function RecipeDetailPage() {
 
           <div className="absolute bottom-6 left-6 right-6 sm:bottom-10 sm:left-10 sm:right-10 text-white font-sans">
             <div className="flex items-center gap-2 mb-3">
-              <span className="rounded-full bg-caramel px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+              <span className="rounded-full bg-caramel px-3.5 py-1 text-[9px] md:text-[11px] font-bold uppercase tracking-wider text-white">
                 {recipe.course || "Main"}
               </span>
-              <span className="rounded-full bg-white/20 backdrop-blur-md px-3.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white border border-white/30 capitalize">
+              <span className="rounded-full bg-white/20 backdrop-blur-md px-3.5 py-1 text-[9px] md:text-[11px] font-semibold uppercase tracking-wider text-white border border-white/30 capitalize">
                 {recipe.difficulty}
               </span>
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white mb-2">
+            <h1 className="font-serif text-2xl md:text-4xl lg:text-5xl font-medium tracking-tight text-white mb-2">
               {recipe.title}
             </h1>
-            <p className="max-w-2xl text-xs sm:text-sm lg:text-base font-light text-white/90 leading-relaxed">
+            <p className="max-w-2xl text-xs md:text-sm lg:text-base font-light text-white/90 leading-relaxed">
               {recipe.description ||
                 "A delicious, carefully curated recipe designed to delight your senses and satisfy your culinary cravings."}
             </p>
           </div>
         </div>
 
-        {/* Metrics & Action Bar */}
-        <div className="mt-6 rounded-xl bg-white dark:bg-[#1d120a] border border-taupe/15 dark:border-stone-850 p-10 shadow-xs flex flex-wrap items-center justify-between gap-6 font-sans transition-colors duration-300">
+        {/* Mobile View Only: FAQ Dropdown Accordion for Metrics & Additional Info */}
+        <div className="lg:hidden">
+          <RecipeMobileInfoDropdown
+            recipe={recipe}
+            prepTime={prepTime}
+            cookTime={cookTime}
+            isSaved={isSaved}
+            setIsSaved={setIsSaved}
+            isInMealPlan={isInMealPlan}
+            setIsInMealPlan={setIsInMealPlan}
+            isShoppingListSaved={isShoppingListSaved}
+            setIsShoppingListSaved={setIsShoppingListSaved}
+            checkedIngredients={checkedIngredients}
+            toggleIngredient={toggleIngredient}
+          />
+        </div>
+
+        {/* Desktop Metrics & Action Bar */}
+        <div className="hidden lg:flex mx-6 md:mx-0 mt-6 rounded-xl bg-white dark:bg-[#1d120a] border border-taupe/15 dark:border-stone-850 p-10 shadow-xs flex-wrap items-center justify-between gap-6 font-sans transition-colors duration-300">
           {/* Key Metrics */}
           <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
             <div className="flex flex-col items-center">
@@ -449,32 +468,32 @@ export function RecipeDetailPage() {
           </div>
         </div>
 
-        {/* Allergen Advisory Alert */}
-        <div className="mt-6">
+        {/* Allergen Advisory Alert (Desktop) */}
+        <div className="hidden lg:block mt-6 mx-6 md:mx-0">
           <AllergenAlert
             allergens={
               recipe.dietary_flags
                 ? recipe.dietary_flags.filter(
-                    (f: string) =>
-                      ![
-                        "vegan",
-                        "vegetarian",
-                        "gluten_free",
-                        "dairy_free",
-                        "halal",
-                        "keto",
-                        "low_carb",
-                      ].includes(f),
-                  )
+                  (f: string) =>
+                    ![
+                      "vegan",
+                      "vegetarian",
+                      "gluten_free",
+                      "dairy_free",
+                      "halal",
+                      "keto",
+                      "low_carb",
+                    ].includes(f),
+                )
                 : []
             }
           />
         </div>
 
         {/* Main Content 2-Column Layout */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          {/* Left Sidebar Column (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
+        <div className="mx-6 md:mx-0 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+          {/* Left Sidebar Column (4 cols, Desktop only) */}
+          <div className="hidden lg:block lg:col-span-4 space-y-4">
             {/* Customer Reviews / Rating Module */}
             <RecipeRatingModule
               recipeId={recipe.id}
@@ -614,11 +633,10 @@ export function RecipeDetailPage() {
                       />
                       <label
                         htmlFor={`ingredient-${idx}`}
-                        className={`cursor-pointer transition-colors ${
-                          isChecked
-                            ? "line-through text-gray-400"
-                            : "text-gray-700 dark:text-gray-300 font-medium"
-                        }`}
+                        className={`cursor-pointer transition-colors ${isChecked
+                          ? "line-through text-gray-400"
+                          : "text-gray-700 dark:text-gray-300 font-medium"
+                          }`}
                       >
                         {label}
                       </label>
@@ -711,10 +729,10 @@ export function RecipeDetailPage() {
                       </div>
 
                       <div>
-                        <h3 className="font-sans font-bold text-base text-ink dark:text-white/70 mb-1">
+                        <h3 className="font-sans font-bold text-sm md:text-base text-ink dark:text-white/70 mb-1">
                           Step {stepNum}
                         </h3>
-                        <p className="font-sans text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed w-full">
+                        <p className="font-sans text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed w-full">
                           {step.instruction}
                         </p>
 
@@ -725,11 +743,11 @@ export function RecipeDetailPage() {
                               {step.tips.length === 1 ? "Tip" : "Tips"}
                             </p>
                             {step.tips.length === 1 ? (
-                              <p className="font-sans text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                              <p className="font-sans text-xs md:text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                                 {step.tips[0]}
                               </p>
                             ) : (
-                              <ul className="list-disc space-y-1.5 pl-4 font-sans text-xs sm:text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                              <ul className="list-disc space-y-1.5 pl-4 font-sans text-xs md:text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                                 {step.tips.map(
                                   (tip: string, tipIndex: number) => (
                                     <li key={tipIndex}>{tip}</li>
@@ -759,8 +777,8 @@ export function RecipeDetailPage() {
         </div>
 
         {/* You Might Also Like Section */}
-        <section className="mt-16 border-t border-gray-200/20 pt-8">
-          <h2 className="font-serif text-lg sm:text-xl text-ink font-semibold mb-8">
+        <section className="mx-6 md:mx-0 mt-6 border-t border-gray-200/20 md:pt-8">
+          <h2 className="font-serif md:text-lg sm:text-xl text-ink font-semibold mb-4 md:mb-8">
             More recipes from {recipe.author?.full_name || "Caramel Kitchen"}
           </h2>
 

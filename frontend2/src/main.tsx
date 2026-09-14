@@ -5,13 +5,16 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { PremiumModalProvider } from './context/PremiumModalContext.tsx'
+import { NavigationProvider } from './context/NavigationContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <PremiumModalProvider>
-          <App />
+          <NavigationProvider>
+            <App />
+          </NavigationProvider>
         </PremiumModalProvider>
       </AuthProvider>
     </BrowserRouter>

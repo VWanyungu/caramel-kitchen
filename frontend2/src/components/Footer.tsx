@@ -101,7 +101,7 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="mt-24 border-t border-taupe/15 dark:border-stone-850/60 bg-white dark:bg-[#120905] pt-16 pb-8 font-sans transition-colors duration-300">
+    <footer className="mt-0 md:mt-24 border-t border-taupe/15 dark:border-stone-850/60 bg-white dark:bg-[#120905] pt-16 pb-8 font-sans transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12 space-y-12">
 
         {/* Main Columns Grid */}
@@ -134,7 +134,7 @@ export const Footer = () => {
             </div>
 
             {/* Pulse Operational status badge */}
-            <div className="pt-2">
+            {/* <div className="pt-2">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/10 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/10 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 shadow-3xs">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -142,7 +142,7 @@ export const Footer = () => {
                 </span>
                 All systems operational
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Right Links Columns */}
@@ -187,7 +187,7 @@ export const Footer = () => {
           <p>
             © {currentYear} Caramel Kitchen. All rights reserved.
           </p>
-          <div className="flex items-center gap-6 font-semibold text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-4 md:gap-6 font-semibold text-gray-500 dark:text-gray-400">
             <a href="#" className="hover:text-caramel dark:hover:text-caramel transition-colors duration-200">
               Privacy Policy
             </a>
