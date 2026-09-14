@@ -66,10 +66,26 @@ const CATEGORY_MAP: Record<string, { label: string; image: string }> = {
 };
 
 const DEFAULT_CATEGORIES = [
-  "breakfast",
-  "soups_stews",
-  "drinks_juices",
-  "fish_seafood",
+  "Main Food Categories",
+  "Rice Dishes",
+  "Chicken",
+  "Beef",
+  "Fish & Seafood",
+  "Vegetables",
+  "Legumes",
+  "Pasta",
+  "Breakfast",
+  "Breads & Pastries",
+  "Snacks",
+  "Baking",
+  "Desserts",
+  "Drinks",
+  "Lifestyle/Content Categories",
+  "Budget Friendly",
+  "Homemade",
+  "Kenyan",
+  "African",
+  "International",
 ];
 
 export function CategoriesGrid({
