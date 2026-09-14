@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { apiGet } from "../lib/api";
+// import { apiGet } from "../lib/api";
 import { FiltersModal } from "../components/FiltersModal";
 import { RecipeGrid } from "../components/RecipeGrid";
 import { SearchFilterBar } from "../components/SearchFilterBar";
@@ -20,7 +20,7 @@ export function BrowsePage() {
     q: qParam,
   }));
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [categories, setCategories] = useState<string[]>([
+  const [categories] = useState<string[]>([
     "Main Food Categories",
     "Rice Dishes",
     "Chicken",
