@@ -191,39 +191,40 @@ export function PricingPage() {
                 </p>
                 <ul className="space-y-3 text-xs text-gray-300">
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Access all premium creator recipes</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Content</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Unlock advanced filter controls</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Recipes</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Save unlimited custom shopping lists</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Collections</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Ad-free cooking page interface</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Mini Cookbooks</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Priority community access</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Seasonal Collections</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Drinks</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Sofia's Kitchen Exclusives</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Videos</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Tutorials</span>
                   </li>
                 </ul>
               </div>
@@ -278,39 +279,52 @@ export function PricingPage() {
                 </p>
                 <ul className="space-y-3 text-xs text-gray-600 dark:text-gray-300">
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Custom meal plans & calendar planner</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Masterclasses</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Full integration with AI Kitchen Assistant</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Academy when available</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Real-time nutritional tracking reports</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Premium Tools</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>Offline access to shopping lists</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Smart Meal Planner</span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <Check
-                      size={14}
-                      className="text-emerald-500 mt-0.5 shrink-0"
-                    />
-                    <span>24/7 dedicated support desk</span>
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Budget Meal Plans</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Student Meal Plans</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Meal Prep Plans</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Family Meal Plans</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Smart Shopping List</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Budget Calculator</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Portion Calculator</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <span>Leftover Planner</span>
                   </li>
                 </ul>
               </div>
