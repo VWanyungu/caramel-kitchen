@@ -507,6 +507,69 @@ export function RecipeDetailPage() {
                 Profile
               </h2>
 
+              {recipe.dish_category && (
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                    Category
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(recipe.dish_category) ? recipe.dish_category : [recipe.dish_category]).map((c: string) => (
+                      <span key={c} className="rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(recipe.course || recipe.courses) && (
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                    Course
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(recipe.courses || recipe.course) ? (recipe.courses || recipe.course) : [recipe.course]).map((c: string) => (
+                      <span key={c} className="rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(recipe.meal || recipe.meals) && (
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                    Meal
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {(Array.isArray(recipe.meals || recipe.meal) ? (recipe.meals || recipe.meal) : [recipe.meal]).map((m: string) => (
+                      <span key={m} className="rounded-full bg-pink-500/10 text-pink-700 dark:text-pink-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize">
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {recipe.cuisine_origin && recipe.cuisine_origin.length > 0 && (
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                    Cuisine
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {recipe.cuisine_origin.map((cuisine: string) => (
+                      <span
+                        key={cuisine}
+                        className="rounded-full bg-orange-500/10 text-orange-700 dark:text-orange-400 text-xs font-semibold px-3.5 py-1.5 inline-block capitalize"
+                      >
+                        {cuisine}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {recipe.dietary_flags && recipe.dietary_flags.length > 0 && (
                 <div>
                   <span className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
