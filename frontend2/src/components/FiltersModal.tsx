@@ -8,30 +8,72 @@ import {
 } from "../features/browse/types";
 
 const CUISINES = [
-  "Italian",
-  "Mexican",
-  "Indian",
-  "Chinese",
-  "Thai",
-  "Japanese",
-  "French",
-  "Mediterranean",
-  "American",
   "Kenyan",
   "East African",
+  "African",
+  "Indian",
+  "Italian",
+  "Chinese",
+  "Mexican",
+  "Japanese",
+  "Thai",
+  "Korean",
+  "Other International cuisines",
 ];
 
 const DIETARY_FLAGS = [
-  "vegan",
-  "vegetarian",
-  "gluten_free",
-  "dairy_free",
-  "nut_free",
-  "keto",
-  "low_carb",
-  "halal",
-  "budget_friendly",
+  "Vegetarian",
+  "Vegan",
+  "Gluten-Free",
+  "Dairy-Free",
+  "High Protein",
 ];
+
+const COURSES = [
+  "Starter/Appetizer",
+  "Main Course",
+  "Side Dish",
+  "Dessert",
+  "Snack",
+]
+
+const MEALS = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Tea Time",
+  "Snack",
+]
+
+const COOKING_METHOD = [
+  "Boiling",
+  "Frying",
+  "Baking",
+  "Grilling",
+  "Roasting",
+  "Steaming",
+  "Air Frying",
+  "Air Frying",
+  "No-Cooking"
+]
+
+const COOKING_TIME = [
+  "Under 15 minutes",
+  "15–30 minutes",
+  "30–60 minutes",
+  "60+ minutes",
+]
+
+const TASTE = [
+  "Sweet",
+  "Savory",
+  "Spicy",
+  "Mild",
+  "Tangy",
+]
+
+
+
 
 const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"];
 
@@ -166,6 +208,61 @@ export function FiltersModal({
               placeholder="Any dietary"
               fullWidth
               onChange={(val) => setDraft((d) => ({ ...d, dietary: val }))}
+            />
+          </div>
+
+          <div>
+            <MultiSelectDropdown
+              label="Courses"
+              options={COURSES.map((c) => ({ label: c, value: c }))}
+              value={draft.courses}
+              placeholder="Any course"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, courses: val }))}
+            />
+          </div>
+
+          <div>
+            <MultiSelectDropdown
+              label="Meals"
+              options={MEALS.map((m) => ({ label: m, value: m }))}
+              value={draft.meals}
+              placeholder="Any meal"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, meals: val }))}
+            />
+          </div>
+
+          <div>
+            <MultiSelectDropdown
+              label="Cooking Method"
+              options={COOKING_METHOD.map((c) => ({ label: c, value: c }))}
+              value={draft.cookingMethods}
+              placeholder="Any method"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, cookingMethods: val }))}
+            />
+          </div>
+
+          <div>
+            <MultiSelectDropdown
+              label="Cooking Time"
+              options={COOKING_TIME.map((c) => ({ label: c, value: c }))}
+              value={draft.cookingTimes}
+              placeholder="Any time"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, cookingTimes: val }))}
+            />
+          </div>
+
+          <div>
+            <MultiSelectDropdown
+              label="Taste"
+              options={TASTE.map((t) => ({ label: t, value: t }))}
+              value={draft.tastes}
+              placeholder="Any taste"
+              fullWidth
+              onChange={(val) => setDraft((d) => ({ ...d, tastes: val }))}
             />
           </div>
 

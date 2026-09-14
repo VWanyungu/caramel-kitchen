@@ -52,6 +52,11 @@ export interface RecipeFilters {
   dietary: string[]
   minTime: number | undefined
   maxTime: number | undefined
+  courses: string[]
+  meals: string[]
+  cookingMethods: string[]
+  cookingTimes: string[]
+  tastes: string[]
 }
 
 export const EMPTY_FILTERS: RecipeFilters = {
@@ -62,6 +67,11 @@ export const EMPTY_FILTERS: RecipeFilters = {
   dietary: [],
   minTime: undefined,
   maxTime: undefined,
+  courses: [],
+  meals: [],
+  cookingMethods: [],
+  cookingTimes: [],
+  tastes: [],
 }
 
 export function hasActiveFilters(filters: RecipeFilters): boolean {
@@ -71,6 +81,11 @@ export function hasActiveFilters(filters: RecipeFilters): boolean {
     filters.difficulty !== '' ||
     filters.dietary.length > 0 ||
     filters.minTime !== undefined ||
-    filters.maxTime !== undefined
+    filters.maxTime !== undefined ||
+    filters.courses.length > 0 ||
+    filters.meals.length > 0 ||
+    filters.cookingMethods.length > 0 ||
+    filters.cookingTimes.length > 0 ||
+    filters.tastes.length > 0
   )
 }
