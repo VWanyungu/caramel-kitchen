@@ -39,10 +39,14 @@ export function Features() {
       linkText: "Explore healthy options",
       linkUrl: "/browse",
       icon: Apple,
-      bgColorClass: "bg-[#f4f8ff] dark:bg-[#0c1424] border-blue-200/40 dark:border-blue-900/30",
-      badgeColorClass: "text-blue-600 dark:text-blue-400 bg-white dark:bg-[#121c33] border-blue-100 dark:border-none",
-      linkColorClass: "text-blue-600 dark:text-blue-400 border-blue-600/20 dark:border-blue-400/20 hover:border-blue-600 dark:hover:border-blue-400",
-      arrowColor: "text-blue-600 dark:text-blue-400",
+      // bgColorClass: "bg-[#f4f8ff] dark:bg-[#0c1424] border-blue-200/40 dark:border-blue-900/30",
+      // badgeColorClass: "text-blue-600 dark:text-blue-400 bg-white dark:bg-[#121c33] border-blue-100 dark:border-none",
+      // linkColorClass: "text-blue-600 dark:text-blue-400 border-blue-600/20 dark:border-blue-400/20 hover:border-blue-600 dark:hover:border-blue-400",
+      // arrowColor: "text-blue-600 dark:text-blue-400",
+      bgColorClass: "bg-[#fff8f2] dark:bg-[#1f150f] border-caramel/10 dark:border-caramel/20",
+      badgeColorClass: "text-[#c8862b] bg-white dark:bg-[#2b1e15] border-[#f0dfd0]  dark:border-none",
+      linkColorClass: "text-[#c8862b] border-[#c8862b]/20 hover:border-[#c8862b]",
+      arrowColor: "text-[#c8862b]",
       svgDecor: (
         <svg className="absolute right-0 bottom-0 w-44 h-44 opacity-25 dark:opacity-15 pointer-events-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="75" cy="75" r="40" stroke="url(#blue-grad)" strokeWidth="6" />
@@ -50,8 +54,10 @@ export function Features() {
           <circle cx="75" cy="75" r="16" fill="url(#blue-grad)" />
           <defs>
             <linearGradient id="blue-grad" x1="35" y1="35" x2="75" y2="115" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#3b82f6" />
-              <stop offset="1" stopColor="#60a5fa" stopOpacity="0.1" />
+              {/* <stop stopColor="#3b82f6" />
+              <stop offset="1" stopColor="#60a5fa" stopOpacity="0.1" /> */}
+              <stop stopColor="#e89e3a" />
+              <stop offset="1" stopColor="#e8b94a" stopOpacity="0.2" />
             </linearGradient>
           </defs>
         </svg>
@@ -65,10 +71,14 @@ export function Features() {
       linkText: "Browse recipes",
       linkUrl: "/browse",
       icon: Bookmark,
-      bgColorClass: "bg-[#faf6fe] dark:bg-[#140e24] border-purple-200/40 dark:border-purple-900/30",
-      badgeColorClass: "text-purple-600 dark:text-purple-400 bg-white dark:bg-[#1b1433] border-purple-100 dark:border-none",
-      linkColorClass: "text-purple-600 dark:text-purple-400 border-purple-600/20 dark:border-purple-400/20 hover:border-purple-600 dark:hover:border-purple-400",
-      arrowColor: "text-purple-600 dark:text-purple-400",
+      // bgColorClass: "bg-[#faf6fe] dark:bg-[#140e24] border-purple-200/40 dark:border-purple-900/30",
+      // badgeColorClass: "text-purple-600 dark:text-purple-400 bg-white dark:bg-[#1b1433] border-purple-100 dark:border-none",
+      // linkColorClass: "text-purple-600 dark:text-purple-400 border-purple-600/20 dark:border-purple-400/20 hover:border-purple-600 dark:hover:border-purple-400",
+      // arrowColor: "text-purple-600 dark:text-purple-400",
+      bgColorClass: "bg-[#fff8f2] dark:bg-[#1f150f] border-caramel/10 dark:border-caramel/20",
+      badgeColorClass: "text-[#c8862b] bg-white dark:bg-[#2b1e15] border-[#f0dfd0]  dark:border-none",
+      linkColorClass: "text-[#c8862b] border-[#c8862b]/20 hover:border-[#c8862b]",
+      arrowColor: "text-[#c8862b]",
       svgDecor: (
         <svg className="absolute right-0 bottom-0 w-44 h-44 opacity-25 dark:opacity-15 pointer-events-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M40 90C40 62.3858 62.3858 40 90 40" stroke="url(#purple-grad)" strokeWidth="8" strokeLinecap="round" />
@@ -76,8 +86,10 @@ export function Features() {
           <path d="M80 90C80 84.4772 84.4772 80 90 80" stroke="url(#purple-grad)" strokeWidth="2" strokeLinecap="round" />
           <defs>
             <linearGradient id="purple-grad" x1="40" y1="40" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#a855f7" />
-              <stop offset="1" stopColor="#c084fc" stopOpacity="0.1" />
+              {/* <stop stopColor="#a855f7" />
+              <stop offset="1" stopColor="#c084fc" stopOpacity="0.1" /> */}
+              <stop stopColor="#e89e3a" />
+              <stop offset="1" stopColor="#e8b94a" stopOpacity="0.2" />
             </linearGradient>
           </defs>
         </svg>
@@ -91,10 +103,14 @@ export function Features() {
       linkText: "Start planning",
       linkUrl: "/meal-plans",
       icon: Calendar,
-      bgColorClass: "bg-[#f2faf5] dark:bg-[#091510] border-emerald-200/40 dark:border-emerald-900/30",
-      badgeColorClass: "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#0f2119] border-emerald-100 dark:border-none",
-      linkColorClass: "text-emerald-600 dark:text-emerald-400 border-emerald-600/20 dark:border-emerald-400/20 hover:border-emerald-600 dark:hover:border-emerald-400",
-      arrowColor: "text-emerald-600 dark:text-emerald-400",
+      // bgColorClass: "bg-[#f2faf5] dark:bg-[#091510] border-emerald-200/40 dark:border-emerald-900/30",
+      // badgeColorClass: "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#0f2119] border-emerald-100 dark:border-none",
+      // linkColorClass: "text-emerald-600 dark:text-emerald-400 border-emerald-600/20 dark:border-emerald-400/20 hover:border-emerald-600 dark:hover:border-emerald-400",
+      // arrowColor: "text-emerald-600 dark:text-emerald-400",
+      bgColorClass: "bg-[#fff8f2] dark:bg-[#1f150f] border-caramel/10 dark:border-caramel/20",
+      badgeColorClass: "text-[#c8862b] bg-white dark:bg-[#2b1e15] border-[#f0dfd0]  dark:border-none",
+      linkColorClass: "text-[#c8862b] border-[#c8862b]/20 hover:border-[#c8862b]",
+      arrowColor: "text-[#c8862b]",
       svgDecor: (
         <svg className="absolute right-0 bottom-0 w-44 h-44 opacity-25 dark:opacity-15 pointer-events-none transition-transform duration-500 group-hover:scale-105" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M50 15L85 50L50 85L15 50Z" stroke="url(#green-grad)" strokeWidth="6" strokeLinejoin="round" />
@@ -102,8 +118,10 @@ export function Features() {
           <circle cx="50" cy="50" r="6" fill="url(#green-grad)" />
           <defs>
             <linearGradient id="green-grad" x1="15" y1="15" x2="85" y2="85" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#10b981" />
-              <stop offset="1" stopColor="#34d399" stopOpacity="0.1" />
+              {/* <stop stopColor="#10b981" />
+              <stop offset="1" stopColor="#34d399" stopOpacity="0.1" /> */}
+              <stop stopColor="#e89e3a" />
+              <stop offset="1" stopColor="#e8b94a" stopOpacity="0.2" />
             </linearGradient>
           </defs>
         </svg>
@@ -112,7 +130,7 @@ export function Features() {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 font-sans">
+    <section className="py-0 md:py-16 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
         <h2 className="font-serif text-3xl sm:text-4xl font-extrabold tracking-tight text-ink animate-fade-in">
           Supercharge Your Culinary Routine
@@ -124,7 +142,7 @@ export function Features() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
         {featureItems.map((item) => {
-          const Icon = item.icon;
+          // const Icon = item.icon;
           return (
             <div
               key={item.id}
@@ -136,12 +154,12 @@ export function Features() {
               {/* Card Content */}
               <div className="space-y-6 relative z-10">
                 {/* Header Badge */}
-                <div className="flex">
+                {/* <div className="flex">
                   <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold border tracking-wide uppercase shadow-2xs ${item.badgeColorClass}`}>
                     <Icon size={12} className="shrink-0" />
                     {item.badge}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Text section */}
                 <div className="space-y-3">

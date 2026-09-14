@@ -230,11 +230,11 @@ export function RecipeComments() {
   });
 
   return (
-    <section className="mt-14 rounded-2xl bg-white dark:bg-[#1d120a] border border-taupe/15 dark:border-stone-850 p-6 sm:p-8 shadow-xs font-sans transition-colors duration-300">
+    <section className="mt-14 rounded-2xl bg-white dark:bg-[#1d120a] border border-taupe/15 dark:border-stone-850 md:p-8 shadow-xs font-sans transition-colors duration-300">
       {/* Top Comment Input Box */}
       <form onSubmit={handleAddComment} className="space-y-4">
         <div className="flex gap-4 items-start">
-          <div className="w-10 h-10 rounded-full bg-caramel/10 border border-caramel/20 flex items-center justify-center text-caramel font-bold text-sm shrink-0 overflow-hidden">
+          <div className="hidden w-10 h-10 rounded-full bg-caramel/10 border border-caramel/20 md:flex items-center justify-center text-caramel font-bold text-sm shrink-0 overflow-hidden">
             {user?.avatar_url ? (
               <img
                 src={user.avatar_url}
@@ -246,7 +246,7 @@ export function RecipeComments() {
             )}
           </div>
 
-          <div className="flex-1 rounded-2xl border border-gray-200 dark:border-stone-800 bg-gray-50/50 dark:bg-[#120905]/40 p-4 transition-all focus-within:border-caramel/40 focus-within:bg-white dark:focus-within:bg-[#120905] focus-within:shadow-xs">
+          <div className="flex-1 rounded-t-2xl md:rounded-2xl border-b md:border border-gray-200 dark:border-stone-800 bg-gray-50/50 dark:bg-[#120905]/40 p-4 transition-all md:focus-within:border-caramel/40 md:focus-within:bg-white dark:md:focus-within:bg-[#120905] md:focus-within:shadow-xs">
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -308,12 +308,12 @@ export function RecipeComments() {
       </form>
 
       {/* Header with Comment count & Sort Filter */}
-      <div className="mt-8 mb-6 flex items-center justify-between border-b border-gray-100 dark:border-stone-850 pb-4">
+      <div className="mx-6 md:mx-0 mt-8 mb-6 flex items-center justify-between border-b border-gray-100 dark:border-stone-850 pb-4">
         <div className="flex items-center gap-2.5">
-          <h3 className="font-serif text-xl font-bold text-ink dark:text-parchment">
+          <h3 className="font-serif md:text-xl font-bold text-ink dark:text-parchment">
             Comments
           </h3>
-          <span className="bg-caramel/15 text-caramel text-xs font-extrabold px-2.5 py-0.5 rounded-full">
+          <span className="hidden md:block bg-caramel/15 text-caramel text-xs font-extrabold px-2.5 py-0.5 rounded-full">
             {totalCommentCount}
           </span>
         </div>
@@ -331,7 +331,7 @@ export function RecipeComments() {
       </div>
 
       {/* Comments Feed */}
-      <div className="space-y-8">
+      <div className="mx-6 md:mx-0 pb-6 space-y-8">
         {sortedComments.map((comment) => {
           const hasReplies = comment.replies.length > 0;
           const isRepliesExpanded = expandedReplies[comment.id] ?? true;
@@ -375,11 +375,10 @@ export function RecipeComments() {
                   <div className="flex items-center gap-4 pt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                     <button
                       onClick={() => handleVoteComment(comment.id, "up")}
-                      className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        comment.userVote === "up"
-                          ? "text-caramel font-bold"
-                          : "hover:text-caramel"
-                      }`}
+                      className={`flex items-center gap-1.5 transition-colors cursor-pointer ${comment.userVote === "up"
+                        ? "text-caramel font-bold"
+                        : "hover:text-caramel"
+                        }`}
                     >
                       <ThumbsUp
                         size={14}
@@ -392,11 +391,10 @@ export function RecipeComments() {
 
                     <button
                       onClick={() => handleVoteComment(comment.id, "down")}
-                      className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-                        comment.userVote === "down"
-                          ? "text-red-500 font-bold"
-                          : "hover:text-red-500"
-                      }`}
+                      className={`flex items-center gap-1.5 transition-colors cursor-pointer ${comment.userVote === "down"
+                        ? "text-red-500 font-bold"
+                        : "hover:text-red-500"
+                        }`}
                     >
                       <ThumbsDown
                         size={14}
@@ -502,11 +500,10 @@ export function RecipeComments() {
                             onClick={() =>
                               handleVoteReply(comment.id, reply.id, "up")
                             }
-                            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-                              reply.userVote === "up"
-                                ? "text-caramel font-bold"
-                                : "hover:text-caramel"
-                            }`}
+                            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${reply.userVote === "up"
+                              ? "text-caramel font-bold"
+                              : "hover:text-caramel"
+                              }`}
                           >
                             <ThumbsUp
                               size={13}
@@ -521,11 +518,10 @@ export function RecipeComments() {
                             onClick={() =>
                               handleVoteReply(comment.id, reply.id, "down")
                             }
-                            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-                              reply.userVote === "down"
-                                ? "text-red-500 font-bold"
-                                : "hover:text-red-500"
-                            }`}
+                            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${reply.userVote === "down"
+                              ? "text-red-500 font-bold"
+                              : "hover:text-red-500"
+                              }`}
                           >
                             <ThumbsDown
                               size={13}

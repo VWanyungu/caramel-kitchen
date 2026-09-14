@@ -21,11 +21,13 @@ export function PremiumModalProvider({ children }: { children: ReactNode }) {
   const [modalOptions, setModalOptions] = useState<PremiumModalOptions>({});
 
   // Check if current user has an active premium/paid subscription
-  const isPremium = Boolean(
-    user?.subscription_tier &&
-    user.subscription_tier !== "free" &&
-    user.subscription_tier !== ""
-  );
+  // const isPremium = Boolean(
+  //   user?.subscription_tier &&
+  //   user.subscription_tier !== "free" &&
+  //   user.subscription_tier !== ""
+  // );
+
+  const isPremium = true
 
   const openPremiumModal = (options?: PremiumModalOptions) => {
     setModalOptions(options || {});

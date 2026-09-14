@@ -31,9 +31,8 @@ function App() {
 
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/browse" element={<BrowsePage />} />
+        <Route path="/recipes" element={<BrowsePage />} />
         <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-        <Route path="/recipe" element={<RecipeDetailPage />} />
         <Route path="/shopping-list" element={<ShoppingListPage />} />
         <Route path="/cart" element={<ShoppingListPage />} />
         <Route path="/profile" element={<ProfilePage />} />

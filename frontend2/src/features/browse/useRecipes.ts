@@ -28,6 +28,72 @@ function buildFilterQuery(filters: RecipeFilters) {
   };
 }
 
+function filterPlaceholderRecipes(
+  recipes: RecipeCard[],
+  filters: RecipeFilters,
+): RecipeCard[] {
+  return recipes.filter((r) => {
+    if (filters.q.trim()) {
+      const q = filters.q.trim().toLowerCase();
+      const matchTitle = r.title.toLowerCase().includes(q);
+      const matchCat = r.dish_category.toLowerCase().includes(q);
+      const matchCuisine = r.cuisine_origin.some((c) =>
+        c.toLowerCase().includes(q),
+      );
+      const matchTags = r.taste_tags.some((t) => t.toLowerCase().includes(q));
+      if (!matchTitle && !matchCat && !matchCuisine && !matchTags) return false;
+    }
+    if (filters.category && r.dish_category !== filters.category) {
+      return false;
+    }
+    if (filters.difficulty && r.difficulty !== filters.difficulty) {
+      return false;
+    }
+    if (filters.maxTime !== undefined && r.total_time_mins > filters.maxTime) {
+      return false;
+    }
+    if (filters.minTime !== undefined && r.total_time_mins < filters.minTime) {
+      return false;
+    }
+    if (filters.cuisine.length > 0) {
+      const kenyanOrigins = [
+        "coastal",
+        "central",
+        "western",
+        "nyanza",
+        "rift_valley",
+        "kenyan",
+        "east_african",
+        "east african",
+      ];
+      const hasCuisine = filters.cuisine.some((c) => {
+        const cLower = c.toLowerCase();
+        if (cLower === "kenyan" || cLower === "east african") {
+          return r.cuisine_origin.some((co) =>
+            kenyanOrigins.includes(co.toLowerCase()),
+          );
+        }
+        return r.cuisine_origin.some((co) => co.toLowerCase() === cLower);
+      });
+      if (!hasCuisine) return false;
+    }
+    if (filters.dietary.length > 0) {
+      const hasDietary = filters.dietary.some((d) => {
+        if (d === "budget_friendly") {
+          return (
+            r.difficulty === "beginner" ||
+            r.total_time_mins <= 45 ||
+            r.dietary_flags.includes("budget_friendly")
+          );
+        }
+        return r.dietary_flags.includes(d);
+      });
+      if (!hasDietary) return false;
+    }
+    return true;
+  });
+}
+
 export function useRecipes(filters: RecipeFilters = EMPTY_FILTERS) {
   const [recipes, setRecipes] = useState<RecipeCard[]>([]);
   const [status, setStatus] = useState<Status>("loading");
@@ -87,7 +153,7 @@ export function useRecipes(filters: RecipeFilters = EMPTY_FILTERS) {
         // TEST-ONLY: fall back to placeholder data when the backend has
         // nothing to return (e.g. unseeded dev DB), so the grid can still
         // be reviewed. Remove once the backend is reliably seeded.
-        setRecipes(PLACEHOLDER_RECIPES);
+        setRecipes(filterPlaceholderRecipes(PLACEHOLDER_RECIPES, filters));
         setHasMore(false);
         setStatus("success");
         return;
