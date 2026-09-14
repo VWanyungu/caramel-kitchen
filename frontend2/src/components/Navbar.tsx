@@ -141,6 +141,7 @@ export function Navbar() {
   const isMealPlansActive = pathname === "/meal-plans";
   const isAiActive = pathname === "/ai";
   const isCreatorActive = pathname === "/creator";
+  const isCollectionsActive = pathname.startsWith("/collections");
 
   return (
     <>
@@ -271,18 +272,18 @@ export function Navbar() {
             </Link>
 
             <Link
-              to="/meal-plans"
+              to="/collections"
               onClick={(e) => {
                 if (!isPremium) {
                   e.preventDefault();
                   openPremiumModal({
-                    featureName: "Weekly Meal Planner",
+                    featureName: "Premium Collections",
                     featureDescription:
-                      "Meal planning, macro balancing, and automated schedule generation are available exclusively on Caramel Bronze and Silver plans.",
+                      "Access exclusive, expert-curated recipe and video collections with a Caramel Premium plan.",
                   });
                 }
               }}
-              className={`relative flex items-center gap-2 px-3.5 xl:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isMealPlansActive
+              className={`relative flex items-center gap-2 px-3.5 xl:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isCollectionsActive
                 ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
                 : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
                 }`}
