@@ -21,7 +21,10 @@ defmodule CaramelKitchenWeb.Plugs.VerifyStripeSignature do
         halt_with_error(conn)
 
       {:error, :missing_raw_body} ->
-        Logger.error("Missing raw body for Stripe signature verification. Is CacheBodyReader configured?")
+        Logger.error(
+          "Missing raw body for Stripe signature verification. Is CacheBodyReader configured?"
+        )
+
         halt_with_error(conn)
 
       nil ->

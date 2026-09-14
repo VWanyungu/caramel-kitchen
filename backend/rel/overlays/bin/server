@@ -1,4 +1,6 @@
 #!/bin/sh
 set -eu
 cd -P -- "$(dirname -- "$(command -v -- "$0")")"
+echo "Running database migrations..."
+./caramel_kitchen eval "CaramelKitchen.Release.migrate()" || true
 RELEASE_DISTRIBUTION=none PHX_SERVER=true exec ./caramel_kitchen start

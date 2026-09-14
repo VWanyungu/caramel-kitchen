@@ -45,14 +45,14 @@ defmodule CaramelKitchenWeb.RecipeController do
           filters: filters
         )
         |> Enum.map(fn %{recipe: r, taste_score: ts, combined_score: cs} ->
-          render_recipe_card(r, %{taste_score: ts, combined_score: cs})
+          render_recipe_card(r, %{taste_score: ts, combined_score: cs, current_user: user})
         end)
       else
         Recipes.list_by_category(filters[:category] || "all",
           limit: limit,
           filters: filters
         )
-        |> Enum.map(&render_recipe_card(&1, %{}))
+        |> Enum.map(&render_recipe_card(&1, %{current_user: nil}))
       end
 
     json(conn, %{data: recipes, meta: %{count: length(recipes), after_id: after_id}})
@@ -79,8 +79,9 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   def trending(conn, params) do
     limit = parse_int(params["limit"], 10) |> min(30)
+    user = conn.assigns[:current_user]
     recipes = Recipes.trending(limit: limit)
-    json(conn, %{data: Enum.map(recipes, &render_recipe_card(&1, %{}))})
+    json(conn, %{data: Enum.map(recipes, &render_recipe_card(&1, %{current_user: user}))})
   end
 
   # GET /api/v1/recipes/search?q=...
@@ -110,13 +111,14 @@ defmodule CaramelKitchenWeb.RecipeController do
     filters = parse_filters(params)
     limit = parse_int(params["limit"], 20)
     offset = parse_int(params["offset"], 0)
+    user = conn.assigns[:current_user]
 
     results = Recipes.search(q, filters: filters, limit: limit, offset: offset)
 
     json(conn, %{
       data:
         Enum.map(results, fn %{recipe: r, rank: rank} ->
-          render_recipe_card(r, %{search_rank: rank})
+          render_recipe_card(r, %{search_rank: rank, current_user: user})
         end),
       meta: %{query: q, limit: limit, offset: offset}
     })
@@ -141,10 +143,21 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   # GET /api/v1/recipes/:id
   def show(conn, %{"id" => id}) do
+    user = conn.assigns[:current_user]
+
     with {:ok, recipe} <- Recipes.get_recipe(id) do
-      user = conn.assigns[:current_user]
-      if user, do: Recipes.track_view(id, user.id)
-      json(conn, %{data: render_recipe_detail(recipe, user)})
+      if (recipe.is_special || false) && not Recipes.has_recipe_access?(recipe, user) do
+        conn
+        |> put_status(:payment_required)
+        |> json(%{
+          error: "premium_required",
+          message: "This special recipe requires a Premium subscription",
+          upgrade_url: "/subscription/checkout"
+        })
+      else
+        if user, do: Recipes.track_view(id, user.id)
+        json(conn, %{data: render_recipe_detail(recipe, user)})
+      end
     end
   end
 
@@ -167,9 +180,20 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   # GET /api/v1/recipes/slug/:slug
   def show_by_slug(conn, %{"slug" => slug}) do
+    user = conn.assigns[:current_user]
+
     with {:ok, recipe} <- Recipes.get_recipe_by_slug(slug) do
-      user = conn.assigns[:current_user]
-      json(conn, %{data: render_recipe_detail(recipe, user)})
+      if (recipe.is_special || false) && not Recipes.has_recipe_access?(recipe, user) do
+        conn
+        |> put_status(:payment_required)
+        |> json(%{
+          error: "premium_required",
+          message: "This special recipe requires a Premium subscription",
+          upgrade_url: "/subscription/checkout"
+        })
+      else
+        json(conn, %{data: render_recipe_detail(recipe, user)})
+      end
     end
   end
 
@@ -219,40 +243,81 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp render_recipe_card(recipe, meta) do
     categories = recipe.dish_categories || []
+    user = meta[:current_user]
+
+    is_premium =
+      Map.get(recipe, :is_premium, false) || Map.get(recipe, :is_special, false) || false
+
+    access_level = Map.get(recipe, :access_level) || if is_premium, do: "premium", else: "free"
+    is_locked = is_premium and not Recipes.has_recipe_access?(recipe, user)
+    cuisine_list = recipe.cuisine_origin || []
+    primary_cuisine = List.first(cuisine_list)
+    primary_category = recipe.dish_category || List.first(categories)
+    dietary_list = recipe.dietary_flags || []
 
     %{
       id: recipe.id,
       slug: recipe.slug,
       title: recipe.title,
       thumbnail_url: recipe.thumbnail_url,
-      dish_category: recipe.dish_category || List.first(categories),
-      dish_categories: categories,
+      # Category
+      category: primary_category,
       categories: categories,
+      dish_category: primary_category,
+      dish_categories: categories,
+      # Classification
       course: recipe.course,
       meal: recipe.meal,
       primary_method: recipe.primary_method,
       difficulty: recipe.difficulty,
+      # Cuisine
+      cuisine: primary_cuisine,
+      cuisines: cuisine_list,
+      cuisine_origin: cuisine_list,
+      # Cost / Economics
+      cost: recipe.cost,
+      estimated_cost: recipe.cost,
+      # Servings
+      servings: recipe.serving_size,
+      serving_size: recipe.serving_size,
+      # Timing
+      cooking_time: recipe.cook_time_mins,
+      cooking_time_mins: recipe.cook_time_mins,
+      cook_time_mins: recipe.cook_time_mins,
+      prep_time_mins: recipe.prep_time_mins,
       total_time_mins: recipe.total_time_mins,
+      # Dietary & Taste
       taste_tags: recipe.taste_tags,
-      dietary_flags: recipe.dietary_flags,
+      dietary: dietary_list,
+      dietary_requirements: dietary_list,
+      dietary_flags: dietary_list,
+      # Nutrition & Rating
       calories: recipe.calories,
       avg_rating: recipe.avg_rating,
       rating_count: recipe.rating_count,
-      cuisine_origin: recipe.cuisine_origin,
       taste_score: meta[:taste_score],
-      search_rank: meta[:search_rank]
+      search_rank: meta[:search_rank],
+      # Access & Tier
+      access_level: access_level,
+      is_special: is_premium,
+      is_premium: is_premium,
+      is_locked: is_locked,
+      created_at: recipe.inserted_at
     }
   end
 
   defp render_recipe_detail(recipe, user) do
-    base = render_recipe_card(recipe, %{})
+    base = render_recipe_card(recipe, %{current_user: user})
     yt = CaramelKitchen.Recipes.Recipe.parse_youtube_video(recipe.video_url || "")
 
     Map.merge(base, %{
       description: recipe.description,
       ingredients: recipe.ingredients,
       steps: recipe.steps,
+      servings: recipe.serving_size,
       serving_size: recipe.serving_size,
+      cooking_time: recipe.cook_time_mins,
+      cooking_time_mins: recipe.cook_time_mins,
       prep_time_mins: recipe.prep_time_mins,
       cook_time_mins: recipe.cook_time_mins,
       video_url: recipe.video_url || yt.video_url,
@@ -268,6 +333,7 @@ defmodule CaramelKitchenWeb.RecipeController do
       view_count: recipe.view_count,
       featured_until: recipe.featured_until,
       published_at: recipe.published_at,
+      created_at: recipe.inserted_at,
       allergy_alerts: compute_allergy_alerts(recipe, user),
       creator_id: recipe.creator_id
     })
@@ -277,23 +343,24 @@ defmodule CaramelKitchenWeb.RecipeController do
 
   defp compute_allergy_alerts(recipe, user) do
     user_allergens = user.allergy_flags || []
-    
+
     # 1. Exact match against explicitly defined recipe allergens
     explicit_alerts = Enum.filter(recipe.allergens, &(&1 in user_allergens))
-    
+
     # 2. Case-insensitive substring match against actual ingredients
     ingredient_alerts =
       Enum.reduce(user_allergens, [], fn allergy, acc ->
         allergy_down = String.downcase(allergy)
-        
+
         found? =
           Enum.any?(recipe.ingredients, fn
             %{"name" => name} when is_binary(name) ->
               String.contains?(String.downcase(name), allergy_down)
+
             _ ->
               false
           end)
-          
+
         if found?, do: [allergy | acc], else: acc
       end)
 
@@ -303,19 +370,80 @@ defmodule CaramelKitchenWeb.RecipeController do
   defp parse_filters(params) do
     %{}
     |> maybe_add(:cooking_method, params["cooking_method"])
-    |> maybe_add(:dietary, parse_list(params["dietary"]))
+    |> maybe_add(
+      :dietary,
+      parse_list(params["dietary"] || params["dietary_requirements"] || params["dietary_flags"])
+    )
     |> maybe_add(:taste, parse_list(params["taste"]))
     |> maybe_add(:max_time, parse_int(params["max_time"]))
     |> maybe_add(:min_time, parse_int(params["min_time"]))
+    |> maybe_add(
+      :cooking_time,
+      parse_int(params["cooking_time"] || params["max_cooking_time"] || params["cook_time"])
+    )
+    |> maybe_add(
+      :min_cooking_time,
+      parse_int(params["min_cooking_time"] || params["min_cook_time"])
+    )
+    |> maybe_add(:cost, parse_decimal(params["cost"] || params["budget"] || params["max_cost"]))
+    |> maybe_add(:min_cost, parse_decimal(params["min_cost"]))
+    |> maybe_add(:servings, parse_int(params["servings"] || params["serving_size"]))
+    |> maybe_add(:min_servings, parse_int(params["min_servings"]))
+    |> maybe_add(:max_servings, parse_int(params["max_servings"]))
+    |> maybe_add(:ingredient, params["ingredient"])
+    |> maybe_add(:ingredients, parse_list(params["ingredients"]))
+    |> maybe_add(:exclude_ingredients, parse_list(params["exclude_ingredients"]))
     |> maybe_add(:difficulty, params["difficulty"])
-    |> maybe_add(:cuisine, parse_list(params["cuisine"]))
+    |> maybe_add(:cuisine, parse_list(params["cuisine"] || params["cuisines"]))
     |> maybe_add(:course, params["course"])
     |> maybe_add(:meal, params["meal"])
     |> maybe_add(:category, params["category"])
     |> maybe_add(:max_calories, parse_int(params["max_calories"]))
     |> maybe_add(:serving_context, params["context"])
     |> maybe_add(:exclude_allergens, parse_list(params["exclude_allergens"]))
+    |> maybe_add(:access_level, params["access_level"])
+    |> maybe_add(:is_special, parse_boolean(params["is_special"] || params["is_premium"]))
+    |> maybe_add(
+      :created_after,
+      parse_datetime_boundary(
+        params["created_after"] || params["created_from"] || params["from_date"] ||
+          params["start_date"],
+        :start_of_day
+      )
+    )
+    |> maybe_add(
+      :created_before,
+      parse_datetime_boundary(
+        params["created_before"] || params["created_to"] || params["to_date"] ||
+          params["end_date"],
+        :end_of_day
+      )
+    )
+    |> maybe_add(
+      :creation_date,
+      parse_exact_date_filter(
+        params["creation_date"] || params["created_at"] || params["created_date"] ||
+          params["date"]
+      )
+    )
+    |> maybe_apply_preset_filter(params["created_within"] || params["date_range"])
+    |> maybe_add(:sort, params["sort"])
   end
+
+  defp parse_decimal(nil), do: nil
+  defp parse_decimal(""), do: nil
+
+  defp parse_decimal(val) when is_binary(val) do
+    case Decimal.parse(val) do
+      {dec, _} -> dec
+      :error -> nil
+    end
+  end
+
+  defp parse_decimal(%Decimal{} = d), do: d
+  defp parse_decimal(val) when is_integer(val), do: Decimal.new(val)
+  defp parse_decimal(val) when is_float(val), do: Decimal.from_float(val)
+  defp parse_decimal(_), do: nil
 
   defp maybe_add(map, _key, nil), do: map
   defp maybe_add(map, _key, []), do: map
@@ -324,6 +452,11 @@ defmodule CaramelKitchenWeb.RecipeController do
   defp parse_list(nil), do: []
   defp parse_list(str) when is_binary(str), do: String.split(str, ",", trim: true)
   defp parse_list(list) when is_list(list), do: list
+
+  defp parse_boolean(nil), do: nil
+  defp parse_boolean(val) when val in [true, "true", "1"], do: true
+  defp parse_boolean(val) when val in [false, "false", "0"], do: false
+  defp parse_boolean(_), do: nil
 
   defp parse_int(val, default \\ nil)
   defp parse_int(nil, default), do: default
@@ -335,8 +468,110 @@ defmodule CaramelKitchenWeb.RecipeController do
     end
   end
 
-  defp parse_int(val, _) when is_integer(val), do: val
+  defp parse_int(val, _default) when is_integer(val), do: val
   defp parse_int(_, default), do: default
+
+  defp parse_datetime_boundary(nil, _), do: nil
+  defp parse_datetime_boundary("", _), do: nil
+  defp parse_datetime_boundary(%DateTime{} = dt, _), do: dt
+
+  defp parse_datetime_boundary(str, boundary) when is_binary(str) do
+    str = String.trim(str)
+
+    case DateTime.from_iso8601(str) do
+      {:ok, dt, _offset} ->
+        dt
+
+      {:error, _} ->
+        case Date.from_iso8601(str) do
+          {:ok, date} ->
+            time = if boundary == :end_of_day, do: ~T[23:59:59], else: ~T[00:00:00]
+            DateTime.new!(date, time, "Etc/UTC")
+
+          {:error, _} ->
+            case Integer.parse(str) do
+              {epoch, ""} ->
+                case DateTime.from_unix(epoch) do
+                  {:ok, dt} -> dt
+                  _ -> nil
+                end
+
+              _ ->
+                nil
+            end
+        end
+    end
+  end
+
+  defp parse_datetime_boundary(_, _), do: nil
+
+  defp parse_exact_date_filter(nil), do: nil
+  defp parse_exact_date_filter(""), do: nil
+
+  defp parse_exact_date_filter(str) when is_binary(str) do
+    str = String.trim(str)
+
+    case Date.from_iso8601(str) do
+      {:ok, date} ->
+        start_dt = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+        end_dt = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
+        {start_dt, end_dt}
+
+      {:error, _} ->
+        case DateTime.from_iso8601(str) do
+          {:ok, dt, _offset} ->
+            date = DateTime.to_date(dt)
+            start_dt = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
+            end_dt = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
+            {start_dt, end_dt}
+
+          _ ->
+            nil
+        end
+    end
+  end
+
+  defp parse_exact_date_filter(_), do: nil
+
+  defp maybe_apply_preset_filter(map, nil), do: map
+  defp maybe_apply_preset_filter(map, ""), do: map
+
+  defp maybe_apply_preset_filter(map, preset) when is_binary(preset) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    today = Date.utc_today()
+
+    case String.downcase(String.trim(preset)) do
+      "today" ->
+        start_dt = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
+        Map.put(map, :created_after, start_dt)
+
+      "yesterday" ->
+        yesterday = Date.add(today, -1)
+        start_dt = DateTime.new!(yesterday, ~T[00:00:00], "Etc/UTC")
+        end_dt = DateTime.new!(yesterday, ~T[23:59:59], "Etc/UTC")
+
+        map
+        |> Map.put(:created_after, start_dt)
+        |> Map.put(:created_before, end_dt)
+
+      p when p in ["this_week", "last_7_days", "week"] ->
+        start_dt = DateTime.add(now, -7, :day)
+        Map.put(map, :created_after, start_dt)
+
+      p when p in ["this_month", "last_30_days", "month"] ->
+        start_dt = DateTime.add(now, -30, :day)
+        Map.put(map, :created_after, start_dt)
+
+      p when p in ["this_year", "year"] ->
+        start_dt = DateTime.new!(Date.new!(today.year, 1, 1), ~T[00:00:00], "Etc/UTC")
+        Map.put(map, :created_after, start_dt)
+
+      _ ->
+        map
+    end
+  end
+
+  defp maybe_apply_preset_filter(map, _), do: map
 end
 
 # ── Feed Controller ────────────────────────────────────────────

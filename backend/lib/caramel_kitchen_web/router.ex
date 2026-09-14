@@ -3,6 +3,7 @@ defmodule CaramelKitchenWeb.Router do
 
   alias CaramelKitchenWeb.Plugs.{
     AuthenticateUser,
+    LoadCurrentUser,
     RequirePremium,
     RequireCreator,
     RequireAdmin,
@@ -22,6 +23,10 @@ defmodule CaramelKitchenWeb.Router do
 
   pipeline :authenticated do
     plug AuthenticateUser
+  end
+
+  pipeline :load_user do
+    plug LoadCurrentUser
   end
 
   pipeline :premium do
@@ -94,9 +99,9 @@ defmodule CaramelKitchenWeb.Router do
     get "/auth/verify-email/:token", AuthController, :verify_email
   end
 
-  # ── Public Recipe browsing (no auth required) ─────────────────
+  # ── Public Recipe & Video browsing ───────────────────────────
   scope "/api/v1", CaramelKitchenWeb do
-    pipe_through [:api, :rate_limit_api]
+    pipe_through [:api, :rate_limit_api, :load_user]
 
     get "/recipes", RecipeController, :index
     get "/recipes/trending", RecipeController, :trending
@@ -106,6 +111,28 @@ defmodule CaramelKitchenWeb.Router do
     get "/categories", RecipeController, :categories
     get "/dish-types", RecipeController, :dish_types
     get "/shopping/shared/:token", ShoppingController, :show_shared
+
+    # Taxonomy discovery
+    get "/cuisines", AdminTaxonomyController, :public_cuisines
+    get "/dietary-tags", AdminTaxonomyController, :public_dietary_tags
+    get "/difficulties", AdminTaxonomyController, :public_difficulties
+
+    # Video browsing
+    get "/videos", VideoController, :index
+    get "/videos/categories", VideoController, :categories
+    get "/videos/:id", VideoController, :show
+    get "/videos/:id/status", VideoInteractionController, :status
+    get "/videos/:id/interaction", VideoInteractionController, :status
+
+    # Collections browsing
+    get "/collections", CollectionController, :index
+    get "/collections/seasonal", CollectionController, :seasonal
+    get "/premium/collections/seasonal", CollectionController, :seasonal
+    get "/collections/:id", CollectionController, :show
+    get "/collections/:id/status", CollectionController, :status
+
+    # Meal plans status
+    get "/meal-plans/:id/status", MealPlanController, :status
   end
 
   # ── Authenticated ─────────────────────────────────────────────
@@ -132,6 +159,38 @@ defmodule CaramelKitchenWeb.Router do
     post "/recipes/:id/rate", InteractionController, :rate
     get "/me/saved", InteractionController, :saved_recipes
 
+    # Video Interactions: Favourite and Saved videos (Issue #112)
+    post "/videos/:id/favorite", VideoInteractionController, :favorite
+    post "/videos/:id/favourite", VideoInteractionController, :favorite
+    delete "/videos/:id/favorite", VideoInteractionController, :unfavorite
+    delete "/videos/:id/favourite", VideoInteractionController, :unfavorite
+    post "/videos/:id/unfavorite", VideoInteractionController, :unfavorite
+    post "/videos/:id/unfavourite", VideoInteractionController, :unfavorite
+
+    post "/videos/:id/save", VideoInteractionController, :save
+    delete "/videos/:id/save", VideoInteractionController, :unsave
+    post "/videos/:id/unsave", VideoInteractionController, :unsave
+
+    get "/me/videos/favorites", VideoInteractionController, :favorite_videos
+    get "/me/videos/favourites", VideoInteractionController, :favorite_videos
+    get "/me/favorites/videos", VideoInteractionController, :favorite_videos
+    get "/me/videos/saved", VideoInteractionController, :saved_videos
+    get "/me/saved/videos", VideoInteractionController, :saved_videos
+
+    # Collection Save Interactions
+    post "/collections/:id/save", CollectionController, :save
+    delete "/collections/:id/save", CollectionController, :unsave
+    post "/collections/:id/unsave", CollectionController, :unsave
+    get "/me/collections/saved", CollectionController, :saved_collections
+    get "/me/saved/collections", CollectionController, :saved_collections
+
+    # Meal Plan Save Interactions
+    post "/meal-plans/:id/save", MealPlanController, :save
+    delete "/meal-plans/:id/save", MealPlanController, :unsave
+    post "/meal-plans/:id/unsave", MealPlanController, :unsave
+    get "/me/meal-plans/saved", MealPlanController, :saved_meal_plans
+    get "/me/saved/meal-plans", MealPlanController, :saved_meal_plans
+
     # Shopping (basic — from single recipe)
     get "/shopping", ShoppingController, :index
     post "/shopping", ShoppingController, :create
@@ -142,6 +201,14 @@ defmodule CaramelKitchenWeb.Router do
 
     # Course builder (free tier)
     resources "/courses", CourseController, only: [:index, :create, :show, :update, :delete]
+
+    # Collections (curated recipe & video groups)
+    get "/me/collections", CollectionController, :my_collections
+    post "/collections", CollectionController, :create
+    put "/collections/:id", CollectionController, :update
+    delete "/collections/:id", CollectionController, :delete
+    post "/collections/:id/items", CollectionController, :add_item
+    delete "/collections/:id/items/:item_id", CollectionController, :remove_item
 
     # Subscription
     get "/subscription", SubscriptionController, :show
@@ -188,6 +255,11 @@ defmodule CaramelKitchenWeb.Router do
     post "/recipes/:id/archive", AdminRecipeController, :archive
     delete "/recipes/:id", AdminRecipeController, :delete
 
+    # Video management
+    post "/videos", VideoController, :create
+    put "/videos/:id", VideoController, :update
+    delete "/videos/:id", VideoController, :delete
+
     # Video upload
     post "/videos/presigned-url", AdminVideoController, :presigned_url
     post "/videos/processed", AdminVideoController, :on_processed
@@ -197,6 +269,31 @@ defmodule CaramelKitchenWeb.Router do
     get "/analytics/recipes", AdminAnalyticsController, :recipes
     get "/analytics/taste", AdminAnalyticsController, :taste_distribution
     get "/analytics/ai", AdminAnalyticsController, :ai_queries
+
+    # Taxonomy management
+    get "/categories", AdminTaxonomyController, :index_categories
+    post "/categories", AdminTaxonomyController, :create_category
+    get "/categories/:id", AdminTaxonomyController, :show_category
+    put "/categories/:id", AdminTaxonomyController, :update_category
+    delete "/categories/:id", AdminTaxonomyController, :delete_category
+
+    get "/cuisines", AdminTaxonomyController, :index_cuisines
+    post "/cuisines", AdminTaxonomyController, :create_cuisine
+    get "/cuisines/:id", AdminTaxonomyController, :show_cuisine
+    put "/cuisines/:id", AdminTaxonomyController, :update_cuisine
+    delete "/cuisines/:id", AdminTaxonomyController, :delete_cuisine
+
+    get "/dietary-tags", AdminTaxonomyController, :index_dietary_tags
+    post "/dietary-tags", AdminTaxonomyController, :create_dietary_tag
+    get "/dietary-tags/:id", AdminTaxonomyController, :show_dietary_tag
+    put "/dietary-tags/:id", AdminTaxonomyController, :update_dietary_tag
+    delete "/dietary-tags/:id", AdminTaxonomyController, :delete_dietary_tag
+
+    get "/difficulties", AdminTaxonomyController, :index_difficulties
+    post "/difficulties", AdminTaxonomyController, :create_difficulty
+    get "/difficulties/:id", AdminTaxonomyController, :show_difficulty
+    put "/difficulties/:id", AdminTaxonomyController, :update_difficulty
+    delete "/difficulties/:id", AdminTaxonomyController, :delete_difficulty
   end
 
   # ── Super Admin ───────────────────────────────────────────────

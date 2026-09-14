@@ -187,6 +187,9 @@ defmodule CaramelKitchenWeb.MealPlanController do
   action_fallback CaramelKitchenWeb.FallbackController
 
   alias CaramelKitchen.MealPlans
+  alias CaramelKitchen.Repo
+  alias CaramelKitchen.Recipes.Recipe
+  import Ecto.Query
 
   # GET /api/v1/meal-plans
   def index(conn, _params) do
@@ -205,10 +208,11 @@ defmodule CaramelKitchenWeb.MealPlanController do
   end
 
   # POST /api/v1/meal-plans/generate
-  def generate(conn, %{"goal_type" => goal_type}) do
+  def generate(conn, %{"goal_type" => goal_type} = params) do
     user = conn.assigns.current_user
+    opts = Map.drop(params, ["goal_type"])
 
-    with {:ok, plan} <- MealPlans.generate_plan(user, goal_type) do
+    with {:ok, plan} <- MealPlans.generate_plan(user, goal_type, opts) do
       conn |> put_status(:created) |> json(%{data: render_plan_full(plan)})
     else
       {:error, :insufficient_recipes} ->
@@ -231,6 +235,12 @@ defmodule CaramelKitchenWeb.MealPlanController do
     end
   end
 
+  def generate(conn, _params) do
+    conn
+    |> put_status(422)
+    |> json(%{error: "invalid_request", message: "goal_type is required"})
+  end
+
   # GET /api/v1/meal-plans/:id
   def show(conn, %{"id" => id}) do
     plan = MealPlans.get_plan!(id)
@@ -238,11 +248,13 @@ defmodule CaramelKitchenWeb.MealPlanController do
   end
 
   # PATCH /api/v1/meal-plans/:id/swap
-  def swap_meal(conn, %{"id" => id, "day_offset" => day, "slot" => slot}) do
+  def swap_meal(conn, %{"id" => id, "day_offset" => day, "slot" => slot} = params) do
     user = conn.assigns.current_user
     plan = MealPlans.get_plan!(id)
+    opts = Map.drop(params, ["id", "day_offset", "slot"])
 
-    with {:ok, updated} <- MealPlans.swap_meal(plan, String.to_integer(day), slot, user) do
+    with {:ok, updated} <-
+           MealPlans.swap_meal(plan, parse_int(day), slot, user, opts) do
       json(conn, %{data: render_plan_full(updated)})
     end
   end
@@ -251,7 +263,7 @@ defmodule CaramelKitchenWeb.MealPlanController do
   def daily_macros(conn, %{"id" => id, "day" => day_offset}) do
     plan = MealPlans.get_plan!(id)
 
-    with {:ok, day} <- MealPlans.daily_summary(plan, String.to_integer(day_offset)) do
+    with {:ok, day} <- MealPlans.daily_summary(plan, parse_int(day_offset)) do
       json(conn, %{data: day})
     end
   end
@@ -272,6 +284,55 @@ defmodule CaramelKitchenWeb.MealPlanController do
     end
   end
 
+  # POST /api/v1/meal-plans/:id/save
+  def save(conn, %{"id" => id} = params) do
+    user = conn.assigns.current_user
+    metadata = Map.get(params, "metadata", %{})
+
+    with {:ok, result} <- MealPlans.save_meal_plan(user, id, metadata) do
+      json(conn, %{data: result})
+    end
+  end
+
+  # DELETE /api/v1/meal-plans/:id/save
+  def unsave(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+
+    with {:ok, result} <- MealPlans.unsave_meal_plan(user, id) do
+      json(conn, %{data: result})
+    end
+  end
+
+  # GET /api/v1/meal-plans/:id/status
+  def status(conn, %{"id" => id}) do
+    user = conn.assigns[:current_user]
+
+    with {:ok, status} <- MealPlans.get_user_meal_plan_status(user, id) do
+      json(conn, %{data: status})
+    end
+  end
+
+  # GET /api/v1/me/meal-plans/saved
+  def saved_meal_plans(conn, params) do
+    user = conn.assigns.current_user
+    limit = min(String.to_integer(params["limit"] || "20"), 100)
+    offset = String.to_integer(params["offset"] || "0")
+    opts = [limit: limit, offset: offset]
+
+    plans = MealPlans.list_saved_meal_plans(user, opts)
+    total = MealPlans.count_saved_meal_plans(user, opts)
+
+    json(conn, %{
+      data: Enum.map(plans, &render_plan_summary/1),
+      meta: %{
+        total_count: total,
+        count: length(plans),
+        limit: limit,
+        offset: offset
+      }
+    })
+  end
+
   defp render_plan_summary(plan) do
     %{
       id: plan.id,
@@ -280,16 +341,87 @@ defmodule CaramelKitchenWeb.MealPlanController do
       week_start: plan.week_start,
       week_end: plan.week_end,
       calorie_target: plan.calorie_target,
+      total_cost: plan.total_cost,
+      estimated_total_cost: plan.total_cost,
+      budget: plan.budget,
       is_active: plan.is_active,
+      is_premium: plan.is_premium || false,
+      save_count: plan.save_count || 0,
       inserted_at: plan.inserted_at
     }
   end
 
   defp render_plan_full(plan) do
+    enriched_days = enrich_plan_days(plan.days)
+
     Map.merge(render_plan_summary(plan), %{
       macro_split: plan.macro_split,
-      days: plan.days,
+      days: enriched_days,
       is_ai_generated: plan.is_ai_generated
     })
   end
+
+  defp enrich_plan_days(days) when is_list(days) do
+    recipe_ids =
+      days
+      |> Enum.flat_map(fn day ->
+        meals = Map.get(day, "meals") || Map.get(day, :meals) || []
+        Enum.map(meals, fn m -> Map.get(m, "recipe_id") || Map.get(m, :recipe_id) end)
+      end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    recipes_by_id =
+      from(r in Recipe, where: r.id in ^recipe_ids)
+      |> Repo.all()
+      |> Map.new(&{&1.id, &1})
+
+    Enum.map(days, fn day ->
+      meals = Map.get(day, "meals") || Map.get(day, :meals) || []
+
+      enriched_meals =
+        Enum.map(meals, fn m ->
+          rid = Map.get(m, "recipe_id") || Map.get(m, :recipe_id)
+          recipe = Map.get(recipes_by_id, rid)
+
+          if recipe do
+            m
+            |> Map.put("recipe_title", recipe.title)
+            |> Map.put("cost", recipe.cost)
+            |> Map.put("estimated_cost", recipe.cost)
+            |> Map.put("thumbnail_url", recipe.thumbnail_url)
+            |> Map.put("cooking_time", recipe.cook_time_mins)
+            |> Map.put("cook_time_mins", recipe.cook_time_mins)
+            |> Map.put("calories", recipe.calories)
+            |> Map.put("meal", recipe.meal)
+            |> Map.put("course", recipe.course)
+            |> Map.put("cuisine", List.first(recipe.cuisine_origin || []))
+            |> Map.put("difficulty", recipe.difficulty)
+            |> Map.put(
+              "access_level",
+              recipe.access_level ||
+                if(recipe.is_special || recipe.is_premium, do: "premium", else: "free")
+            )
+          else
+            m
+          end
+        end)
+
+      day
+      |> Map.put("meals", enriched_meals)
+    end)
+  end
+
+  defp enrich_plan_days(days), do: days
+
+  defp parse_int(val) when is_integer(val), do: val
+
+  defp parse_int(val) when is_binary(val) do
+    case Integer.parse(val) do
+      {n, _} -> n
+      _ -> 0
+    end
+  end
+
+  defp parse_int(_), do: 0
 end

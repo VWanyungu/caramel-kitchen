@@ -38,7 +38,11 @@ defmodule CaramelKitchen.Recipes do
       |> apply_dietary_filter(user.dietary_flags)
       |> apply_after_cursor(after_id)
       |> order_by([r],
-        desc: fragment("0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score", ^taste_vec),
+        desc:
+          fragment(
+            "0.6 * (1 - (taste_profile <=> ?::vector)) + 0.4 * engagement_score",
+            ^taste_vec
+          ),
         desc: r.published_at
       )
       |> select([r], %{
@@ -76,7 +80,12 @@ defmodule CaramelKitchen.Recipes do
       )
     )
     |> order_by([r],
-      desc: fragment("ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)", ^sanitised, ^sanitised)
+      desc:
+        fragment(
+          "ts_rank(search_vector, plainto_tsquery('english', ?)) + similarity(title, ?)",
+          ^sanitised,
+          ^sanitised
+        )
     )
     |> select([r], %{
       recipe: r,
@@ -119,10 +128,11 @@ defmodule CaramelKitchen.Recipes do
   def list_by_category("all", opts) do
     limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
+    sort = Keyword.get(opts, :sort, Map.get(filters, :sort))
 
     from(r in Recipe, where: r.status == "live")
     |> apply_filters(filters)
-    |> order_by([r], desc: r.engagement_score)
+    |> apply_recipe_ordering(sort)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -134,12 +144,13 @@ defmodule CaramelKitchen.Recipes do
   def list_by_category(categories, opts) when is_list(categories) do
     limit = Keyword.get(opts, :limit, 20)
     filters = Keyword.get(opts, :filters, %{})
+    sort = Keyword.get(opts, :sort, Map.get(filters, :sort))
 
     from(r in Recipe,
       where: r.status == "live" and fragment("? && ?", r.dish_categories, ^categories)
     )
     |> apply_filters(filters)
-    |> order_by([r], desc: r.engagement_score)
+    |> apply_recipe_ordering(sort)
     |> limit(^limit)
     |> Repo.all()
   end
@@ -160,6 +171,23 @@ defmodule CaramelKitchen.Recipes do
   def get_recipe_by_slug(slug) do
     Repo.fetch(from r in Recipe, where: r.slug == ^slug and r.status == "live")
   end
+
+  @doc "Checks whether a user has access to view a recipe's full details"
+  def has_recipe_access?(%Recipe{} = recipe, user) do
+    if recipe.is_special || recipe.is_premium || recipe.access_level == "premium" do
+      cond do
+        is_nil(user) -> false
+        user.id == recipe.creator_id -> true
+        CaramelKitchen.Accounts.User.admin?(user) -> true
+        CaramelKitchen.Accounts.User.premium?(user) -> true
+        true -> false
+      end
+    else
+      true
+    end
+  end
+
+  def has_recipe_access?(_, _), do: false
 
   # ── Category counts ───────────────────────────────────────────
 
@@ -246,11 +274,13 @@ defmodule CaramelKitchen.Recipes do
   def list_creator_recipes(creator_id, opts \\ []) do
     status = Keyword.get(opts, :status)
     limit = Keyword.get(opts, :limit, 50)
+    filters = Keyword.get(opts, :filters, %{})
 
     q = from r in Recipe, where: r.creator_id == ^creator_id
 
     q
     |> then(fn q -> if status, do: where(q, [r], r.status == ^status), else: q end)
+    |> apply_filters(filters)
     |> order_by([r], desc: r.inserted_at)
     |> limit(^limit)
     |> Repo.all()
@@ -278,6 +308,9 @@ defmodule CaramelKitchen.Recipes do
       {:dietary, flags}, q when is_list(flags) and length(flags) > 0 ->
         where(q, [r], fragment("? @> ?", r.dietary_flags, ^flags))
 
+      {:dietary_requirements, flags}, q when is_list(flags) and length(flags) > 0 ->
+        where(q, [r], fragment("? @> ?", r.dietary_flags, ^flags))
+
       {:taste, tags}, q when is_list(tags) and length(tags) > 0 ->
         where(q, [r], fragment("? && ?", r.taste_tags, ^tags))
 
@@ -287,11 +320,90 @@ defmodule CaramelKitchen.Recipes do
       {:min_time, minutes}, q when is_integer(minutes) ->
         where(q, [r], r.total_time_mins >= ^minutes)
 
+      {:cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins <= ^minutes)
+
+      {:max_cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins <= ^minutes)
+
+      {:min_cooking_time, minutes}, q when is_integer(minutes) ->
+        where(q, [r], r.cook_time_mins >= ^minutes)
+
+      {:cost, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:max_cost, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:min_cost, min_cost}, q when not is_nil(min_cost) ->
+        where(q, [r], r.cost >= ^min_cost)
+
+      {:budget, max_cost}, q when not is_nil(max_cost) ->
+        where(q, [r], r.cost <= ^max_cost)
+
+      {:servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size == ^n)
+
+      {:serving_size, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size == ^n)
+
+      {:min_servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size >= ^n)
+
+      {:max_servings, n}, q when is_integer(n) ->
+        where(q, [r], r.serving_size <= ^n)
+
+      {:ingredient, ing}, q when is_binary(ing) and ing != "" ->
+        pattern = "%#{ing}%"
+
+        where(
+          q,
+          [r],
+          fragment(
+            "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+            r.ingredients,
+            ^pattern
+          )
+        )
+
+      {:ingredients, ings}, q when is_list(ings) and length(ings) > 0 ->
+        Enum.reduce(ings, q, fn ing, sub_q ->
+          pattern = "%#{ing}%"
+
+          where(
+            sub_q,
+            [r],
+            fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+              r.ingredients,
+              ^pattern
+            )
+          )
+        end)
+
+      {:exclude_ingredients, ings}, q when is_list(ings) and length(ings) > 0 ->
+        Enum.reduce(ings, q, fn ing, sub_q ->
+          pattern = "%#{ing}%"
+
+          where(
+            sub_q,
+            [r],
+            not fragment(
+              "EXISTS (SELECT 1 FROM unnest(?) AS elem WHERE elem->>'name' ILIKE ?)",
+              r.ingredients,
+              ^pattern
+            )
+          )
+        end)
+
       {:difficulty, level}, q when is_binary(level) ->
         where(q, [r], r.difficulty == ^level)
 
       {:cuisine, origins}, q when is_list(origins) and length(origins) > 0 ->
         where(q, [r], fragment("? && ?", r.cuisine_origin, ^origins))
+
+      {:cuisine, origin}, q when is_binary(origin) and origin != "" ->
+        where(q, [r], fragment("? && ?", r.cuisine_origin, ^[origin]))
 
       {:course, course}, q when is_binary(course) ->
         where(q, [r], r.course == ^course)
@@ -324,12 +436,67 @@ defmodule CaramelKitchen.Recipes do
       {:max_calories, cal}, q when is_integer(cal) ->
         where(q, [r], r.calories <= ^cal)
 
+      {:access_level, level}, q when is_binary(level) ->
+        where(q, [r], r.access_level == ^level)
+
+      {:is_special, val}, q when val in [true, "true"] ->
+        where(q, [r], r.is_special == true or r.is_premium == true or r.access_level == "premium")
+
+      {:is_special, val}, q when val in [false, "false"] ->
+        where(
+          q,
+          [r],
+          r.is_special == false and r.is_premium == false and r.access_level == "free"
+        )
+
+      {:is_premium, val}, q when val in [true, "true"] ->
+        where(q, [r], r.is_premium == true or r.is_special == true or r.access_level == "premium")
+
+      {:is_premium, val}, q when val in [false, "false"] ->
+        where(
+          q,
+          [r],
+          r.is_premium == false and r.is_special == false and r.access_level == "free"
+        )
+
+      {:created_after, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
+      {:created_before, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at <= ^dt)
+
+      {:created_from, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
+      {:created_to, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at <= ^dt)
+
+      {:creation_date, {start_dt, end_dt}}, q when not is_nil(start_dt) and not is_nil(end_dt) ->
+        where(q, [r], r.inserted_at >= ^start_dt and r.inserted_at <= ^end_dt)
+
+      {:creation_date, dt}, q when not is_nil(dt) ->
+        where(q, [r], r.inserted_at >= ^dt)
+
       _, q ->
         q
     end)
   end
 
   defp apply_filters(query, _), do: query
+
+  defp apply_recipe_ordering(query, sort)
+       when sort in [:newest, "newest", :created_at_desc, "created_at_desc"] do
+    order_by(query, [r], desc: r.inserted_at)
+  end
+
+  defp apply_recipe_ordering(query, sort)
+       when sort in [:oldest, "oldest", :created_at_asc, "created_at_asc"] do
+    order_by(query, [r], asc: r.inserted_at)
+  end
+
+  defp apply_recipe_ordering(query, _) do
+    order_by(query, [r], desc: r.engagement_score)
+  end
 
   defp apply_dietary_filter(query, []), do: query
 

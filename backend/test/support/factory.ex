@@ -3,9 +3,12 @@ defmodule CaramelKitchen.Factory do
 
   alias CaramelKitchen.Accounts.User
   alias CaramelKitchen.Recipes.Recipe
-  alias CaramelKitchen.MealPlans.MealPlan
+  alias CaramelKitchen.MealPlans.{MealPlan, UserMealPlanInteraction}
 
   alias CaramelKitchen.Monetisation.Subscription
+  alias CaramelKitchen.Videos.{Video, UserVideoInteraction}
+  alias CaramelKitchen.Taxonomies.Taxonomy
+  alias CaramelKitchen.Collections.{Collection, CollectionItem, UserCollectionInteraction}
 
   def user_factory do
     %User{
@@ -30,12 +33,75 @@ defmodule CaramelKitchen.Factory do
     })
   end
 
+  def admin_factory do
+    struct!(user_factory(), %{
+      role: "admin",
+      subscription_tier: "creator_pro"
+    })
+  end
+
   def premium_user_factory do
     struct!(user_factory(), %{
       subscription_tier: "premium",
       taste_survey_done: true,
       taste_vector: [0.8, 0.3, 0.7, 0.9, 0.6, 0.2, 0.5, 0.1]
     })
+  end
+
+  def video_factory(attrs \\ %{}) do
+    title = Map.get(attrs, :title) || sequence(:title, &"Test Video #{&1}")
+    category = Map.get(attrs, :category, "Recipe_Videos")
+    yt_embed = Map.get(attrs, :yt_embed_code, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+
+    %Video{
+      title: title,
+      description: Map.get(attrs, :description, "A test cooking video tutorial"),
+      category: category,
+      is_premium: Map.get(attrs, :is_premium, false),
+      is_special: Map.get(attrs, :is_special, false),
+      yt_embed_code: yt_embed,
+      youtube_video_id: "dQw4w9WgXcQ",
+      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      video_embed_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      duration_secs: 180,
+      view_count: Map.get(attrs, :view_count, 0),
+      favorite_count: Map.get(attrs, :favorite_count, 0),
+      save_count: Map.get(attrs, :save_count, 0)
+    }
+  end
+
+  def user_video_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "favorite")
+
+    %UserVideoInteraction{
+      user: build(:user),
+      video: build(:video),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
+    }
+  end
+
+  def user_collection_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "saved")
+
+    %UserCollectionInteraction{
+      user: build(:user),
+      collection: build(:collection),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
+    }
+  end
+
+  def user_meal_plan_interaction_factory(attrs \\ %{}) do
+    action = Map.get(attrs, :action, "saved")
+
+    %UserMealPlanInteraction{
+      user: build(:user),
+      meal_plan: build(:meal_plan),
+      action: action,
+      metadata: Map.get(attrs, :metadata, %{})
+    }
   end
 
   def recipe_factory(attrs \\ %{}) do
@@ -79,6 +145,7 @@ defmodule CaramelKitchen.Factory do
       calories: 450,
       macros: %{"protein_g" => 35, "carbs_g" => 10, "fat_g" => 28},
       status: "live",
+      is_special: Map.get(attrs, :is_special, false),
       published_at: DateTime.utc_now() |> DateTime.truncate(:second),
       view_count: 100,
       save_count: 25,
@@ -94,19 +161,22 @@ defmodule CaramelKitchen.Factory do
     struct!(recipe_factory(), %{status: "draft", published_at: nil})
   end
 
-  def meal_plan_factory do
-    %MealPlan{
-      user_id: insert(:premium_user).id,
-      goal_type: "balanced",
-      name: "Test Meal Plan",
-      week_start: Date.utc_today(),
-      week_end: Date.add(Date.utc_today(), 6),
-      calorie_target: 2000,
-      macro_split: %{protein_pct: 30, carbs_pct: 40, fat_pct: 30},
-      days: [],
-      is_ai_generated: false,
-      is_active: true
+  def meal_plan_factory(attrs \\ %{}) do
+    meal_plan = %MealPlan{
+      user_id: Map.get(attrs, :user_id) || insert(:premium_user).id,
+      goal_type: Map.get(attrs, :goal_type, "balanced"),
+      name: Map.get(attrs, :name, "Test Meal Plan"),
+      week_start: Map.get(attrs, :week_start, Date.utc_today()),
+      week_end: Map.get(attrs, :week_end, Date.add(Date.utc_today(), 6)),
+      calorie_target: Map.get(attrs, :calorie_target, 2000),
+      macro_split: Map.get(attrs, :macro_split, %{protein_pct: 30, carbs_pct: 40, fat_pct: 30}),
+      days: Map.get(attrs, :days, []),
+      is_ai_generated: Map.get(attrs, :is_ai_generated, false),
+      is_active: Map.get(attrs, :is_active, true),
+      is_premium: Map.get(attrs, :is_premium, false)
     }
+
+    merge_attributes(meal_plan, attrs)
   end
 
   def subscription_factory do
@@ -119,6 +189,73 @@ defmodule CaramelKitchen.Factory do
       current_period_end:
         DateTime.add(DateTime.utc_now(), 30 * 86_400, :second) |> DateTime.truncate(:second)
     }
+  end
+
+  def taxonomy_factory(attrs \\ %{}) do
+    type = Map.get(attrs, :type, "category")
+    name = Map.get(attrs, :name) || sequence(:taxonomy_name, &"Taxonomy Item #{&1}")
+    slug = Map.get(attrs, :slug) || sequence(:taxonomy_slug, &"taxonomy_item_#{&1}")
+
+    taxonomy = %Taxonomy{
+      type: to_string(type),
+      name: name,
+      slug: slug,
+      description: Map.get(attrs, :description, "A test taxonomy item"),
+      icon_url: Map.get(attrs, :icon_url, "https://example.com/icon.svg"),
+      display_order: Map.get(attrs, :display_order, 0),
+      is_active: Map.get(attrs, :is_active, true)
+    }
+
+    merge_attributes(taxonomy, attrs)
+  end
+
+  def collection_factory(attrs \\ %{}) do
+    user_id = Map.get(attrs, :user_id) || insert(:user).id
+    name = Map.get(attrs, :name) || sequence(:collection_name, &"Collection #{&1}")
+    slug = Map.get(attrs, :slug) || sequence(:collection_slug, &"collection_#{&1}")
+
+    collection = %Collection{
+      user_id: user_id,
+      name: name,
+      slug: slug,
+      description: Map.get(attrs, :description, "A curated group of recipes and videos"),
+      cover_image_url: Map.get(attrs, :cover_image_url),
+      is_public: Map.get(attrs, :is_public, true),
+      is_curated: Map.get(attrs, :is_curated, false),
+      is_premium: Map.get(attrs, :is_premium, false),
+      is_seasonal: Map.get(attrs, :is_seasonal, false),
+      season_name: Map.get(attrs, :season_name),
+      start_date: Map.get(attrs, :start_date),
+      end_date: Map.get(attrs, :end_date),
+      save_count: Map.get(attrs, :save_count, 0)
+    }
+
+    merge_attributes(collection, attrs)
+  end
+
+  def collection_item_factory(attrs \\ %{}) do
+    collection_id = Map.get(attrs, :collection_id) || insert(:collection).id
+    item_type = Map.get(attrs, :item_type, "recipe")
+
+    {recipe_id, video_id} =
+      case item_type do
+        "recipe" ->
+          {Map.get(attrs, :recipe_id) || insert(:recipe).id, nil}
+
+        "video" ->
+          {nil, Map.get(attrs, :video_id) || insert(:video).id}
+      end
+
+    item = %CollectionItem{
+      collection_id: collection_id,
+      item_type: item_type,
+      recipe_id: recipe_id,
+      video_id: video_id,
+      position: Map.get(attrs, :position, 1),
+      notes: Map.get(attrs, :notes)
+    }
+
+    merge_attributes(item, attrs)
   end
 end
 
@@ -166,7 +303,15 @@ defmodule CaramelKitchenWeb.ConnCase do
 
   setup tags do
     CaramelKitchen.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+
+    conn = %{
+      Phoenix.ConnTest.build_conn()
+      | remote_ip:
+          {127, 0, rem(System.unique_integer([:positive]), 250) + 1,
+           rem(System.unique_integer([:positive]), 250) + 1}
+    }
+
+    {:ok, conn: conn}
   end
 
   def authenticate_conn(conn, user) do

@@ -23,6 +23,32 @@ defmodule CaramelKitchenWeb.Plugs.AuthenticateUser do
   end
 end
 
+defmodule CaramelKitchenWeb.Plugs.LoadCurrentUser do
+  @moduledoc "Optionally extracts and assigns current_user if Authorization header is present."
+  import Plug.Conn
+  alias CaramelKitchen.Auth.Guardian
+
+  def init(opts), do: opts
+
+  def call(conn, _opts) do
+    case get_req_header(conn, "authorization") do
+      ["Bearer " <> token] ->
+        case Guardian.resource_from_token(token, %{"typ" => "access"}) do
+          {:ok, user, claims} ->
+            conn
+            |> assign(:current_user, user)
+            |> assign(:jwt_claims, claims)
+
+          _ ->
+            conn
+        end
+
+      _ ->
+        conn
+    end
+  end
+end
+
 defmodule CaramelKitchenWeb.Plugs.RequirePremium do
   import Plug.Conn
   import Phoenix.Controller, only: [json: 2]
@@ -115,7 +141,11 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
 
       {:error, reason} ->
         require Logger
-        Logger.error("Rate limiter failure: #{inspect(reason)}. Failing open for identifier: #{identifier}")
+
+        Logger.error(
+          "Rate limiter failure: #{inspect(reason)}. Failing open for identifier: #{identifier}"
+        )
+
         conn
     end
   end
@@ -127,7 +157,6 @@ defmodule CaramelKitchenWeb.Plugs.RateLimit do
     "#{bucket}:#{key}"
   end
 end
-
 
 defmodule CaramelKitchenWeb.Plugs.TrackRequest do
   @moduledoc "Injects request metadata for telemetry."

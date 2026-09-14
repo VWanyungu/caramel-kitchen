@@ -27,7 +27,8 @@ config :caramel_kitchen,
   fcm_server_key: nil,
   stripe_webhook_secret: "whsec_test",
   stripe_premium_price_id: "price_test",
-  stripe_creator_price_id: "price_test_creator"
+  stripe_creator_price_id: "price_test_creator",
+  auto_generate_shopping_list: false
 
 # Use test adapter — no real emails sent in tests
 config :caramel_kitchen, CaramelKitchen.Mailer, adapter: Swoosh.Adapters.Test

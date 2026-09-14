@@ -27,6 +27,16 @@ Example:
 - beverage
 - appetizer
 
+Meal:
+Example:
+- breakfast
+- lunch
+- dinner
+- snack
+- brunch
+- dessert
+- beverage
+
 Primary Method (Required):
 Choose ONE:
 - boiling
@@ -55,14 +65,16 @@ Example:
 - nigerian
 
 --------------------------------------------------
-TIMING & SERVINGS
+TIMING, SERVINGS & COST
 --------------------------------------------------
 
 Preparation Time (minutes):
 
 Cooking Time (minutes):
 
-Serving Size:
+Serving Size / Servings:
+
+Estimated Cost (e.g. 12.50):
 
 --------------------------------------------------
 FLAVOUR PROFILE
@@ -181,6 +193,16 @@ Step 3:
 Instruction:
 
 (Add as many steps as required.)
+
+--------------------------------------------------
+ACCESS LEVEL (PREMIUM)
+--------------------------------------------------
+
+Choose ONE:
+- free
+- premium
+
+Access Level: free
 
 --------------------------------------------------
 PUBLICATION STATUS
