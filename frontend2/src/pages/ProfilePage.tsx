@@ -24,12 +24,18 @@ import {
   Play,
   Clock,
   X,
+  Bookmark,
+  ClipboardList,
+  Layers,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { RecipeCard } from "../components/RecipeCard";
+import { CollectionCard } from "../components/CollectionCard";
 import { PLACEHOLDER_RECIPES } from "../features/browse/placeholderRecipes";
+import { MOCK_COLLECTIONS } from "./collections/mockData";
 import { Button } from "../components/ui";
 import { type SofiaVideo } from "../data/sofiaVideosData";
 import {
@@ -37,11 +43,18 @@ import {
   toggleSaveVideo,
   subscribeToSavedVideos,
 } from "../lib/savedVideosStorage";
+import {
+  getSavedCollectionIds,
+  subscribeToSavedCollections,
+} from "../lib/savedCollectionsStorage";
+import { ShoppingListPage } from "./ShoppingListPage";
 
 type ProfileTab =
   | "recipes"
+  | "saved_collections"
   | "saved_videos"
   | "meal_plans"
+  | "shopping_list"
   | "billing"
   | "settings";
 
@@ -105,9 +118,22 @@ const BILLING_HISTORY = [
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as ProfileTab | null;
 
-  const [activeTab, setActiveTab] = useState<ProfileTab>("recipes");
+  const [activeTab, setActiveTab] = useState<ProfileTab>(tabParam || "recipes");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: ProfileTab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
 
   // Profile Form State
   const [name, setName] = useState(user?.name || "Marc Underwood");
@@ -131,6 +157,22 @@ export function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Notification settings state
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem("caramel_notification_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Error reading notification settings", e);
+    }
+    return {
+      weeklyDigest: true,
+      sofiaMasterclasses: true,
+      productUpdates: false,
+      savedItemAlerts: true,
+    };
+  });
+
   // Payment state
   const [paymentMethod] = useState({
     type: "Visa",
@@ -144,6 +186,23 @@ export function ProfilePage() {
   // Saved recipes state
   const [savedRecipes, setSavedRecipes] = useState(
     PLACEHOLDER_RECIPES.slice(0, 4),
+  );
+
+  // Saved collections state
+  const [savedCollectionIds, setSavedCollectionIds] = useState<string[]>(
+    getSavedCollectionIds(),
+  );
+
+  useEffect(() => {
+    setSavedCollectionIds(getSavedCollectionIds());
+    const unsubscribe = subscribeToSavedCollections(() => {
+      setSavedCollectionIds(getSavedCollectionIds());
+    });
+    return unsubscribe;
+  }, []);
+
+  const savedCollections = MOCK_COLLECTIONS.filter((c) =>
+    savedCollectionIds.includes(c.id),
   );
 
   // Saved videos state
@@ -188,6 +247,15 @@ export function ProfilePage() {
     setNewPassword("");
     setConfirmPassword("");
     triggerToast("Password changed successfully!");
+  };
+
+  const handleSaveNotifications = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem(
+      "caramel_notification_settings",
+      JSON.stringify(notifications),
+    );
+    triggerToast("Notification preferences updated successfully!");
   };
 
   const handleRemoveSavedRecipe = (recipeId: string, e: React.MouseEvent) => {
@@ -408,9 +476,9 @@ export function ProfilePage() {
           </div>
 
           {/* Tab Navigation Menu */}
-          <div className="px-6 sm:px-10 border-t border-gray-100 dark:border-stone-850 flex items-center gap-8 overflow-x-auto text-xs sm:text-sm font-bold">
+          <div className="px-6 sm:px-10 border-t border-gray-100 dark:border-stone-850 flex items-center gap-6 sm:gap-8 overflow-x-auto text-xs sm:text-sm font-bold scrollbar-none">
             <button
-              onClick={() => setActiveTab("recipes")}
+              onClick={() => handleTabChange("recipes")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "recipes"
                   ? "border-caramel text-caramel"
@@ -422,7 +490,19 @@ export function ProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab("saved_videos")}
+              onClick={() => handleTabChange("saved_collections")}
+              className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "saved_collections"
+                  ? "border-caramel text-caramel"
+                  : "border-transparent text-gray-500 hover:text-ink dark:hover:text-parchment"
+              }`}
+            >
+              <Bookmark size={16} />
+              <span>Saved Collections ({savedCollections.length})</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange("saved_videos")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "saved_videos"
                   ? "border-caramel text-caramel"
@@ -434,7 +514,19 @@ export function ProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab("meal_plans")}
+              onClick={() => handleTabChange("shopping_list")}
+              className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "shopping_list"
+                  ? "border-caramel text-caramel"
+                  : "border-transparent text-gray-500 hover:text-ink dark:hover:text-parchment"
+              }`}
+            >
+              <ClipboardList size={16} />
+              <span>Shopping List</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange("meal_plans")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "meal_plans"
                   ? "border-caramel text-caramel"
@@ -446,7 +538,7 @@ export function ProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab("billing")}
+              onClick={() => handleTabChange("billing")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "billing"
                   ? "border-caramel text-caramel"
@@ -458,7 +550,7 @@ export function ProfilePage() {
             </button>
 
             <button
-              onClick={() => setActiveTab("settings")}
+              onClick={() => handleTabChange("settings")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "settings"
                   ? "border-caramel text-caramel"
@@ -529,7 +621,55 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Tab 2: Saved Videos */}
+        {/* Tab 2: Saved Collections */}
+        {activeTab === "saved_collections" && (
+          <div className="mt-8 space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink dark:text-parchment">
+                  Saved Collections
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  Curated recipe bundles, video courses, and seasonal guides you've bookmarked.
+                </p>
+              </div>
+
+              <Link to="/collections">
+                <Button variant="outline" size="sm" icon={<Plus size={14} />}>
+                  Explore Collections
+                </Button>
+              </Link>
+            </div>
+
+            {savedCollections.length === 0 ? (
+              <div className="bg-white dark:bg-[#1d120a] rounded-3xl p-12 text-center border border-taupe/10 dark:border-stone-850 space-y-4">
+                <Layers
+                  size={40}
+                  className="mx-auto text-gray-300 dark:text-stone-700"
+                />
+                <h3 className="font-serif text-lg font-bold">
+                  No saved collections yet
+                </h3>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  Browse our hand-picked recipe collections and bookmark your favorites.
+                </p>
+                <Link to="/collections">
+                  <Button variant="primary" size="md">
+                    Browse Collections
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {savedCollections.map((collection) => (
+                  <CollectionCard key={collection.id} collection={collection} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Saved Videos */}
         {activeTab === "saved_videos" && (
           <div className="mt-8 space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
@@ -622,7 +762,14 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Tab 3: Saved Meal Plans */}
+        {/* Tab 4: Shopping List */}
+        {activeTab === "shopping_list" && (
+          <div className="mt-6 animate-fade-in">
+            <ShoppingListPage />
+          </div>
+        )}
+
+        {/* Tab 5: Saved Meal Plans */}
         {activeTab === "meal_plans" && (
           <div className="mt-8 space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
@@ -1087,6 +1234,174 @@ export function ProfilePage() {
                   icon={<Lock size={15} />}
                 >
                   Update Password
+                </Button>
+              </div>
+            </form>
+
+            {/* Notification Settings Form */}
+            <form
+              onSubmit={handleSaveNotifications}
+              className="bg-white dark:bg-[#1d120a] rounded-3xl p-6 sm:p-8 border border-taupe/10 dark:border-stone-850 shadow-xs space-y-6"
+            >
+              <h3 className="font-serif text-lg font-bold text-ink dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-stone-850 pb-3">
+                <Bell size={18} className="text-caramel" />
+                <span>Notification Preferences</span>
+              </h3>
+
+              <div className="space-y-4">
+                {/* Option 1 */}
+                <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50/60 dark:bg-[#120905]/50 border border-gray-100 dark:border-stone-850">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-bold text-ink dark:text-parchment cursor-pointer">
+                      Weekly Recipe Digest
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Receive hand-picked seasonal recipes and recommended meal plans every Monday morning.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifications.weeklyDigest}
+                    onClick={() =>
+                      setNotifications((prev: any) => ({
+                        ...prev,
+                        weeklyDigest: !prev.weeklyDigest,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      notifications.weeklyDigest
+                        ? "bg-caramel"
+                        : "bg-gray-200 dark:bg-stone-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        notifications.weeklyDigest
+                          ? "translate-x-5"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Option 2 */}
+                <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50/60 dark:bg-[#120905]/50 border border-gray-100 dark:border-stone-850">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-bold text-ink dark:text-parchment cursor-pointer">
+                      Learn with Sofia Masterclass Alerts
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Get notified when Chef Sofia publishes a new video masterclass or technique guide.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifications.sofiaMasterclasses}
+                    onClick={() =>
+                      setNotifications((prev: any) => ({
+                        ...prev,
+                        sofiaMasterclasses: !prev.sofiaMasterclasses,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      notifications.sofiaMasterclasses
+                        ? "bg-caramel"
+                        : "bg-gray-200 dark:bg-stone-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        notifications.sofiaMasterclasses
+                          ? "translate-x-5"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Option 3 */}
+                <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50/60 dark:bg-[#120905]/50 border border-gray-100 dark:border-stone-850">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-bold text-ink dark:text-parchment cursor-pointer">
+                      Saved Items & Collection Updates
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Alerts when bookmarked recipes or collections get new tips, variations, or ingredients.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifications.savedItemAlerts}
+                    onClick={() =>
+                      setNotifications((prev: any) => ({
+                        ...prev,
+                        savedItemAlerts: !prev.savedItemAlerts,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      notifications.savedItemAlerts
+                        ? "bg-caramel"
+                        : "bg-gray-200 dark:bg-stone-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        notifications.savedItemAlerts
+                          ? "translate-x-5"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Option 4 */}
+                <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50/60 dark:bg-[#120905]/50 border border-gray-100 dark:border-stone-850">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-bold text-ink dark:text-parchment cursor-pointer">
+                      Caramel AI & Product Updates
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      News about new AI Assistant features, kitchen tools, and platform enhancements.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifications.productUpdates}
+                    onClick={() =>
+                      setNotifications((prev: any) => ({
+                        ...prev,
+                        productUpdates: !prev.productUpdates,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      notifications.productUpdates
+                        ? "bg-caramel"
+                        : "bg-gray-200 dark:bg-stone-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        notifications.productUpdates
+                          ? "translate-x-5"
+                          : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  icon={<Bell size={15} />}
+                >
+                  Save Notification Preferences
                 </Button>
               </div>
             </form>
