@@ -1,23 +1,35 @@
-import { useState } from "react";
-import { BookOpen, Calendar, Film, Layers } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bookmark, BookOpen, Calendar, Film, Layers } from "lucide-react";
 import { CollectionCard } from "../../components/CollectionCard";
 import { MOCK_COLLECTIONS } from "./mockData";
+import {
+  getSavedCollectionIds,
+  subscribeToSavedCollections,
+} from "../../lib/savedCollectionsStorage";
 
-type FilterTab = "all" | "seasonal" | "meal_plans" | "videos";
+type FilterTab = "all" | "saved" | "seasonal" | "meal_plans" | "videos";
 
 export function CollectionsPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [savedIds, setSavedIds] = useState<string[]>(getSavedCollectionIds());
   const collections = MOCK_COLLECTIONS;
 
-  const filteredCollections = collections.filter(collection => {
+  useEffect(() => {
+    setSavedIds(getSavedCollectionIds());
+    const unsubscribe = subscribeToSavedCollections(() => {
+      setSavedIds(getSavedCollectionIds());
+    });
+    return unsubscribe;
+  }, []);
+
+  const filteredCollections = collections.filter((collection) => {
     if (activeTab === "all") return true;
+    if (activeTab === "saved") return savedIds.includes(collection.id);
     if (activeTab === "seasonal") return collection.is_seasonal;
     if (activeTab === "videos") {
-      // Return collections that have at least one video
-      return collection.items?.some(item => item.item_type === "video");
+      return collection.items?.some((item) => item.item_type === "video");
     }
     if (activeTab === "meal_plans") {
-      // Using description/name for mock data as we don't have meal_plan type yet
       return collection.name.toLowerCase().includes("plan");
     }
     return true;
@@ -41,12 +53,11 @@ export function CollectionsPage() {
 
       {/* Filters & Content */}
       <section className="px-4 sm:px-8 lg:px-24 py-8">
-        
         {/* Filter Tabs */}
         <div className="flex flex-wrap items-center gap-3 mb-10">
           <button
             onClick={() => setActiveTab("all")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === "all"
                 ? "bg-ink dark:bg-white text-white dark:text-ink shadow-md"
                 : "bg-gray-100 dark:bg-stone-900 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-stone-800"
@@ -55,10 +66,22 @@ export function CollectionsPage() {
             <Layers size={16} />
             <span>All</span>
           </button>
-          
+
+          <button
+            onClick={() => setActiveTab("saved")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              activeTab === "saved"
+                ? "bg-caramel text-white shadow-md shadow-caramel/20"
+                : "bg-gray-100 dark:bg-stone-900 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-stone-800"
+            }`}
+          >
+            <Bookmark size={16} />
+            <span>Saved ({savedIds.length})</span>
+          </button>
+
           <button
             onClick={() => setActiveTab("seasonal")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === "seasonal"
                 ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
                 : "bg-gray-100 dark:bg-stone-900 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-stone-800"
@@ -67,10 +90,10 @@ export function CollectionsPage() {
             <Calendar size={16} />
             <span>Seasonal</span>
           </button>
-          
+
           <button
             onClick={() => setActiveTab("videos")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === "videos"
                 ? "bg-blue-500 text-white shadow-md shadow-blue-500/20"
                 : "bg-gray-100 dark:bg-stone-900 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-stone-800"
@@ -82,7 +105,7 @@ export function CollectionsPage() {
 
           <button
             onClick={() => setActiveTab("meal_plans")}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === "meal_plans"
                 ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
                 : "bg-gray-100 dark:bg-stone-900 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-stone-800"
@@ -95,18 +118,19 @@ export function CollectionsPage() {
 
         {/* Collections Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-          {filteredCollections.map(collection => (
+          {filteredCollections.map((collection) => (
             <CollectionCard key={collection.id} collection={collection} />
           ))}
         </div>
-        
+
         {filteredCollections.length === 0 && (
           <div className="py-20 flex flex-col items-center justify-center text-center">
             <Layers size={48} className="text-gray-300 dark:text-stone-700 mb-4" />
             <h3 className="text-xl font-display font-bold text-ink dark:text-white mb-2">No collections found</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-md">
-              We couldn't find any collections matching your selected filter. 
-              Try selecting a different category or clearing your filters.
+              {activeTab === "saved"
+                ? "You haven't saved any collections yet. Click the bookmark icon on any collection card to save it."
+                : "We couldn't find any collections matching your selected filter. Try selecting a different category or clearing your filters."}
             </p>
           </div>
         )}

@@ -1,23 +1,50 @@
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Diamond, Layers, Lock, Sun } from "lucide-react";
+import { Bookmark, BookmarkCheck, Diamond, Layers, Lock, Sun } from "lucide-react";
 import type { Collection } from "../pages/collections/types";
 import { usePremiumModal } from "../context/PremiumModalContext";
+import {
+  isCollectionSaved,
+  toggleSaveCollection,
+  subscribeToSavedCollections,
+} from "../lib/savedCollectionsStorage";
 
 interface CollectionCardProps {
   collection: Collection;
+  onSaveToggle?: (collectionId: string, isSaved: boolean) => void;
 }
 
-export function CollectionCard({ collection }: CollectionCardProps) {
+export function CollectionCard({ collection, onSaveToggle }: CollectionCardProps) {
   const { isPremium, openPremiumModal } = usePremiumModal();
   const itemCount = collection.items?.length || 0;
+  const [saved, setSaved] = useState<boolean>(isCollectionSaved(collection.id));
+
+  useEffect(() => {
+    setSaved(isCollectionSaved(collection.id));
+    const unsubscribe = subscribeToSavedCollections(() => {
+      setSaved(isCollectionSaved(collection.id));
+    });
+    return unsubscribe;
+  }, [collection.id]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (collection.is_premium && !isPremium) {
       e.preventDefault();
       openPremiumModal({
         featureName: "Premium Collections",
-        featureDescription: "Access exclusive, expert-curated recipe and video collections with a Caramel Premium plan."
+        featureDescription:
+          "Access exclusive, expert-curated recipe and video collections with a Caramel Premium plan.",
       });
+    }
+  };
+
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const nowSaved = toggleSaveCollection(collection.id);
+    setSaved(nowSaved);
+    if (onSaveToggle) {
+      onSaveToggle(collection.id, nowSaved);
     }
   };
 
@@ -51,11 +78,31 @@ export function CollectionCard({ collection }: CollectionCardProps) {
           )}
         </div>
 
-        {collection.is_premium && !isPremium && (
-          <div className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-sm">
-            <Lock size={14} className="text-white" />
-          </div>
-        )}
+        {/* Action icons container on top right */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {collection.is_premium && !isPremium && (
+            <div className="h-8 w-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center shadow-sm">
+              <Lock size={14} className="text-white" />
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            title={saved ? "Remove from saved collections" : "Save collection"}
+            className={`h-8 w-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
+              saved
+                ? "bg-caramel text-white scale-105"
+                : "bg-black/40 hover:bg-caramel text-white hover:scale-105"
+            }`}
+          >
+            {saved ? (
+              <BookmarkCheck size={15} className="fill-white" />
+            ) : (
+              <Bookmark size={15} />
+            )}
+          </button>
+        </div>
 
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-xs font-medium">

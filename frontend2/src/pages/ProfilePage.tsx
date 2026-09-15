@@ -20,15 +20,30 @@ import {
   Utensils,
   Diamond,
   AlertTriangle,
+  Video,
+  Play,
+  Clock,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { RecipeCard } from "../components/RecipeCard";
 import { PLACEHOLDER_RECIPES } from "../features/browse/placeholderRecipes";
 import { Button } from "../components/ui";
+import { type SofiaVideo } from "../data/sofiaVideosData";
+import {
+  getSavedVideos,
+  toggleSaveVideo,
+  subscribeToSavedVideos,
+} from "../lib/savedVideosStorage";
 
-type ProfileTab = "recipes" | "meal_plans" | "billing" | "settings";
+type ProfileTab =
+  | "recipes"
+  | "saved_videos"
+  | "meal_plans"
+  | "billing"
+  | "settings";
 
 interface MealPlanSummary {
   id: string;
@@ -130,6 +145,26 @@ export function ProfilePage() {
   const [savedRecipes, setSavedRecipes] = useState(
     PLACEHOLDER_RECIPES.slice(0, 4),
   );
+
+  // Saved videos state
+  const [savedVideos, setSavedVideos] = useState<SofiaVideo[]>(getSavedVideos());
+  const [activeVideoModal, setActiveVideoModal] = useState<SofiaVideo | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setSavedVideos(getSavedVideos());
+    const unsubscribe = subscribeToSavedVideos(() => {
+      setSavedVideos(getSavedVideos());
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleRemoveSavedVideo = (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleSaveVideo(videoId);
+    triggerToast("Video removed from your saved list.");
+  };
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
@@ -387,6 +422,18 @@ export function ProfilePage() {
             </button>
 
             <button
+              onClick={() => setActiveTab("saved_videos")}
+              className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "saved_videos"
+                  ? "border-caramel text-caramel"
+                  : "border-transparent text-gray-500 hover:text-ink dark:hover:text-parchment"
+              }`}
+            >
+              <Video size={16} />
+              <span>Saved Videos ({savedVideos.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("meal_plans")}
               className={`py-4 border-b-2 transition-all duration-200 cursor-pointer flex items-center gap-2 whitespace-nowrap ${
                 activeTab === "meal_plans"
@@ -482,7 +529,100 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Tab 2: Saved Meal Plans */}
+        {/* Tab 2: Saved Videos */}
+        {activeTab === "saved_videos" && (
+          <div className="mt-8 space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-ink dark:text-parchment">
+                  Saved Masterclass Videos
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  Quick access to all your bookmarked cooking tutorials with Chef Sofia.
+                </p>
+              </div>
+
+              <Link to="/learn">
+                <Button variant="outline" size="sm" icon={<Plus size={14} />}>
+                  Explore Sofia's Tutorials
+                </Button>
+              </Link>
+            </div>
+
+            {savedVideos.length === 0 ? (
+              <div className="bg-white dark:bg-[#1d120a] rounded-3xl p-12 text-center border border-taupe/10 dark:border-stone-850 space-y-4">
+                <Video
+                  size={40}
+                  className="mx-auto text-gray-300 dark:text-stone-700"
+                />
+                <h3 className="font-serif text-lg font-bold">
+                  No saved videos yet
+                </h3>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  Learn essential culinary skills with Chef Sofia and bookmark your favorite masterclass lessons.
+                </p>
+                <Link to="/learn">
+                  <Button variant="primary" size="md">
+                    Watch Masterclasses
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {savedVideos.map((video) => (
+                  <div
+                    key={video.id}
+                    onClick={() => setActiveVideoModal(video)}
+                    className="group bg-white dark:bg-[#1c120c] rounded-3xl overflow-hidden border border-taupe/10 dark:border-stone-850 hover:border-caramel/40 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col cursor-pointer relative"
+                  >
+                    {/* Remove button overlay */}
+                    <button
+                      onClick={(e) => handleRemoveSavedVideo(video.id, e)}
+                      title="Remove from saved videos"
+                      className="absolute top-2.5 right-2.5 z-20 p-2 rounded-full bg-black/60 hover:bg-red-600 text-white shadow-md transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+
+                    <div className="relative aspect-video w-full overflow-hidden bg-black/10">
+                      <img
+                        src={video.thumbnailUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-caramel/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                          <Play size={18} className="ml-0.5 fill-white" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-white text-[10px] font-medium flex items-center gap-1">
+                        <Clock size={10} />
+                        <span>{video.duration}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                      <div>
+                        <span className="text-[10px] font-bold text-caramel dark:text-amber-400 uppercase tracking-wider">
+                          {video.category}
+                        </span>
+                        <h3 className="font-serif text-xs sm:text-sm font-bold text-ink dark:text-parchment line-clamp-2 leading-snug group-hover:text-caramel transition-colors mt-0.5">
+                          {video.title}
+                        </h3>
+                      </div>
+                      <div className="text-[11px] text-gray-400 dark:text-stone-500 flex items-center justify-between pt-2 border-t border-taupe/10 dark:border-stone-850">
+                        <span>{video.views}</span>
+                        <span>{video.level}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Saved Meal Plans */}
         {activeTab === "meal_plans" && (
           <div className="mt-8 space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
@@ -987,6 +1127,65 @@ export function ProfilePage() {
               >
                 Keep My Plan
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Embedded YouTube Player Modal for Saved Videos */}
+      {activeVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#1c120c] rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-taupe/20 dark:border-stone-800 shadow-2xl relative flex flex-col">
+            <div className="p-4 sm:p-5 flex items-center justify-between border-b border-taupe/10 dark:border-stone-850 sticky top-0 bg-white/95 dark:bg-[#1c120c]/95 backdrop-blur-md z-10">
+              <div className="flex items-center gap-3">
+                <img
+                  src={activeVideoModal.channelAvatar}
+                  alt={activeVideoModal.channelName}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-caramel/30"
+                />
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base text-ink dark:text-parchment line-clamp-1">
+                    {activeVideoModal.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-stone-400">
+                    {activeVideoModal.channelName} • {activeVideoModal.category}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => handleRemoveSavedVideo(activeVideoModal.id, e)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-600/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                >
+                  Remove Saved
+                </button>
+                <button
+                  onClick={() => setActiveVideoModal(null)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-stone-800 text-gray-500 dark:text-stone-400 transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative aspect-video w-full bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${activeVideoModal.youtubeId}?autoplay=1`}
+                title={activeVideoModal.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </div>
+
+            <div className="p-6 space-y-4">
+              <h2 className="font-serif text-lg font-bold text-ink dark:text-parchment">
+                {activeVideoModal.title}
+              </h2>
+              <p className="text-sm text-gray-700 dark:text-stone-300 leading-relaxed">
+                {activeVideoModal.description}
+              </p>
             </div>
           </div>
         </div>
