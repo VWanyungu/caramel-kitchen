@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { RoleRoute } from "./auth/RoleRoute";
 import { Navbar } from "./components/Navbar";
 import { BrowsePage } from "./pages/BrowsePage";
@@ -7,7 +7,6 @@ import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RecipeDetailPage } from "./pages/RecipeDetailPage";
 import { SignupPage } from "./pages/SignupPage";
-import { ShoppingListPage } from "./pages/ShoppingListPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/Homepage";
@@ -37,8 +36,14 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/recipes" element={<BrowsePage />} />
         <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-        <Route path="/shopping-list" element={<ShoppingListPage />} />
-        <Route path="/cart" element={<ShoppingListPage />} />
+        <Route
+          path="/shopping-list"
+          element={<Navigate to="/profile?tab=shopping_list" replace />}
+        />
+        <Route
+          path="/cart"
+          element={<Navigate to="/profile?tab=shopping_list" replace />}
+        />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/premium" element={<PricingPage />} />
         <Route path="/ai" element={<AIPage />} />

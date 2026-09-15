@@ -6,7 +6,6 @@ import {
   ChefHat,
   Sun,
   User,
-  ClipboardList,
   Search,
   X,
   Diamond,
@@ -136,8 +135,6 @@ export function Navbar() {
 
   const isHomeActive = pathname === "/";
   const isDiscoverActive = pathname === "/recipes";
-  const isShoppingListActive =
-    pathname === "/shopping-list" || pathname === "/cart";
   const isMealPlansActive = pathname === "/meal-plans";
   const isAiActive = pathname === "/ai";
   const isLearnActive = pathname === "/learn" || pathname === "/learn-with-sofia";
@@ -234,17 +231,6 @@ export function Navbar() {
             >
               <Compass size={15} />
               <span>Recipes</span>
-            </Link>
-
-            <Link
-              to="/shopping-list"
-              className={`flex items-center gap-2 px-3.5 xl:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 ${isShoppingListActive
-                ? "bg-white dark:bg-[#120905] text-caramel dark:text-caramel shadow-xs"
-                : "text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-caramel"
-                }`}
-            >
-              <ClipboardList size={15} />
-              <span>Shopping List</span>
             </Link>
 
             <Link
@@ -559,7 +545,7 @@ export function Navbar() {
             </Link>
 
             <Link
-              to="/browse"
+              to="/recipes"
               onClick={closeMobileMenu}
               className={`flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-medium text-sm transition-all duration-150 ${isDiscoverActive
                 ? "bg-caramel/10 dark:bg-caramel/20 text-caramel dark:text-caramel font-semibold shadow-xs"
@@ -575,25 +561,6 @@ export function Navbar() {
                 }
               />
               <span>Discover Recipes</span>
-            </Link>
-
-            <Link
-              to="/shopping-list"
-              onClick={closeMobileMenu}
-              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-medium text-sm transition-all duration-150 ${isShoppingListActive
-                ? "bg-caramel/10 dark:bg-caramel/20 text-caramel dark:text-caramel font-semibold shadow-xs"
-                : "text-gray-700 dark:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-stone-800/60"
-                }`}
-            >
-              <ClipboardList
-                size={18}
-                className={
-                  isShoppingListActive
-                    ? "text-caramel"
-                    : "text-gray-400 dark:text-stone-400"
-                }
-              />
-              <span>Shopping List</span>
             </Link>
 
             <Link
