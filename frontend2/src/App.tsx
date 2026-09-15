@@ -12,6 +12,10 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/Homepage";
 import { PricingPage } from "./pages/PricingPage";
+import { AIPage } from "./pages/AIPage";
+import { CollectionsPage } from "./pages/collections/CollectionsPage";
+import { CollectionDetailPage } from "./pages/collections/CollectionDetailPage";
+import { LearnWithSofiaPage } from "./pages/LearnWithSofiaPage";
 
 function AppShell() {
   return (
@@ -37,6 +41,11 @@ function App() {
         <Route path="/cart" element={<ShoppingListPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/premium" element={<PricingPage />} />
+        <Route path="/ai" element={<AIPage />} />
+        <Route path="/learn" element={<LearnWithSofiaPage />} />
+        <Route path="/learn-with-sofia" element={<LearnWithSofiaPage />} />
+        <Route path="/collections" element={<CollectionsPage />} />
+        <Route path="/collections/:id" element={<CollectionDetailPage />} />
         <Route
           path="/creator"
           element={
