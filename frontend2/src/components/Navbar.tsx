@@ -14,7 +14,7 @@ import {
   Menu,
   LogOut,
   LogIn,
-  UserPlus, Book, BookOpen
+  UserPlus, Book, BookOpen, ShieldCheck
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -344,6 +344,12 @@ export function Navbar() {
 
               {isAuthenticated ? (
                 <>
+                  <Link to="/admin">
+                    <Button variant="dark" size="sm" icon={<ShieldCheck size={14} />}>
+                      Admin
+                    </Button>
+                  </Link>
+
                   {isCreator && (
                     <Link to="/creator">
                       <Button

@@ -15,6 +15,7 @@ import { AIPage } from "./pages/AIPage";
 import { CollectionsPage } from "./pages/collections/CollectionsPage";
 import { CollectionDetailPage } from "./pages/collections/CollectionDetailPage";
 import { LearnWithSofiaPage } from "./pages/LearnWithSofiaPage";
+import { AdminPortalPage } from "./pages/AdminPortalPage";
 
 function AppShell() {
   return (
@@ -51,6 +52,7 @@ function App() {
         <Route path="/learn-with-sofia" element={<LearnWithSofiaPage />} />
         <Route path="/collections" element={<CollectionsPage />} />
         <Route path="/collections/:id" element={<CollectionDetailPage />} />
+        <Route path="/admin" element={<AdminPortalPage />} />
         <Route
           path="/creator"
           element={
