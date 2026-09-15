@@ -5,9 +5,7 @@ import {
   MessageSquare,
   Sparkles,
   Send,
-  MoreHorizontal,
   ChefHat,
-  ChevronRight,
   Bot
 } from "lucide-react";
 
@@ -141,33 +139,29 @@ export function AIPage() {
                 <button
                   key={mode.id}
                   onClick={() => setActiveMode(mode.id as Mode)}
-                  className={`flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 min-w-[240px] lg:min-w-0 text-left border cursor-pointer ${
-                    isActive
-                      ? 'bg-white dark:bg-stone-900 border-caramel/30 dark:border-caramel/30 shadow-md shadow-caramel/5 ring-1 ring-caramel/20 scale-[1.02]'
-                      : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-stone-800 hover:scale-[1.01]'
-                  }`}
+                  className={`flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 min-w-[240px] lg:min-w-0 text-left border cursor-pointer ${isActive
+                    ? 'bg-white dark:bg-stone-900 border-caramel/30 dark:border-caramel/30 shadow-md shadow-caramel/5 ring-1 ring-caramel/20 scale-[1.02]'
+                    : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-stone-800 hover:scale-[1.01]'
+                    }`}
                 >
                   <div
-                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-gradient-to-br text-white shadow-sm ' + mode.color
-                        : "bg-gray-100 dark:bg-stone-800 text-gray-500 dark:text-stone-400"
-                    }`}
+                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive
+                      ? 'bg-gradient-to-br text-white shadow-sm ' + mode.color
+                      : "bg-gray-100 dark:bg-stone-800 text-gray-500 dark:text-stone-400"
+                      }`}
                   >
                     <Icon size={18} />
                   </div>
                   <div>
                     <h3
-                      className={`font-semibold text-sm ${
-                        isActive ? "text-ink dark:text-white" : "text-gray-700 dark:text-gray-300"
-                      }`}
+                      className={`font-semibold text-sm ${isActive ? "text-ink dark:text-white" : "text-gray-700 dark:text-gray-300"
+                        }`}
                     >
                       {mode.label}
                     </h3>
                     <p
-                      className={`text-xs mt-1 leading-relaxed ${
-                        isActive ? "text-gray-600 dark:text-gray-400" : "text-gray-500 dark:text-stone-500"
-                      }`}
+                      className={`text-xs mt-1 leading-relaxed ${isActive ? "text-gray-600 dark:text-gray-400" : "text-gray-500 dark:text-stone-500"
+                        }`}
                     >
                       {mode.description}
                     </p>
@@ -183,7 +177,7 @@ export function AIPage() {
       <main className="flex-1 flex flex-col relative min-h-0 bg-gray-50 dark:bg-[#120905]">
         {/* Dynamic Header based on active mode */}
         <header className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent dark:from-[#120905] dark:via-[#120905]/80 dark:to-transparent z-10 pointer-events-none" />
-        
+
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-12 pt-8 pb-32">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6 opacity-0 animate-in fade-in zoom-in duration-500">
@@ -201,29 +195,27 @@ export function AIPage() {
             </div>
           ) : (
             <div className="space-y-8 max-w-4xl mx-auto">
-              {messages.map((msg, index) => {
+              {messages.map((msg) => {
                 const isUser = msg.role === "user";
                 const isAi = msg.role === "ai";
-                
+
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-end gap-3 sm:gap-4 ${
-                      isUser ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex items-end gap-3 sm:gap-4 ${isUser ? "justify-end" : "justify-start"
+                      }`}
                   >
                     {isAi && (
                       <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-caramel to-orange-500 text-white shadow-md">
                         <Bot size={18} />
                       </div>
                     )}
-                    
+
                     <div
-                      className={`relative max-w-[85%] sm:max-w-[75%] px-5 py-3.5 rounded-3xl text-sm leading-relaxed ${
-                        isUser
-                          ? "bg-ink dark:bg-stone-800 text-white rounded-br-md shadow-md"
-                          : "bg-white dark:bg-[#1c0f0a] border border-taupe/15 dark:border-stone-800 text-ink dark:text-gray-200 rounded-bl-md shadow-xs"
-                      }`}
+                      className={`relative max-w-[85%] sm:max-w-[75%] px-5 py-3.5 rounded-3xl text-sm leading-relaxed ${isUser
+                        ? "bg-ink dark:bg-stone-800 text-white rounded-br-md shadow-md"
+                        : "bg-white dark:bg-[#1c0f0a] border border-taupe/15 dark:border-stone-800 text-ink dark:text-gray-200 rounded-bl-md shadow-xs"
+                        }`}
                     >
                       <p>{msg.content}</p>
                     </div>
@@ -236,7 +228,7 @@ export function AIPage() {
                   </div>
                 );
               })}
-              
+
               {isTyping && (
                 <div className="flex items-end gap-3 sm:gap-4 justify-start">
                   <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-caramel to-orange-500 text-white shadow-md">
@@ -274,17 +266,16 @@ export function AIPage() {
               <button
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className={`flex items-center justify-center h-10 w-10 sm:w-auto sm:px-4 rounded-full gap-2 transition-all duration-200 ${
-                  input.trim() && !isTyping
-                    ? "bg-gradient-to-r from-caramel to-orange-500 text-white shadow-md hover:shadow-lg cursor-pointer transform hover:-translate-y-0.5"
-                    : "bg-gray-100 dark:bg-stone-800 text-gray-400 dark:text-stone-600 cursor-not-allowed"
-                }`}
+                className={`flex items-center justify-center h-10 w-10 sm:w-auto sm:px-4 rounded-full gap-2 transition-all duration-200 ${input.trim() && !isTyping
+                  ? "bg-gradient-to-r from-caramel to-orange-500 text-white shadow-md hover:shadow-lg cursor-pointer transform hover:-translate-y-0.5"
+                  : "bg-gray-100 dark:bg-stone-800 text-gray-400 dark:text-stone-600 cursor-not-allowed"
+                  }`}
               >
                 <span className="hidden sm:inline font-semibold text-sm">Send</span>
                 <Send size={16} className={input.trim() && !isTyping ? "fill-white/20 -mt-0.5 ml-0.5" : ""} />
               </button>
             </form>
-            
+
             <div className="text-center mt-3">
               <p className="text-[10px] text-gray-400 dark:text-stone-600 font-medium tracking-wide">
                 AI Chef can make mistakes. Consider verifying important nutritional information.

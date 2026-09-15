@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, Layers, PlayCircle, BookOpen, UtensilsCrossed } from "lucide-react";
+import { ChevronLeft, PlayCircle, BookOpen, UtensilsCrossed } from "lucide-react";
 import { MOCK_COLLECTIONS } from "./mockData";
 import { RecipeGrid } from "../../components/RecipeGrid";
 import type { RecipeCard } from "../../features/browse/types";
